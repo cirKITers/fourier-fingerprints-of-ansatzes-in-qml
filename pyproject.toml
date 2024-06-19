@@ -1,0 +1,59 @@
+[project]
+name = "entangling_the_waves"
+readme = "README.md"
+dynamic = [ "dependencies", "version",]
+
+[project.scripts]
+entangling_the_waves = "entangling_the_waves.__main__:main"
+
+[tool.kedro]
+package_name = "entangling_the_waves"
+project_name = "entangling_the_waves"
+kedro_init_version = "0.19.6"
+tools = [ "Testing", "Custom Logging", "Kedro Viz",]
+example_pipeline = "False"
+source_dir = "src"
+
+[project.entry-points."kedro.hooks"]
+
+[tool.pytest.ini_options]
+addopts = "--cov-report term-missing --cov src/entangling_the_waves -ra"
+
+[tool.coverage.report]
+fail_under = 0
+show_missing = true
+exclude_lines = [ "pragma: no cover", "raise NotImplementedError",]
+
+[tool.setuptools.dynamic.dependencies]
+file = "requirements.txt"
+
+[tool.setuptools.dynamic.version]
+attr = "entangling_the_waves.__version__"
+
+[tool.setuptools.packages.find]
+where = [ "src",]
+namespaces = false
+
+
+[tool.poetry]
+name = "entangling_the_waves"
+version = "0.1.0"
+description = ""
+authors = ["Melvin Strobl <lc3267@kit.edu>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"
+mlflow = "^2.13.2"
+pennylane = "^0.36.0"
+pytest = "^8.2.2"
+kedro = "^0.19.6"
+kedro-mlflow = "^0.12.2"
+kedro-viz = "^9.1.0"
+plotly = "^5.22.0"
+
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

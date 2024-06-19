@@ -1,0 +1,4 @@
+
+# trained_model:
+#   type: kedro_mlflow.io.models.MlflowModelTrackingDataset
+#   flavor: python_function
