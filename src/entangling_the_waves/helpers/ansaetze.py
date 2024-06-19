@@ -31,6 +31,10 @@ class Ansaetze:
     def get_available():
         return [
             Ansaetze.Circuit_01,
+            Ansaetze.Circuit_5,
+            Ansaetze.Circuit_9,
+            Ansaetze.Circuit_15,
+            Ansaetze.Circuit_18,
             Ansaetze.Circuit_19,
             Ansaetze.No_Entangling,
             Ansaetze.Strongly_Entangling,

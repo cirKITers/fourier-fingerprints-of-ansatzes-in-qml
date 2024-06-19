@@ -1,5 +1,8 @@
-poetry run kedro run --params=circuit_type=Hardware_Efficient
-poetry run kedro run --params=circuit_type=Circuit_19
-poetry run kedro run --params=circuit_type=Circuit_11
-poetry run kedro run --params=circuit_type=Circuit_01
-poetry run kedro run --params=circuit_type=Strongly_Entangling
+#!/bin/bash
+
+# run experiments with all different circuits
+for circuit in Circuit_1 Circuit_5 Circuit_9 Circuit_15 Circuit_18 Circuit_19 Hardware_Efficient Strongly_Entangling No_Entangling
+do
+    echo "Running $circuit"
+    kedro run --params="circuit_type=$circuit"
+done

@@ -4,7 +4,7 @@ coefficients: [1.0,1.0,1.0,1.0]
 
 n_qubits: 3
 n_layers: 3
-circuit_type: 'Circuit_9' # Circuit_01, Circuit_5, Circuit_9, Circuit_15, Circuit_18, Circuit_19, Hardware_Efficient, Strongly_Entangling, No_Entangling
+circuit_type: 'Circuit_19' # Circuit_1, Circuit_5, Circuit_9, Circuit_15, Circuit_18, Circuit_19, Hardware_Efficient, Strongly_Entangling, No_Entangling
 data_reupload: True
 samples: 200
 seed: 1000
