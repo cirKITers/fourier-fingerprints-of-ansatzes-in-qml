@@ -1,5 +1,5 @@
 from entangling_the_waves.helpers.coefficients import Coefficients
-from entangling_the_waves.helpers.model import Model
+from qml_essentials.model import Model
 
 import pandas as pd
 from typing import Dict
@@ -17,7 +17,7 @@ def calculate_coefficients(model: Model, samples: int, seed: int, noise_params: 
         seed=seed,
         inputs=[0],
         noise_params=noise_params,
-        cache=True,
+        cache=False,
     )
 
     log.info(f"Calculated entangling capability: {entangling_capability}")

@@ -1,15 +1,30 @@
 from entangling_the_waves.helpers.entanglement import Entanglement
-from entangling_the_waves.helpers.model import Model
+from qml_essentials.model import Model
 
 import pennylane as qml
 import pennylane.numpy as np
 import mlflow
 from typing import Dict
 from rich.progress import track
+from typing import List
 
 import logging
 
 log = logging.getLogger(__name__)
+
+
+def validate_problem(omegas: List[List[float]], model: Model):
+    if model.n_layers == 1 or model.n_qubits == 1:
+        if model.degree < len(omegas):
+            log.warning(
+                f"Model is too small to use {len(omegas)} frequencies. Consider adjusting the model degree."
+            )
+        elif model.degree > len(omegas):
+            log.warning(
+                f"Model is too large to use {len(omegas)} frequencies. Consider adjusting the model degree."
+            )
+    else:
+        log.warning("Problem validation not implemented yet.")
 
 
 def train_model(
@@ -50,10 +65,22 @@ def train_model(
             noise_params=noise_params,
             cache=False,  # disable caching because currently no gradients are being stored
             state_vector=False,
-            exp_val=True,
         )
 
         log.debug(f"Cost in epoch {epoch}: {cost_val}")
         mlflow.log_metric("mse", cost_val, epoch)
+
+        control_params = np.array(
+            [
+                model.pqc.get_control_angles(params, model.n_qubits)
+                for params in model.params
+            ]
+        )
+        if control_params.any() != None:
+            control_rotation_mean = (
+                np.sum(np.abs(control_params) % (2 * np.pi)) / control_params.size
+            )
+
+            mlflow.log_metric("control_rotation_mean", control_rotation_mean, epoch)
 
     return model

@@ -1,4 +1,4 @@
-from entangling_the_waves.helpers.model import Model
+from qml_essentials.model import Model
 
 import plotly.graph_objects as go
 import pandas as pd
@@ -34,7 +34,8 @@ def visualize_coefficients_correlated(
     model: Model,
 ) -> go.Figure:
     df_filtered = df.filter(regex="c.*", axis=0).filter(regex="c.*", axis=1)
-
+    mlflow.log_metric("coefficients_correlation_variance", df_filtered.var().var())
+    mlflow.log_metric("coefficients_correlation_mean", df_filtered.mean().mean())
     return visualize_heatmap_filtered(
         df=df_filtered,
         title=f"Correlated Coefficients for {model.pqc.__class__.__name__}",
@@ -47,7 +48,8 @@ def visualize_parameters_correlated(
     model: Model,
 ) -> go.Figure:
     df_filtered = df.filter(regex="p.*", axis=0).filter(regex="p.*", axis=1)
-
+    mlflow.log_metric("parameters_correlation_variance", df_filtered.var().var())
+    mlflow.log_metric("parameters_correlation_mean", df_filtered.mean().mean())
     return visualize_heatmap_filtered(
         df=df_filtered,
         title=f"Correlated Parameters for {model.pqc.__class__.__name__}",
@@ -60,7 +62,12 @@ def visualize_parameters_coefficients_correlated(
     model: Model,
 ) -> go.Figure:
     df_filtered = df.filter(regex="p.*", axis=0).filter(regex="c.*", axis=1)
-
+    mlflow.log_metric(
+        "parameters_coefficients_correlation_variance", df_filtered.var().var()
+    )
+    mlflow.log_metric(
+        "parameters_coefficients_correlation_mean", df_filtered.mean().mean()
+    )
     return visualize_heatmap_filtered(
         df=df_filtered,
         title=f"Correlation Parameters Coefficients for {model.pqc.__class__.__name__}",
