@@ -51,8 +51,14 @@ kedro = "^0.19.6"
 kedro-mlflow = "^0.12.2"
 kedro-viz = "^9.1.0"
 plotly = "^5.22.0"
+qml-essentials = {version = "^0.1.0", source = "quantum"}
 
 
+
+[[tool.poetry.source]]
+name = "quantum"
+url = "https://ea3a0fbb-599f-4d83-86f1-0e71abe27513.ka.bw-cloud-instance.org/lc3267/quantum/+simple/"
+priority = "supplemental"
 
 [build-system]
 requires = ["poetry-core"]

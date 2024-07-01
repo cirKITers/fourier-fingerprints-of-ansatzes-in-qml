@@ -2836,6 +2836,25 @@ files = [
 ]
 
 [[package]]
+name = "qml-essentials"
+version = "0.1.0"
+description = ""
+optional = false
+python-versions = ">=3.11,<4.0"
+files = [
+    {file = "qml_essentials-0.1.0-py3-none-any.whl", hash = "sha256:a07adb951cd949dfe45cd48f10a75265ab91836fca1c378e3b807914a01e17f3"},
+    {file = "qml_essentials-0.1.0.tar.gz", hash = "sha256:908df62fbdee3ab5e9f6409dff673b42450eb7e45c392c1c6ba62b34227fac75"},
+]
+
+[package.dependencies]
+pennylane = ">=0.36.0,<0.37.0"
+
+[package.source]
+type = "legacy"
+url = "https://ea3a0fbb-599f-4d83-86f1-0e71abe27513.ka.bw-cloud-instance.org/lc3267/quantum/+simple"
+reference = "quantum"
+
+[[package]]
 name = "querystring-parser"
 version = "1.2.4"
 description = "QueryString parser for Python/Django that correctly handles nested dictionaries"
@@ -4011,4 +4030,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "2d6429ec1814b98dbab6dae35643e962bbe6973343dc628ca59354991013ee36"
+content-hash = "fa634f14b40566df40bd2a75a67d4f122d931f9b89f18a573128dd5c2a1cd575"
