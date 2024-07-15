@@ -18,6 +18,7 @@ class Coefficients:
         model: Callable,  # type: ignore
         samples: int,
         seed: Optional[int] = None,
+        control_value: int = None,
         **kwargs: Any,
     ) -> float:
         """
@@ -66,7 +67,21 @@ class Coefficients:
         if samples > 0:
             # TODO: maybe switch to JAX rng
             rng = np.random.default_rng(seed)
-            params = rng.uniform(0, 2 * np.pi, size=(samples, *model.params.shape))
+            params = np.ndarray((samples, *model.params.shape))
+            for s in range(samples):
+                params[s] = rng.uniform(0, 2 * np.pi, size=model.params.shape)
+
+                if control_value is not None:
+                    indices = model.pqc.get_control_indices(model.n_qubits)
+                    # special treatment for the control indices
+                    if indices is not None:
+                        params[s, :, indices[0] : indices[1] : indices[2]] = (
+                            np.ones_like(
+                                params[s, :, indices[0] : indices[1] : indices[2]]
+                            )
+                            * control_value
+                        )
+            # params = rng.uniform(0, 2 * np.pi, size=(samples, *model.params.shape))
         else:
             if seed is not None:
                 log.warning("Seed is ignored when samples is 0")
