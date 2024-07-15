@@ -35,6 +35,9 @@ class Coefficients:
             Number of samples per qubit.
         seed : Optional[int], optional
             Seed for the random number generator.
+        control_value : int, optional
+            Value of the controlled rotational gates. Allows to overwrite the
+            default control value set during model initialization.
         **kwargs : Any
             Additional keyword arguments for the model function.
 
