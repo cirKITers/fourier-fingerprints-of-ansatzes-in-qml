@@ -3,8 +3,7 @@ import pennylane as qml
 import pennylane.numpy as np
 from functools import partial
 import pandas as pd
-from rich.progress import track
-
+from rich.progress import Progress, Task
 
 import logging
 
@@ -19,6 +18,8 @@ class Coefficients:
         samples: int,
         seed: Optional[int] = None,
         control_value: int = None,
+        progress: Optional[Progress] = None,
+        sample_coeff_task: Optional[Task] = None,
         **kwargs: Any,
     ) -> float:
         """
@@ -59,28 +60,33 @@ class Coefficients:
             Returns:
                 np.ndarray: The Fourier coefficients of the model.
             """
+            # freeze the model for the specific parameters
             partial_circuit = partial(model, model.params, execution_type="expval")
 
             num_inputs = 1
 
             coeffs = qml.fourier.coefficients(partial_circuit, num_inputs, model.degree)
+
+            # reorder coefficients such that [..., c_-1, c_0, c_1, ...]
             coeffs[: model.degree + 1] = [*coeffs[1 : model.degree + 1], coeffs[0]]
             return coeffs
 
         if samples > 0:
             # TODO: maybe switch to JAX rng
             rng = np.random.default_rng(seed)
-            params = np.ndarray((samples, *model.params.shape))
+            param_samples = np.ndarray((samples, *model.params.shape))
             for s in range(samples):
-                params[s] = rng.uniform(0, 2 * np.pi, size=model.params.shape)
+                param_samples[s] = rng.uniform(0, 2 * np.pi, size=model.params.shape)
 
                 if control_value is not None:
                     indices = model.pqc.get_control_indices(model.n_qubits)
                     # special treatment for the control indices
                     if indices is not None:
-                        params[s, :, indices[0] : indices[1] : indices[2]] = (
+                        param_samples[s, :, indices[0] : indices[1] : indices[2]] = (
                             np.ones_like(
-                                params[s, :, indices[0] : indices[1] : indices[2]]
+                                param_samples[
+                                    s, :, indices[0] : indices[1] : indices[2]
+                                ]
                             )
                             * control_value
                         )
@@ -89,7 +95,7 @@ class Coefficients:
             if seed is not None:
                 log.warning("Seed is ignored when samples is 0")
             samples = 1
-            params = model.params.reshape(1, *model.params.shape)
+            param_samples = model.params.reshape(1, *model.params.shape)
 
         # Build a pandas dataframe with the parameters and coefficients as columns
         df = pd.DataFrame(
@@ -101,18 +107,17 @@ class Coefficients:
             ]
         )
 
-        param_samples = np.random.uniform(
-            0, 2 * np.pi, size=(samples, *model.params.shape), requires_grad=True
-        )
-
-        for i, params in track(
-            enumerate(param_samples),
-            description="Sampling..",
-            total=samples,
-        ):
-            model.params = params
+        # param_samples = np.random.uniform(
+        #     0, 2 * np.pi, size=(samples, *model.params.shape), requires_grad=True
+        # )
+        if progress is not None:
+            progress.reset(sample_coeff_task)
+        for i, param_samples in enumerate(param_samples):
+            model.params = param_samples
             coeffs = calculate_coefficients(model)
             # TODO: currently we're using the abs value -> maybe check if real/imag part has some contrib as well
-            df.loc[i] = [*params.flatten().tolist(), *np.abs(coeffs).tolist()]
+            df.loc[i] = [*param_samples.flatten().tolist(), *np.abs(coeffs).tolist()]
+            if progress is not None:
+                progress.update(sample_coeff_task, advance=1)
 
         return df
