@@ -55,7 +55,7 @@ class Coefficients:
             Returns:
                 np.ndarray: The Fourier coefficients of the model.
             """
-            partial_circuit = partial(model, model.params, exp_val=True)
+            partial_circuit = partial(model, model.params, execution_type="expval")
 
             num_inputs = 1
 

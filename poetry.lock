@@ -2837,13 +2837,13 @@ files = [
 
 [[package]]
 name = "qml-essentials"
-version = "0.1.0"
+version = "0.1.9"
 description = ""
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "qml_essentials-0.1.0-py3-none-any.whl", hash = "sha256:a07adb951cd949dfe45cd48f10a75265ab91836fca1c378e3b807914a01e17f3"},
-    {file = "qml_essentials-0.1.0.tar.gz", hash = "sha256:908df62fbdee3ab5e9f6409dff673b42450eb7e45c392c1c6ba62b34227fac75"},
+    {file = "qml_essentials-0.1.9-py3-none-any.whl", hash = "sha256:b15fd6d4dc6ddd32180139d56b70db195619201c0bf82177bebb89726f189b31"},
+    {file = "qml_essentials-0.1.9.tar.gz", hash = "sha256:a47eace2f514ceef700f89347fcf30a0347c573d7baecb2d449861ebda1ee445"},
 ]
 
 [package.dependencies]
@@ -4030,4 +4030,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "fa634f14b40566df40bd2a75a67d4f122d931f9b89f18a573128dd5c2a1cd575"
+content-hash = "6a6fd2ceaa7b580a9d7a58a55b3f36714341658b28a8e3cabe82fb5ced51549d"

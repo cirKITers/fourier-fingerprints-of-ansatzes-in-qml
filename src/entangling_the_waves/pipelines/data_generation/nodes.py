@@ -14,8 +14,16 @@ def create_model(
     circuit_type: str,
     data_reupload: bool,
     output_qubit: int,
+    initialization: str,
 ) -> Model:
-    return Model(n_qubits, n_layers, circuit_type, data_reupload, output_qubit)
+    return Model(
+        n_qubits=n_qubits,
+        n_layers=n_layers,
+        circuit_type=circuit_type,
+        data_reupload=data_reupload,
+        output_qubit=output_qubit,
+        initialization=initialization,
+    )
 
 
 def sample_domain(domain: List[float], omegas: List[List[float]]) -> np.ndarray:
