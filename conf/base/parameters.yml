@@ -2,13 +2,14 @@ domain: [-0.7,0.7] # domain of x values
 omegas: [1.0,2.0,3.0,4.0]
 coefficients: [1.0,1.0,1.0,1.0]
 
-n_qubits: 4
-n_layers: 1
+n_qubits: 6
+n_layers: 2
 circuit_type: 'Circuit_19' # Circuit_01, Circuit_05, Circuit_09, Circuit_15, Circuit_18, Circuit_19, Hardware_Efficient, Strongly_Entangling, No_Entangling
 data_reupload: True
-samples: 100
+samples: 200
 seed: 1000
 output_qubit: 0
+initialization: "random" # random, zero-controlled, pi-controlled
 
 noise_params:
   BitFlip: 0.0
@@ -20,3 +21,4 @@ noise_params:
 epochs: 100
 learning_rate: 0.001
 batch_size: -1
+n_control_values: 3
