@@ -24,6 +24,11 @@ def visualize_heatmap_filtered(
     )
     fig.update_layout(
         title_text=title,
+        yaxis=dict(autorange="reversed", scaleanchor="x"),
+        plot_bgcolor="rgba(0,0,0,0)",
+        width=600,
+        height=600,
+        autosize=False,
     )
     mlflow.log_figure(fig, f"{name}.html")
     return fig
