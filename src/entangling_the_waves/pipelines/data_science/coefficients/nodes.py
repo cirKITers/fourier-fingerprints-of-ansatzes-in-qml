@@ -2,6 +2,7 @@ from entangling_the_waves.helpers.coefficients import Coefficients
 from qml_essentials.model import Model
 import pennylane.numpy as np
 from rich.progress import Progress, Task
+import mlflow
 
 import pandas as pd
 from typing import Dict
@@ -13,14 +14,19 @@ log = logging.getLogger(__name__)
 
 def calculate_coefficients(model: Model, samples: int, seed: int, noise_params: Dict):
 
-    coefficients = Coefficients.numerical(
-        model=model,
-        samples=samples,
-        seed=seed,
-        inputs=[0],
-        noise_params=noise_params,
-        cache=False,
-    )
+    with Progress() as progress:
+        sample_coeff_task = progress.add_task("Sampling...", total=samples)
+
+        coefficients = Coefficients.numerical(
+            model=model,
+            samples=samples,
+            seed=seed,
+            inputs=None,
+            noise_params=noise_params,
+            cache=False,
+            progress=progress,
+            sample_coeff_task=sample_coeff_task,
+        )
 
     return coefficients
 
@@ -36,14 +42,18 @@ def normalize(df: pd.DataFrame) -> pd.DataFrame:
 def sweep_control_values(
     model: Model, samples: int, seed: int, noise_params: Dict, n_control_values: int
 ):
+    coefficients_correlated_control = pd.DataFrame(
+        columns=["coeff_mean", "control_value"]
+    )
+
     with Progress() as progress:
         control_value_it_task = progress.add_task(
             "Iterating control values...", total=n_control_values
         )
         sample_coeff_task = progress.add_task("Sampling...", total=samples)
-        coefficients_correlated_mean = []
-        for cv in np.linspace(0, np.pi, n_control_values, endpoint=True):
-            df = Coefficients.numerical(
+        # coefficients_correlated_mean = []
+        for i, cv in enumerate(np.linspace(0, np.pi, n_control_values, endpoint=True)):
+            coefficients = Coefficients.numerical(
                 model=model,
                 samples=samples,
                 seed=seed,
@@ -54,14 +64,17 @@ def sweep_control_values(
                 noise_params=noise_params,
                 cache=False,
             )
-            df_correlated = correlate(df)
-            df_correlated_normalized = normalize(df_correlated)
-            coefficients = df_correlated_normalized.filter(
-                regex="c_-.*", axis=0
-            ).filter(regex="c_-.*", axis=1)
-            coefficients_correlated_mean.append(coefficients.mean().mean())
+            df_correlated = correlate(coefficients)
+            # df_correlated_normalized = normalize(df_correlated)
+            coefficients_correlated = df_correlated.filter(regex="c_.*", axis=0).filter(
+                regex="c_.*", axis=1
+            )
+            coefficients_correlated_control.loc[i] = {
+                "coeff_mean": coefficients_correlated.mean().mean(),
+                "control_value": cv.item(),
+            }
+            # coefficients_correlated_mean.append(coefficients.mean().mean())
 
             progress.advance(control_value_it_task, advance=1)
 
-        print(coefficients_correlated_mean)
-    return coefficients_correlated_mean
+    return coefficients_correlated_control
