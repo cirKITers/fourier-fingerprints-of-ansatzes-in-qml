@@ -26,7 +26,7 @@ def create_pipeline() -> Pipeline:
                     "seed": "params:seed",
                     "n_control_values": "params:n_control_values",
                 },
-                outputs="coefficients_mean",
+                outputs="coefficients_correlated_control",
                 name="sweep_control_values",
             ),
             node(

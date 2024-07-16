@@ -5,6 +5,8 @@ import pandas as pd
 import mlflow
 import logging
 
+from typing import List
+
 log = logging.getLogger(__name__)
 
 
@@ -78,3 +80,22 @@ def visualize_parameters_coefficients_correlated(
         title=f"Correlation Parameters Coefficients for {model.pqc.__class__.__name__}",
         name=f"correlated_parameters_coefficients_{model.pqc.__class__.__name__.lower()}",
     )
+
+
+def visualize_coefficients_correlated_control(
+    df: pd.DataFrame,
+    model: Model,
+) -> go.Figure:
+    fig = go.Figure(
+        data=go.Scatter(
+            x=df["control_value"],
+            y=df["coeff_mean"],
+        )
+    )
+    fig.update_layout(
+        title_text=f"Correlated Coefficients for {model.pqc.__class__.__name__} over control values",
+        plot_bgcolor="rgba(0,0,0,0)",
+        template="plotly_white",
+    )
+    mlflow.log_figure(fig, f"coefficients_correlated_control.html")
+    return fig
