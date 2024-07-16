@@ -104,7 +104,7 @@ def visualize_coefficients_correlated_control(
             showgrid=False,
         ),
         yaxis=dict(
-            title="Correlation",
+            title="Correlation Mean",
             showgrid=False,
         ),
     )
