@@ -26,11 +26,14 @@ def visualize_heatmap_filtered(
     )
     fig.update_layout(
         title_text=title,
-        yaxis=dict(autorange="reversed", scaleanchor="x"),
         plot_bgcolor="rgba(0,0,0,0)",
         width=600,
         height=600,
         autosize=False,
+        xaxis=dict(
+            title="Coefficients",
+        ),
+        yaxis=dict(title="Coefficients", autorange="reversed", scaleanchor="x"),
     )
     mlflow.log_figure(fig, f"{name}.html")
     return fig
@@ -96,6 +99,14 @@ def visualize_coefficients_correlated_control(
         title_text=f"Correlated Coefficients for {model.pqc.__class__.__name__} over control values",
         plot_bgcolor="rgba(0,0,0,0)",
         template="plotly_white",
+        xaxis=dict(
+            title="Control Value",
+            showgrid=False,
+        ),
+        yaxis=dict(
+            title="Correlation",
+            showgrid=False,
+        ),
     )
     mlflow.log_figure(fig, f"coefficients_correlated_control.html")
     return fig
