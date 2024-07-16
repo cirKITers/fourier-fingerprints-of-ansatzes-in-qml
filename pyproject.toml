@@ -52,6 +52,7 @@ kedro-mlflow = "^0.12.2"
 kedro-viz = "^9.1.0"
 plotly = "^5.22.0"
 qml-essentials = "^0.1.9"
+tenacity = "^8.5.0"
 
 
 
