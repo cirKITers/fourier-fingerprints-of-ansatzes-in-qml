@@ -21,9 +21,6 @@ def calculate_coefficients(model: Model, samples: int, seed: int, noise_params: 
             model=model,
             samples=samples,
             seed=seed,
-            inputs=None,
-            noise_params=noise_params,
-            cache=False,
             progress=progress,
             sample_coeff_task=sample_coeff_task,
         )
@@ -60,9 +57,6 @@ def sweep_control_values(
                 control_value=cv,
                 progress=progress,
                 sample_coeff_task=sample_coeff_task,
-                inputs=None,
-                noise_params=noise_params,
-                cache=False,
             )
             df_correlated = correlate(coefficients)
             # df_correlated_normalized = normalize(df_correlated)
