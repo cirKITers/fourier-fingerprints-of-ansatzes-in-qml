@@ -1,4 +1,5 @@
 mlruns
+session_store.db
 
 ##########################
 # KEDRO PROJECT
