@@ -57,6 +57,7 @@ def sweep_control_values(
                 control_value=cv,
                 progress=progress,
                 sample_coeff_task=sample_coeff_task,
+                noise_params=noise_params,
             )
             df_correlated = correlate(coefficients)
             # df_correlated_normalized = normalize(df_correlated)
