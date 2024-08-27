@@ -17,7 +17,12 @@ def create_pipeline() -> Pipeline:
                     "learning_rate": "params:learning_rate",
                     "batch_size": "params:batch_size",
                 },
-                outputs="trained_model",
+                outputs={
+                    "model": "trained_model",
+                    "params": "trained_params",
+                    "grads": "trained_grads",
+                    "coeffs": "trained_coefficients",
+                },
                 name="train_model",
             ),
         ]

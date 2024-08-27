@@ -6,9 +6,13 @@ import pennylane.numpy as np
 import mlflow
 from typing import Dict
 from rich.progress import track
+import pandas as pd
+import warnings
 from typing import List
 
 import logging
+
+from entangling_the_waves.helpers.coefficients import Coefficients
 
 log = logging.getLogger(__name__)
 
@@ -36,6 +40,21 @@ def train_model(
     learning_rate: float,
     batch_size: int,
 ):
+    # Indices for logging params and gradients
+    df_param_index_names = ["layer_dim", "param_dim"]
+    df_params_index = pd.MultiIndex.from_product(
+        [range(s) for s in model.params.shape], names=df_param_index_names
+    )
+    df_grads_index_names = ["out_dim", "layer_dim", "param_dim"]
+    df_grads_index = pd.MultiIndex.from_product(
+        [range(s) for s in (1, *model.params.shape)], names=df_grads_index_names
+    )
+    df_params = pd.DataFrame()
+    df_grads = pd.DataFrame()
+    df_coeffs = pd.DataFrame(
+        columns=[f"c_{i}" for i in range(-model.degree, model.degree + 1)]
+    )
+
     opt = qml.AdamOptimizer(stepsize=learning_rate)
 
     def mse(prediction, target):
@@ -47,14 +66,28 @@ def train_model(
     log.info(f"Training model for {epochs} epochs")
 
     for epoch in track(range(epochs), description="Training..", total=epochs):
-        ent_cap = Entanglement.meyer_wallach(
-            model=model,
-            n_samples=0,  # disable sampling, use model params
-            noise_params=noise_params,
-            cache=False,
-        )
+        with warnings.catch_warnings(action="ignore"):
+            ent_cap = Entanglement.meyer_wallach(
+                model=model,
+                n_samples=0,  # disable sampling, use model params
+                seed=None,  # set seed none to disable warnings
+                noise_params=noise_params,
+                cache=False,
+            )
         log.debug(f"Entangling capability in epoch {epoch}: {ent_cap}")
         mlflow.log_metric("entangling_capability", ent_cap, epoch)
+
+        # log params and gradients
+        df_params_epoch = pd.DataFrame(
+            {"param": model.params.flatten(), "epoch": epoch},
+            index=df_params_index,
+        )
+        df_grads_epoch = pd.DataFrame(
+            {"param": model.params.flatten(), "epoch": epoch},
+            index=df_grads_index,
+        )
+        df_params = pd.concat([df_params, df_params_epoch])
+        df_grads = pd.concat([df_grads, df_grads_epoch])
 
         model.params, cost_val = opt.step_and_cost(
             cost,
@@ -82,4 +115,18 @@ def train_model(
 
             mlflow.log_metric("control_rotation_mean", control_rotation_mean, epoch)
 
-    return model
+        # log coefficients
+        df_coeffs = pd.concat(
+            [df_coeffs, Coefficients.numerical(model, samples=0).filter(regex="c.*")],
+            ignore_index=True,
+        )
+
+    # Convert indices to columns
+    df_params = df_params.rename_axis(df_param_index_names).reset_index()
+    df_grads = df_grads.rename_axis(df_grads_index_names).reset_index()
+    return {
+        "model": model,
+        "params": df_params,
+        "grads": df_grads,
+        "coeffs": df_coeffs,
+    }

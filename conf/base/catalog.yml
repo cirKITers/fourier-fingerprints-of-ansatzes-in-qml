@@ -2,3 +2,21 @@
 # trained_model:
 #   type: kedro_mlflow.io.models.MlflowModelTrackingDataset
 #   flavor: python_function
+
+trained_coefficients:
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  dataset:
+    type: pandas.CSVDataset
+    filepath: "coeffs.csv"
+
+trained_params:
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  dataset:
+    type: pandas.CSVDataset
+    filepath: "params.csv"
+
+trained_grads:
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  dataset:
+    type: pandas.CSVDataset
+    filepath: "grads.csv"
