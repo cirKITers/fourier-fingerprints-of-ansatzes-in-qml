@@ -45,13 +45,12 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
 mlflow = "^2.13.2"
-pennylane = "^0.36.0"
 pytest = "^8.2.2"
 kedro = "^0.19.6"
 kedro-mlflow = "^0.12.2"
 kedro-viz = "^9.1.0"
 plotly = "^5.22.0"
-qml-essentials = "^0.1.11"
+qml-essentials = "^0.1.13"
 tenacity = "^8.5.0"
 
 
