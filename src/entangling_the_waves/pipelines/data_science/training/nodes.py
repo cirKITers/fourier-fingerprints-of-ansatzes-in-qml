@@ -1,4 +1,4 @@
-from entangling_the_waves.helpers.entanglement import Entanglement
+from qml_essentials.entanglement import Entanglement
 from qml_essentials.model import Model
 
 import pennylane as qml
@@ -49,11 +49,9 @@ def train_model(
     for epoch in track(range(epochs), description="Training..", total=epochs):
         ent_cap = Entanglement.meyer_wallach(
             model=model,
-            samples=0,  # disable sampling, use model params
-            inputs=[0],
+            n_samples=0,  # disable sampling, use model params
             noise_params=noise_params,
             cache=False,
-            state_vector=True,
         )
         log.debug(f"Entangling capability in epoch {epoch}: {ent_cap}")
         mlflow.log_metric("entangling_capability", ent_cap, epoch)
@@ -64,7 +62,8 @@ def train_model(
             inputs=domain_samples,
             noise_params=noise_params,
             cache=False,  # disable caching because currently no gradients are being stored
-            state_vector=False,
+            execution_type="expval",
+            force_mean=True,
         )
 
         log.debug(f"Cost in epoch {epoch}: {cost_val}")

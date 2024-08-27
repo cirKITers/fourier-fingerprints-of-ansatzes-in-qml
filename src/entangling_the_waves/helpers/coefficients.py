@@ -1,4 +1,6 @@
 from typing import Callable, Optional, List, Any
+from qml_essentials.coefficients import Coefficients as QMLCoefficients
+
 import pennylane as qml
 import pennylane.numpy as np
 from functools import partial
@@ -61,11 +63,7 @@ class Coefficients:
                 np.ndarray: The Fourier coefficients of the model.
             """
             # freeze the model for the specific parameters
-            partial_circuit = partial(model, model.params, execution_type="expval")
-
-            num_inputs = 1
-
-            coeffs = qml.fourier.coefficients(partial_circuit, num_inputs, model.degree)
+            coeffs = QMLCoefficients.sample_coefficients(model)
 
             # reorder coefficients such that [..., c_-1, c_0, c_1, ...]
             coeffs[: model.degree + 1] = [*coeffs[1 : model.degree + 1], coeffs[0]]
