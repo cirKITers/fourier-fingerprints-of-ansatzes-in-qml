@@ -43,6 +43,9 @@ def sweep_control_values(
         columns=["coeff_mean", "control_value"]
     )
 
+    if model.pqc.get_control_indices(model.n_qubits) is None:
+        return coefficients_correlated_control
+
     with Progress() as progress:
         control_value_it_task = progress.add_task(
             "Iterating control values...", total=n_control_values
