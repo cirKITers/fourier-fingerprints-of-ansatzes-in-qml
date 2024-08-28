@@ -29,6 +29,19 @@
             ],
             "console": "integratedTerminal",
             "justMyCode": false
+        },
+        {
+            "name": "Training",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "kedro",
+            "args": [
+                "run",
+                "--pipeline",
+                "training"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
         }
     ]
 }
