@@ -16,6 +16,7 @@ def create_pipeline() -> Pipeline:
                     "epochs": "params:epochs",
                     "learning_rate": "params:learning_rate",
                     "batch_size": "params:batch_size",
+                    "log_entangling": "params:log_entangling",
                 },
                 outputs={
                     "model": "trained_model",

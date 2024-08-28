@@ -39,6 +39,7 @@ def train_model(
     epochs: int,
     learning_rate: float,
     batch_size: int,
+    log_entangling: bool = True,
 ):
     # Indices for logging params and gradients
     df_param_index_names = ["layer_dim", "param_dim"]
@@ -66,16 +67,17 @@ def train_model(
     log.info(f"Training model for {epochs} epochs")
 
     for epoch in track(range(epochs), description="Training..", total=epochs):
-        with warnings.catch_warnings(action="ignore"):
-            ent_cap = Entanglement.meyer_wallach(
-                model=model,
-                n_samples=0,  # disable sampling, use model params
-                seed=None,  # set seed none to disable warnings
-                noise_params=noise_params,
-                cache=False,
-            )
-        log.debug(f"Entangling capability in epoch {epoch}: {ent_cap}")
-        mlflow.log_metric("entangling_capability", ent_cap, epoch)
+        if log_entangling:
+            with warnings.catch_warnings(action="ignore"):
+                ent_cap = Entanglement.meyer_wallach(
+                    model=model,
+                    n_samples=0,  # disable sampling, use model params
+                    seed=None,  # set seed none to disable warnings
+                    noise_params=noise_params,
+                    cache=False,
+                )
+            log.debug(f"Entangling capability in epoch {epoch}: {ent_cap}")
+            mlflow.log_metric("entangling_capability", ent_cap, epoch)
 
         # log params and gradients
         df_params_epoch = pd.DataFrame(
