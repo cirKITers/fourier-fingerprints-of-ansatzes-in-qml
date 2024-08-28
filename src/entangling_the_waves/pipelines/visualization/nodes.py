@@ -1,11 +1,12 @@
 from qml_essentials.model import Model
 
+import pennylane.numpy as np
 import plotly.graph_objects as go
 import pandas as pd
 import mlflow
 import logging
 
-from typing import List
+from typing import Dict
 
 log = logging.getLogger(__name__)
 
@@ -109,4 +110,46 @@ def visualize_coefficients_correlated_control(
         ),
     )
     mlflow.log_figure(fig, f"coefficients_correlated_control.html")
+    return fig
+
+
+def visualize_model(
+    model: Model,
+    domain_samples: np.ndarray,
+    fourier_series: np.ndarray,
+    noise_params: Dict,
+) -> go.Figure:
+    fig = go.Figure(
+        data=[
+            go.Scatter(
+                x=domain_samples, y=fourier_series, mode="lines", name="Fourier Series"
+            ),
+            go.Scatter(
+                x=domain_samples,
+                y=model(
+                    params=model.params,
+                    inputs=domain_samples,
+                    noise_params=noise_params,
+                    force_mean=True,
+                ),
+                mode="lines",
+                name="Ground Truth",
+            ),
+        ]
+    )
+    fig.update_layout(
+        title_text=f"Ground Truth and Model Prediction",
+        plot_bgcolor="rgba(0,0,0,0)",
+        template="plotly_white",
+        xaxis=dict(
+            title="Control Value",
+            showgrid=False,
+        ),
+        yaxis=dict(
+            title="Correlation Mean",
+            showgrid=False,
+        ),
+    )
+    mlflow.log_figure(fig, f"coefficients_correlated_control.html")
+
     return fig

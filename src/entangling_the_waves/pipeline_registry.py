@@ -19,6 +19,10 @@ from entangling_the_waves.pipelines.visualization.pipeline import (
     create_pipeline as create_visualization_pipeline,
 )
 
+from entangling_the_waves.pipelines.visualization.pipeline import (
+    create_model_pipeline as create_model_visualization_pipeline,
+)
+
 
 def register_pipelines() -> Dict[str, Pipeline]:
     """Register the project's pipelines.
@@ -30,8 +34,11 @@ def register_pipelines() -> Dict[str, Pipeline]:
         "__default__": create_data_generation_pipeline()
         + create_coefficients_pipeline()
         + create_training_pipeline()
-        + create_visualization_pipeline(),
-        "training": create_data_generation_pipeline() + create_training_pipeline(),
+        + create_visualization_pipeline()
+        + create_model_visualization_pipeline(),
+        "training": create_data_generation_pipeline()
+        + create_training_pipeline()
+        + create_model_visualization_pipeline(),
         "coefficients": create_data_generation_pipeline()
         + create_coefficients_pipeline()
         + create_visualization_pipeline(),
