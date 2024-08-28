@@ -26,6 +26,10 @@ def create_model(
     )
 
 
+def print_model(model: Model):
+    return str(model)
+
+
 def sample_domain(domain: List[float], omegas: List[List[float]]) -> np.ndarray:
     """
     Generates a flattened grid of (x,y,...) coordinates in a range of -1 to 1.
