@@ -1,6 +1,6 @@
-domain: [-0.7854,0.7854] # domain of x values
+domain: [-3.1415,3.1415] # domain of x values
 omegas: [1.0,2.0,3.0,4.0]
-coefficients: [1.0,1.0,1.0,1.0]
+coefficients: [0.5,0.5,0.5,0.5] #[1.0,1.0,1.0,1.0]
 
 n_qubits: 4
 n_layers: 1
