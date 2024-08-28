@@ -13,6 +13,26 @@ log = logging.getLogger(__name__)
 
 
 class Coefficients:
+    @staticmethod
+    def calculate_coefficients(
+        model: Callable[[np.ndarray], float], **kwargs: Any
+    ) -> np.ndarray:
+        """
+        Calculate the Fourier coefficients of the given model.
+
+        Args:
+            model (Callable[[np.ndarray], float]): The model to calculate the Fourier coefficients for.
+                The model should take in a parameter array and input values and return a float.
+
+        Returns:
+            np.ndarray: The Fourier coefficients of the model.
+        """
+        # freeze the model for the specific parameters
+        coeffs = QMLCoefficients.sample_coefficients(model, **kwargs)
+
+        # reorder coefficients such that [..., c_-1, c_0, c_1, ...]
+        coeffs[: model.degree + 1] = [*coeffs[1 : model.degree + 1], coeffs[0]]
+        return coeffs
 
     @staticmethod
     def numerical(
@@ -50,24 +70,6 @@ class Coefficients:
             Entangling capacity of the given circuit.
             It is guaranteed to be between 0.0 and 1.0.
         """
-
-        def calculate_coefficients(model: Callable[[np.ndarray], float]) -> np.ndarray:
-            """
-            Calculate the Fourier coefficients of the given model.
-
-            Args:
-                model (Callable[[np.ndarray], float]): The model to calculate the Fourier coefficients for.
-                    The model should take in a parameter array and input values and return a float.
-
-            Returns:
-                np.ndarray: The Fourier coefficients of the model.
-            """
-            # freeze the model for the specific parameters
-            coeffs = QMLCoefficients.sample_coefficients(model, **kwargs)
-
-            # reorder coefficients such that [..., c_-1, c_0, c_1, ...]
-            coeffs[: model.degree + 1] = [*coeffs[1 : model.degree + 1], coeffs[0]]
-            return coeffs
 
         if samples > 0:
             # TODO: maybe switch to JAX rng
@@ -112,7 +114,7 @@ class Coefficients:
             progress.reset(sample_coeff_task)
         for i, param_samples in enumerate(param_samples):
             model.params = param_samples
-            coeffs = calculate_coefficients(model)
+            coeffs = Coefficients.calculate_coefficients(model, **kwargs)
             # TODO: currently we're using the abs value -> maybe check if real/imag part has some contrib as well
             df.loc[i] = [*param_samples.flatten().tolist(), *np.abs(coeffs).tolist()]
             if progress is not None:
