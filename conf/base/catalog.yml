@@ -3,6 +3,12 @@
 #   type: kedro_mlflow.io.models.MlflowModelTrackingDataset
 #   flavor: python_function
 
+model_str:
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  dataset:
+    type: text.TextDataset
+    filepath: "model.txt"
+
 trained_coefficients:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
   dataset:
