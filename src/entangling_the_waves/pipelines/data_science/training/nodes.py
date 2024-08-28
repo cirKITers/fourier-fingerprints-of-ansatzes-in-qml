@@ -50,11 +50,13 @@ def train_model(
     df_grads_index = pd.MultiIndex.from_product(
         [range(s) for s in (1, *model.params.shape)], names=df_grads_index_names
     )
+    df_coeffs_index_names = ["freq"]
+    df_coeffs_index = pd.MultiIndex.from_product(
+        [range(-model.degree, model.degree + 1)], names=df_coeffs_index_names
+    )
     df_params = pd.DataFrame()
     df_grads = pd.DataFrame()
-    df_coeffs = pd.DataFrame(
-        columns=[f"c_{i}" for i in range(-model.degree, model.degree + 1)]
-    )
+    df_coeffs = pd.DataFrame()
 
     opt = qml.AdamOptimizer(stepsize=learning_rate)
 
@@ -80,16 +82,24 @@ def train_model(
             mlflow.log_metric("entangling_capability", ent_cap, epoch)
 
         # log params and gradients
-        df_params_epoch = pd.DataFrame(
-            {"param": model.params.flatten(), "epoch": epoch},
-            index=df_params_index,
+        df_params = pd.concat(
+            [
+                df_params,
+                pd.DataFrame(
+                    {"param": model.params.flatten(), "epoch": epoch},
+                    index=df_params_index,
+                ),
+            ]
         )
-        df_grads_epoch = pd.DataFrame(
-            {"param": model.params.flatten(), "epoch": epoch},
-            index=df_grads_index,
+        df_grads = pd.concat(
+            [
+                df_grads,
+                pd.DataFrame(
+                    {"param": model.params.flatten(), "epoch": epoch},
+                    index=df_grads_index,
+                ),
+            ]
         )
-        df_params = pd.concat([df_params, df_params_epoch])
-        df_grads = pd.concat([df_grads, df_grads_epoch])
 
         model.params, cost_val = opt.step_and_cost(
             cost,
@@ -117,15 +127,24 @@ def train_model(
 
             mlflow.log_metric("control_rotation_mean", control_rotation_mean, epoch)
 
-        # log coefficients
+        coeffs = Coefficients.calculate_coefficients(model, cache=False)
         df_coeffs = pd.concat(
-            [df_coeffs, Coefficients.numerical(model, samples=0).filter(regex="c.*")],
-            ignore_index=True,
+            [
+                df_coeffs,
+                pd.DataFrame(
+                    {
+                        "coeffs": coeffs.real,
+                        "epoch": epoch,
+                    },
+                    index=df_coeffs_index,
+                ),
+            ]
         )
 
     # Convert indices to columns
     df_params = df_params.rename_axis(df_param_index_names).reset_index()
     df_grads = df_grads.rename_axis(df_grads_index_names).reset_index()
+    df_coeffs = df_coeffs.rename_axis(df_coeffs_index_names).reset_index()
     return {
         "model": model,
         "params": df_params,
