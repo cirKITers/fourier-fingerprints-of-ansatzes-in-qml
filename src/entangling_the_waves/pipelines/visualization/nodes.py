@@ -21,6 +21,7 @@ def visualize_heatmap_filtered(
             y=df.index,
             x=df.columns,
             hoverongaps=False,
+            colorscale="Bluyl",
         )
     )
     fig.update_layout(
