@@ -52,6 +52,7 @@ kedro-viz = "^9.1.0"
 plotly = "^5.22.0"
 qml-essentials = "^0.1.13"
 tenacity = "^8.5.0"
+kaleido = "0.2.1"
 
 
 
@@ -63,3 +64,6 @@ priority = "supplemental"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.kedro_telemetry]
+project_id = "2dbf6e51c6074f2485463579a3ae3733"
