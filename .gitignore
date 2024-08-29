@@ -3,6 +3,7 @@ session_store.db
 *.csv
 model.txt
 stats.json
+*.html
 ##########################
 # KEDRO PROJECT
 
