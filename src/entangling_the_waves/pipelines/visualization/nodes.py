@@ -33,15 +33,16 @@ def visualize_heatmap_filtered(
 
 
 def visualize_coefficients_correlated(
-    df: pd.DataFrame,
-    model: Model,
+    df: pd.DataFrame, model: Model, positive_only=True
 ) -> go.Figure:
-    df_filtered = df.filter(regex="c.*", axis=0).filter(regex="c.*", axis=1)
+    if positive_only:
+        df_filtered = df.filter(regex="c_\+.*", axis=0).filter(regex="c_\+.*", axis=1)
+    else:
+        df_filtered = df.filter(regex="c.*", axis=0).filter(regex="c.*", axis=1)
     mlflow.log_metric("coefficients_correlation_variance", df_filtered.var().var())
     mlflow.log_metric("coefficients_correlation_mean", df_filtered.mean().mean())
     fig = visualize_heatmap_filtered(
         df=df_filtered,
-        name=f"correlated_coefficients",
     )
     fig.update_layout(
         title_text=f"Correlated Coefficients for {model.pqc.__class__.__name__}",
@@ -63,7 +64,6 @@ def visualize_parameters_correlated(
     mlflow.log_metric("parameters_correlation_mean", df_filtered.mean().mean())
     fig = visualize_heatmap_filtered(
         df=df_filtered,
-        name=f"correlated_parameters",
     )
     fig.update_layout(
         title_text=f"Correlated Parameters for {model.pqc.__class__.__name__}",
@@ -77,10 +77,12 @@ def visualize_parameters_correlated(
 
 
 def visualize_parameters_coefficients_correlated(
-    df: pd.DataFrame,
-    model: Model,
+    df: pd.DataFrame, model: Model, positive_only=True
 ) -> go.Figure:
-    df_filtered = df.filter(regex="p.*", axis=0).filter(regex="c.*", axis=1)
+    if positive_only:
+        df_filtered = df.filter(regex="p_.*", axis=0).filter(regex="c_\+.*", axis=1)
+    else:
+        df_filtered = df.filter(regex="p.*", axis=0).filter(regex="c.*", axis=1)
     mlflow.log_metric(
         "parameters_coefficients_correlation_variance", df_filtered.var().var()
     )
@@ -89,7 +91,6 @@ def visualize_parameters_coefficients_correlated(
     )
     fig = visualize_heatmap_filtered(
         df=df_filtered,
-        name=f"correlated_parameters_coefficients",
     )
     fig.update_layout(
         title_text=f"Correlation Parameters Coefficients for {model.pqc.__class__.__name__}",
@@ -166,4 +167,4 @@ def visualize_model(
         ),
     )
 
-    return fig
+    return {"model": fig}
