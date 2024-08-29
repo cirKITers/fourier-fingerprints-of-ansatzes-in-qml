@@ -18,6 +18,7 @@ log = logging.getLogger(__name__)
 
 
 def validate_problem(omegas: List[List[float]], model: Model):
+
     if model.n_layers == 1 or model.n_qubits == 1:
         if model.degree < len(omegas):
             log.warning(
@@ -36,7 +37,7 @@ def train_model(
     domain_samples: np.ndarray,
     fourier_series: np.ndarray,
     noise_params: Dict,
-    epochs: int,
+    steps: int,
     learning_rate: float,
     batch_size: int,
     log_entangling: bool = True,
@@ -66,9 +67,9 @@ def train_model(
     def cost(params, **kwargs):
         return mse(model(params=params, **kwargs), fourier_series)
 
-    log.info(f"Training model for {epochs} epochs")
+    log.info(f"Training model for {steps} steps")
 
-    for epoch in track(range(epochs), description="Training..", total=epochs):
+    for step in track(range(steps), description="Training..", total=steps):
         if log_entangling:
             with warnings.catch_warnings(action="ignore"):
                 ent_cap = Entanglement.meyer_wallach(
@@ -78,15 +79,15 @@ def train_model(
                     noise_params=noise_params,
                     cache=False,
                 )
-            log.debug(f"Entangling capability in epoch {epoch}: {ent_cap}")
-            mlflow.log_metric("entangling_capability", ent_cap, epoch)
+            log.debug(f"Entangling capability in step {step}: {ent_cap}")
+            mlflow.log_metric("entangling_capability", ent_cap, step)
 
         # log params and gradients
         df_params = pd.concat(
             [
                 df_params,
                 pd.DataFrame(
-                    {"param": model.params.flatten(), "epoch": epoch},
+                    {"param": model.params.flatten(), "step": step},
                     index=df_params_index,
                 ),
             ]
@@ -95,7 +96,7 @@ def train_model(
             [
                 df_grads,
                 pd.DataFrame(
-                    {"param": model.params.flatten(), "epoch": epoch},
+                    {"param": model.params.flatten(), "step": step},
                     index=df_grads_index,
                 ),
             ]
@@ -111,8 +112,8 @@ def train_model(
             force_mean=True,
         )
 
-        log.debug(f"Cost in epoch {epoch}: {cost_val}")
-        mlflow.log_metric("mse", cost_val, epoch)
+        log.debug(f"Cost in step {step}: {cost_val}")
+        mlflow.log_metric("mse", cost_val, step)
 
         control_params = np.array(
             [
@@ -125,7 +126,7 @@ def train_model(
                 np.sum(np.abs(control_params) % (2 * np.pi)) / control_params.size
             )
 
-            mlflow.log_metric("control_rotation_mean", control_rotation_mean, epoch)
+            mlflow.log_metric("control_rotation_mean", control_rotation_mean, step)
 
         coeffs = Coefficients.calculate_coefficients(model, cache=False)
         df_coeffs = pd.concat(
@@ -134,7 +135,7 @@ def train_model(
                 pd.DataFrame(
                     {
                         "coeffs": coeffs.real,
-                        "epoch": epoch,
+                        "step": step,
                     },
                     index=df_coeffs_index,
                 ),
