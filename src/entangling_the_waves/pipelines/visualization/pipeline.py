@@ -18,7 +18,7 @@ def create_pipeline() -> Pipeline:
                     "df": "coefficients_correlated_normalized",
                     "model": "model",
                 },
-                outputs="coefficients_correlated",
+                outputs="fig_coefficients_correlated",
                 name="visualize_coefficients_correlated",
             ),
             node(
@@ -27,7 +27,7 @@ def create_pipeline() -> Pipeline:
                     "df": "coefficients_correlated_normalized",
                     "model": "model",
                 },
-                outputs="parameters_correlated",
+                outputs="fig_parameters_correlated",
                 name="visualize_parameters_correlated",
             ),
             node(
@@ -36,7 +36,7 @@ def create_pipeline() -> Pipeline:
                     "df": "coefficients_correlated_normalized",
                     "model": "model",
                 },
-                outputs="parameters_coefficients_correlated",
+                outputs="fig_parameters_coefficients_correlated",
                 name="visualize_parameters_coefficients_correlated",
             ),
             node(
@@ -45,7 +45,7 @@ def create_pipeline() -> Pipeline:
                     "df": "coefficients_correlated_control",
                     "model": "model",
                 },
-                outputs="coefficients_correlated_control",
+                outputs="fig_coefficients_correlated_control",
                 name="visualize_coefficients_correlated_control",
             ),
         ]
@@ -63,7 +63,7 @@ def create_model_pipeline() -> Pipeline:
                     "fourier_series": "fourier_series",
                     "noise_params": "params:noise_params",
                 },
-                outputs={"model": "model_trained"},
+                outputs={"model": "fig_model_trained"},
                 name="visualize_model_trained",
             ),
             node(
@@ -74,7 +74,7 @@ def create_model_pipeline() -> Pipeline:
                     "fourier_series": "fourier_series",
                     "noise_params": "params:noise_params",
                 },
-                outputs={"model": "model_initial"},
+                outputs={"model": "fig_model_initial"},
                 name="visualize_model_initial",
             ),
         ]
