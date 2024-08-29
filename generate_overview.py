@@ -1,0 +1,102 @@
+import mlflow
+import plotly
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import re
+import json
+
+experiment_id = "446249578927817437"
+run_ids = [
+    "34cc3379811f497790de5cb84dd3e3af",
+    "ca422eaec0ef498992af889083155a2c",
+    "e8133ab587014ab8893a7e570ba2465c",
+    "f7c69c0caebe4e6c811d2195c66237a5",
+    "d96866eda07a4260876e5dfbd369bf61",
+    "cc2d405607634d2c9237a996d29b9219",
+]
+
+# run_id_condition = "'" + "','".join(run_ids) + "'"
+# complex_filter = f"""
+#     attributes.run_id IN ({run_id_condition})
+#     """
+
+# runs = mlflow.search_runs(
+#     experiment_ids=[experiment_id],
+#     filter_string=complex_filter,
+# )
+
+
+def read_from_html(path):
+    with open(path) as f:
+        html = f.read()
+    call_arg_str = re.findall(r"Plotly\.newPlot\((.*)\)", html[-(2**16) :])[0]
+    call_args = json.loads(f"[{call_arg_str}]")
+    plotly_json = {"data": call_args[1], "layout": call_args[2]}
+    return plotly.io.from_json(json.dumps(plotly_json))
+
+
+ansaetze = []
+for it, run_id in enumerate(run_ids):
+    client = mlflow.tracking.MlflowClient()
+    ansatz = client.get_run(run_id).data.params["circuit_type"]
+    ansaetze.append(ansatz)
+
+fig = make_subplots(rows=1, cols=len(run_ids), subplot_titles=ansaetze)
+
+for it, run_id in enumerate(run_ids):
+    client = mlflow.tracking.MlflowClient()
+
+    sub_fig_path = client.download_artifacts(
+        run_id, f"correlated_coefficients_{ansaetze[it].lower()}.html", "./"
+    )
+    sub_fig = read_from_html(sub_fig_path)
+    sub_fig_trace = sub_fig.data[0]
+    sub_fig_trace.update(coloraxis=f"coloraxis")
+
+    fig.add_trace(sub_fig_trace, row=1, col=it + 1)
+    fig.update_xaxes(dict(title="Coefficients"), row=1, col=it + 1)
+    fig.update_yaxes(
+        dict(
+            title="Coefficients" if it == 0 else "",
+            autorange="reversed",
+            scaleanchor="x",
+        ),
+        row=1,
+        col=it + 1,
+    )
+
+fig.update_layout(
+    template="plotly_white",
+)
+
+fig.write_image("correlated_coefficients.pdf")
+
+pass
+
+for it, run_id in enumerate(run_ids):
+    client = mlflow.tracking.MlflowClient()
+    ansatz = client.get_run(run_id).data.params["circuit_type"]
+    ansaetze.append(ansatz)
+    mse_hist = client.get_metric_history(run_id, "mse")
+    mse = []
+    for entity in mse_hist:
+        mse.append(entity.value)
+
+    fig.add_trace(
+        go.Scatter(
+            x=[i for i in range(len(mse))],
+            y=mse,
+        ),
+        row=1,
+        col=it + 1,
+    )
+
+    fig_path = client.download_artifacts(
+        run_id, f"correlated_coefficients_{ansatz.lower()}.html", "./"
+    )
+    fig_a = read_from_html(fig_path)
+    fig.add_trace(fig_a.data[0], row=it + 1, col=2)
+
+fig.update_layout(template="plotly_white")
+
+fig.show()
