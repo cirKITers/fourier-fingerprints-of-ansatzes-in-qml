@@ -102,7 +102,8 @@ class Coefficients:
             columns=[
                 *[f"p_{i}" for i in range(len(model.params.flatten()))],
                 *[
-                    f"c_{i}" for i in range(-model.degree, model.degree + 1)
+                    f"c_{i}" if i <= 0 else f"c_+{i}"
+                    for i in range(-model.degree, model.degree + 1)
                 ],  # symmetric + zero frequency
             ]
         )
