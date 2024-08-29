@@ -4,6 +4,7 @@ session_store.db
 model.txt
 stats.json
 *.html
+*.pdf
 ##########################
 # KEDRO PROJECT
 
