@@ -26,3 +26,27 @@ trained_grads:
   dataset:
     type: pandas.CSVDataset
     filepath: "grads.csv"
+
+coefficients_correlated:
+  type: entangling_the_waves.helpers.dataset.MlFlowPlotlyArtifact
+  filepath: "coefficients_correlated.html"
+
+parameters_correlated:
+  type: entangling_the_waves.helpers.dataset.MlFlowPlotlyArtifact
+  filepath: "parameters_correlated.html"
+
+parameters_coefficients_correlated:
+  type: entangling_the_waves.helpers.dataset.MlFlowPlotlyArtifact
+  filepath: "parameters_coefficients_correlated.html"
+  
+coefficients_correlated_control:
+  type: entangling_the_waves.helpers.dataset.MlFlowPlotlyArtifact
+  filepath: "coefficients_correlated_control.html"
+
+model_initial:
+  type: entangling_the_waves.helpers.dataset.MlFlowPlotlyArtifact
+  filepath: "model_initial.html"
+
+model_trained:
+  type: entangling_the_waves.helpers.dataset.MlFlowPlotlyArtifact
+  filepath: "model_trained.html"

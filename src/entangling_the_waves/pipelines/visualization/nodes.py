@@ -13,8 +13,6 @@ log = logging.getLogger(__name__)
 
 def visualize_heatmap_filtered(
     df: pd.DataFrame,
-    title: str,
-    name: str,
 ) -> go.Figure:
 
     fig = go.Figure(
@@ -26,17 +24,11 @@ def visualize_heatmap_filtered(
         )
     )
     fig.update_layout(
-        title_text=title,
         plot_bgcolor="rgba(0,0,0,0)",
         width=600,
         height=600,
         autosize=False,
-        xaxis=dict(
-            title="Coefficients",
-        ),
-        yaxis=dict(title="Coefficients", autorange="reversed", scaleanchor="x"),
     )
-    mlflow.log_figure(fig, f"{name}.html")
     return fig
 
 
@@ -47,11 +39,19 @@ def visualize_coefficients_correlated(
     df_filtered = df.filter(regex="c.*", axis=0).filter(regex="c.*", axis=1)
     mlflow.log_metric("coefficients_correlation_variance", df_filtered.var().var())
     mlflow.log_metric("coefficients_correlation_mean", df_filtered.mean().mean())
-    return visualize_heatmap_filtered(
+    fig = visualize_heatmap_filtered(
         df=df_filtered,
-        title=f"Correlated Coefficients for {model.pqc.__class__.__name__}",
-        name=f"correlated_coefficients_{model.pqc.__class__.__name__.lower()}",
+        name=f"correlated_coefficients",
     )
+    fig.update_layout(
+        title_text=f"Correlated Coefficients for {model.pqc.__class__.__name__}",
+        xaxis=dict(
+            title="Coefficients",
+        ),
+        yaxis=dict(title="Coefficients", autorange="reversed", scaleanchor="x"),
+    )
+
+    return fig
 
 
 def visualize_parameters_correlated(
@@ -61,11 +61,19 @@ def visualize_parameters_correlated(
     df_filtered = df.filter(regex="p.*", axis=0).filter(regex="p.*", axis=1)
     mlflow.log_metric("parameters_correlation_variance", df_filtered.var().var())
     mlflow.log_metric("parameters_correlation_mean", df_filtered.mean().mean())
-    return visualize_heatmap_filtered(
+    fig = visualize_heatmap_filtered(
         df=df_filtered,
-        title=f"Correlated Parameters for {model.pqc.__class__.__name__}",
-        name=f"correlated_parameters_{model.pqc.__class__.__name__.lower()}",
+        name=f"correlated_parameters",
     )
+    fig.update_layout(
+        title_text=f"Correlated Parameters for {model.pqc.__class__.__name__}",
+        xaxis=dict(
+            title="Parameters",
+        ),
+        yaxis=dict(title="Parameters", autorange="reversed", scaleanchor="x"),
+    )
+
+    return fig
 
 
 def visualize_parameters_coefficients_correlated(
@@ -79,11 +87,19 @@ def visualize_parameters_coefficients_correlated(
     mlflow.log_metric(
         "parameters_coefficients_correlation_mean", df_filtered.mean().mean()
     )
-    return visualize_heatmap_filtered(
+    fig = visualize_heatmap_filtered(
         df=df_filtered,
-        title=f"Correlation Parameters Coefficients for {model.pqc.__class__.__name__}",
-        name=f"correlated_parameters_coefficients_{model.pqc.__class__.__name__.lower()}",
+        name=f"correlated_parameters_coefficients",
     )
+    fig.update_layout(
+        title_text=f"Correlation Parameters Coefficients for {model.pqc.__class__.__name__}",
+        xaxis=dict(
+            title="Coefficients",
+        ),
+        yaxis=dict(title="Parameters", autorange="reversed", scaleanchor="x"),
+    )
+
+    return fig
 
 
 def visualize_coefficients_correlated_control(
@@ -109,7 +125,6 @@ def visualize_coefficients_correlated_control(
             showgrid=False,
         ),
     )
-    mlflow.log_figure(fig, f"coefficients_correlated_control.html")
     return fig
 
 
@@ -122,7 +137,7 @@ def visualize_model(
     fig = go.Figure(
         data=[
             go.Scatter(
-                x=domain_samples, y=fourier_series, mode="lines", name="Fourier Series"
+                x=domain_samples, y=fourier_series, mode="lines", name="Ground Truth"
             ),
             go.Scatter(
                 x=domain_samples,
@@ -133,7 +148,7 @@ def visualize_model(
                     force_mean=True,
                 ),
                 mode="lines",
-                name="Ground Truth",
+                name="Prediction",
             ),
         ]
     )
@@ -150,6 +165,5 @@ def visualize_model(
             showgrid=False,
         ),
     )
-    mlflow.log_figure(fig, f"coefficients_correlated_control.html")
 
     return fig
