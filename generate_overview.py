@@ -4,6 +4,11 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import re
 import json
+import pandas as pd
+import numpy as np
+import plotly.io as pio
+
+pio.kaleido.scope.mathjax = None
 
 experiment_id = "446249578927817437"
 run_ids = [
@@ -66,37 +71,35 @@ for it, run_id in enumerate(run_ids):
     )
 
 fig.update_layout(
+    title_text="Correlation of Coefficients for Different Ansaetze",
     template="plotly_white",
+    height=400,
+    width=300 * len(run_ids),
 )
 
 fig.write_image("correlated_coefficients.pdf")
 
-pass
+# ------------------------
+
+loss_precision = 1e3
+df = pd.DataFrame()
 
 for it, run_id in enumerate(run_ids):
     client = mlflow.tracking.MlflowClient()
-    ansatz = client.get_run(run_id).data.params["circuit_type"]
-    ansaetze.append(ansatz)
     mse_hist = client.get_metric_history(run_id, "mse")
-    mse = []
-    for entity in mse_hist:
-        mse.append(entity.value)
+    df[ansaetze[it]] = [
+        np.trunc(entity.value * loss_precision) / loss_precision for entity in mse_hist
+    ]
 
-    fig.add_trace(
-        go.Scatter(
-            x=[i for i in range(len(mse))],
-            y=mse,
-        ),
-        row=1,
-        col=it + 1,
-    )
+fig = go.Figure(
+    data=[go.Scatter(x=df.index, y=df[ansatz], name=ansatz) for ansatz in ansaetze]
+)
 
-    fig_path = client.download_artifacts(
-        run_id, f"correlated_coefficients_{ansatz.lower()}.html", "./"
-    )
-    fig_a = read_from_html(fig_path)
-    fig.add_trace(fig_a.data[0], row=it + 1, col=2)
+fig.update_layout(
+    title="Loss for Different Ansaetze",
+    template="plotly_white",
+    yaxis=dict(title="MSE", type="log", range=[np.log(1 / loss_precision), np.log(1)]),
+    xaxis=dict(title="Epochs", type="log"),
+)
 
-fig.update_layout(template="plotly_white")
-
-fig.show()
+fig.write_image("mse.pdf")
