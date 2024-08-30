@@ -50,9 +50,9 @@ kedro = "^0.19.6"
 kedro-mlflow = "^0.12.2"
 kedro-viz = "^9.1.0"
 plotly = "^5.22.0"
-qml-essentials = "^0.1.13"
 tenacity = "^8.5.0"
 kaleido = "0.2.1"
+qml-essentials = "^0.1.13"
 
 
 

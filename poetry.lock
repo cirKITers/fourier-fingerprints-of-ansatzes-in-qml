@@ -2923,8 +2923,8 @@ description = ""
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "qml_essentials-0.1.13-py3-none-any.whl", hash = "sha256:b480b0abd7681174758840cde96a07ed46a61379eba11ceca5bd60ae7379f810"},
-    {file = "qml_essentials-0.1.13.tar.gz", hash = "sha256:aa65d361b82d593b922a5ff1c6fa33d12d607f5fe579e1d6cb0bfd0ead51852b"},
+    {file = "qml_essentials-0.1.13-py3-none-any.whl", hash = "sha256:4891429ec43d146062ce041acbb8d635e04f9b034bca3fc90d41ca4be698109f"},
+    {file = "qml_essentials-0.1.13.tar.gz", hash = "sha256:0cd20f875a9a5d49ca28b7d8596b66297f078c6cd11b4be0b20970b60a36f48e"},
 ]
 
 [package.dependencies]
