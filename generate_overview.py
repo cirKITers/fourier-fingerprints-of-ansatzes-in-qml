@@ -176,9 +176,42 @@ fig.write_image("mse.pdf")
 
 # ------------------------
 
+run_ids = [
+    "5ccbb173bcd149279b55dbe049d3c6c9",
+    "f0edb62c6d764167aa64ffdc38ee1c94",
+    "e8bc9f74e12e4c3e89fb8955d0d24c82",
+    "50e96f6bd5ef44d49905e0e3011a0032",
+    "4ea2830dbe8f4f019e342ca3bf1b534f",
+    "9e6d53238bc345eeb5d66645097c61a2",
+    "a4ea3b8b0d814b42b3429253141694d5",
+    "d929e52051bd4bf380527ebfaba2c4b7",
+    "bed94e748e164b4e8383e2a1c760065d",
+    "81fbce13e7f44c17ac09a42a2014a8fc",
+    "8c83001c0d6f4e568115709bda8f5dec",
+    "9b485f4b671c4bdabb0d1d3e80f28ca5",
+    "832299a11b3a417ea27b385b8898cd15",
+    "7e9b4e3cf62f41ee8be4c191586add50",
+    "25355ebf15444847ac769e7ec377cfd1",
+    "e19b30b8f943466f93d8cb7ffcd4bd85",
+    "c6b736c5229c4b0ba5d40b1d6559c2d2",
+    "67ca3d0a7cd34c12b661af7a9e0eccb4",
+    "e4edfe8d97504a0ba0df219e15396f99",
+    "9a24ef3d70de4f57b5393a122261184f",
+    "955f8f5146c0448fa25b2dd999b61aff",
+    "912bc69bc0cf429aabcc0a67b2ec8c0c",
+    "e0f0d123e8e449ecaab6e2ebb1546728",
+    "03f6ab0bb45543f68c18d6c657618440",
+    "5a608e92469c41c7957e2d6c7d73bbf7",
+    "1418c40dfca5405d8ffd6cd9ca775d3e",
+    "3921ec9c72174fd285e52126cf1c5b57",
+    "e43274cce02641698eee38d695d73173",
+    "2f7ad762d67d4c8aac2b9d85ceff994d",
+]
+
 df = pd.DataFrame(
     columns=[
         "ansatz",
+        "n_qubits",
         "mse",
         "coefficients_correlation_mean",
         # "coefficients_correlation_variance",
@@ -187,8 +220,14 @@ df = pd.DataFrame(
 
 for it, run_id in enumerate(run_ids):
     client = mlflow.tracking.MlflowClient()
-    client.get_run(run_id).data
-    df.loc[it, "ansatz"] = client.get_run(run_id).data.params["circuit_type"]
+    if client.get_run(run_id).info.status == "FAILED":
+        print(f"Run {run_id} failed")
+        continue
+
+    df.loc[it, "ansatz"] = ansaetze.index(
+        client.get_run(run_id).data.params["circuit_type"]
+    )
+    df.loc[it, "n_qubits"] = int(client.get_run(run_id).data.params["n_qubits"])
     df.loc[it, "mse"] = client.get_run(run_id).data.metrics["mse"]
     df.loc[it, "coefficients_correlation_mean"] = client.get_run(run_id).data.metrics[
         "coefficients_correlation_mean"
@@ -205,15 +244,19 @@ for it, run_id in enumerate(run_ids):
 fig = go.Figure(
     data=[
         go.Parcoords(
-            line=dict(color=df.index, colorscale=px.colors.qualitative.Dark2),
+            line=dict(
+                color=df["ansatz"],
+                colorscale=px.colors.qualitative.Dark2,
+            ),
             dimensions=list(
                 [
                     dict(
                         label="ansatz",
-                        values=df.index,
-                        tickvals=df.index,
-                        ticktext=df["ansatz"],
+                        values=df["ansatz"],
+                        tickvals=df["ansatz"],
+                        ticktext=ansaetze,
                     ),
+                    dict(label="n_qubits", values=df["n_qubits"]),
                     # dict(
                     #     label="coefficients_correlation_variance",
                     #     values=df["coefficients_correlation_variance"],
