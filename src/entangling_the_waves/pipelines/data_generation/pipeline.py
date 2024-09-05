@@ -15,6 +15,7 @@ def create_pipeline() -> Pipeline:
                     "data_reupload": "params:data_reupload",
                     "output_qubit": "params:output_qubit",
                     "initialization": "params:initialization",
+                    "seed": "params:seed",
                 },
                 outputs="model",
                 name="create_model",
