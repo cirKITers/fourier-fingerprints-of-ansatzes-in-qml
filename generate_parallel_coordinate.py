@@ -45,8 +45,6 @@ for it, run_id in enumerate(run_ids):
         print(f"Run {run_id} failed")
         continue
 
-    if int(client.get_run(run_id).data.params["n_qubits"]) != 6:
-        continue
     df.loc[it, "ansatz"] = ansaetze.index(
         client.get_run(run_id).data.params["circuit_type"]
     )
