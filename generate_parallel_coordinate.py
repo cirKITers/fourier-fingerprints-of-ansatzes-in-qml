@@ -70,7 +70,7 @@ fig = go.Figure(
         go.Parcoords(
             line=dict(
                 color=df["ansatz"],
-                colorscale=px.colors.qualitative.Dark2,
+                colorscale=px.colors.qualitative.T10,
             ),
             dimensions=list(
                 [
