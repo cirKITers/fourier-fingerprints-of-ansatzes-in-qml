@@ -54,16 +54,6 @@ tenacity = "^8.5.0"
 kaleido = "0.2.1"
 qml-essentials = "^0.1.13"
 
-
-
-[[tool.poetry.source]]
-name = "quantum"
-url = "https://ea3a0fbb-599f-4d83-86f1-0e71abe27513.ka.bw-cloud-instance.org/lc3267/quantum/+simple/"
-priority = "supplemental"
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.kedro_telemetry]
-project_id = "2dbf6e51c6074f2485463579a3ae3733"
