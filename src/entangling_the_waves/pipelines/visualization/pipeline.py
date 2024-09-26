@@ -17,6 +17,7 @@ def create_pipeline() -> Pipeline:
                 inputs={
                     "df": "coefficients_correlated_normalized",
                     "model": "model",
+                    "positive_only": "params:positive_coeffs_only",
                 },
                 outputs="fig_coefficients_correlated",
                 name="visualize_coefficients_correlated",

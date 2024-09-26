@@ -1,0 +1,74 @@
+import mlflow
+import plotly
+import plotly.graph_objects as go
+import re
+import json
+import pandas as pd
+import numpy as np
+import plotly.io as pio
+from runs import run_ids, experiment_id
+
+pio.kaleido.scope.mathjax = None
+
+
+def read_from_html(path):
+    with open(path) as f:
+        html = f.read()
+    call_arg_str = re.findall(r"Plotly\.newPlot\((.*)\)", html[-(2**16) :])[0]
+    call_args = json.loads(f"[{call_arg_str}]")
+    plotly_json = {"data": call_args[1], "layout": call_args[2]}
+    return plotly.io.from_json(json.dumps(plotly_json))
+
+
+global_df = pd.DataFrame()
+all_ansaetze = []
+qubits=[]
+for it, run_id in enumerate(run_ids):
+    client = mlflow.tracking.MlflowClient()
+    all_ansaetze.append(client.get_run(run_id).data.params["circuit_type"])
+    qubits.append(int(client.get_run(run_id).data.params["n_qubits"]))
+ansaetze = list(set(all_ansaetze))
+n_ansaetze = len(set(all_ansaetze))
+
+
+# ----------------------------------
+
+df = pd.DataFrame(
+    columns=[
+        "ansatz",
+        "n_qubits",
+        "coefficients_correlation_mean",
+        # "coefficients_correlation_variance",
+    ]
+)
+
+for it, run_id in enumerate(run_ids):
+
+    client = mlflow.tracking.MlflowClient()
+    if client.get_run(run_id).info.status != "FINISHED":
+        print(f"Run {run_id} not finished")
+        continue
+
+    df.loc[it, "ansatz"] = ansaetze.index(
+        client.get_run(run_id).data.params["circuit_type"]
+    )
+    df.loc[it, "n_qubits"] = int(client.get_run(run_id).data.params["n_qubits"])
+    # df.loc[it, "mse"] = np.log(client.get_run(run_id).data.metrics["mse"])
+    df.loc[it, "coefficients_correlation_mean"] = client.get_run(run_id).data.metrics[
+        "coefficients_correlation_mean"
+    ]
+
+df.sort_values(by="n_qubits", inplace=True)
+
+fig = go.Figure(
+    data=[go.Scatter(x=df[df["ansatz"]==id].n_qubits, y=df[df["ansatz"]==id].coefficients_correlation_mean, name=ansatz) for id, ansatz in enumerate(ansaetze)]
+)
+
+fig.update_layout(
+    title=f"Coefficient Correlation Mean for Different Ansaetze over Qubits",
+    template="plotly_white",
+    yaxis=dict(title="Coefficient Correlation Mean"),
+    xaxis=dict(title="Qubits"),
+)
+
+fig.write_image(f"coefficient_correlation_qubits.pdf")

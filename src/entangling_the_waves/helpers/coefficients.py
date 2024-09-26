@@ -55,7 +55,7 @@ class Coefficients:
             It must have a `n_qubits` attribute representing the number of qubits.
             It must accept a `params` argument representing the parameters of the circuit.
         samples : int
-            Number of samples per qubit.
+            Number of overall samples
         seed : Optional[int], optional
             Seed for the random number generator.
         control_value : int, optional
@@ -74,6 +74,7 @@ class Coefficients:
         if samples > 0:
             # TODO: maybe switch to JAX rng
             rng = np.random.default_rng(seed)
+            # sample in terms of samples per parameter
             param_samples = np.ndarray((samples, *model.params.shape))
             for s in range(samples):
                 param_samples[s] = rng.uniform(0, 2 * np.pi, size=model.params.shape)
@@ -90,12 +91,12 @@ class Coefficients:
                             )
                             * control_value
                         )
-            # params = rng.uniform(0, 2 * np.pi, size=(samples, *model.params.shape))
         else:
             if seed is not None:
                 log.warning("Seed is ignored when samples is 0")
             samples = 1
-            param_samples = model.params.reshape(1, *model.params.shape)
+            # add another dimension to "simulate" param space
+            param_samples = model.params.reshape(samples, *model.params.shape)
 
         # Build a pandas dataframe with the parameters and coefficients as columns
         df = pd.DataFrame(
@@ -108,16 +109,13 @@ class Coefficients:
             ]
         )
 
-        # param_samples = np.random.uniform(
-        #     0, 2 * np.pi, size=(samples, *model.params.shape), requires_grad=True
-        # )
         if progress is not None:
             progress.reset(sample_coeff_task)
-        for i, param_samples in enumerate(param_samples):
-            model.params = param_samples
+        for i, param_set in enumerate(param_samples):
+            model.params = param_set
             coeffs = Coefficients.calculate_coefficients(model, **kwargs)
             # TODO: currently we're using the abs value -> maybe check if real/imag part has some contrib as well
-            df.loc[i] = [*param_samples.flatten().tolist(), *np.abs(coeffs).tolist()]
+            df.loc[i] = [*param_set.flatten().tolist(), *np.abs(coeffs).tolist()]
             if progress is not None:
                 progress.update(sample_coeff_task, advance=1)
 

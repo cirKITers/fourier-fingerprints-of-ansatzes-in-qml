@@ -48,11 +48,14 @@ for it, run_id in enumerate(run_ids):
     df.loc[it, "ansatz"] = ansaetze.index(
         client.get_run(run_id).data.params["circuit_type"]
     )
+
+    
     df.loc[it, "n_qubits"] = int(client.get_run(run_id).data.params["n_qubits"])
-    df.loc[it, "mse"] = np.log(client.get_run(run_id).data.metrics["mse"])
-    df.loc[it, "coefficients_correlation_mean"] = np.log(client.get_run(run_id).data.metrics[
+    # df.loc[it, "mse"] = np.log(client.get_run(run_id).data.metrics["mse"])
+    df.loc[it, "mse"] = client.get_run(run_id).data.metrics["mse"]
+    df.loc[it, "coefficients_correlation_mean"] = client.get_run(run_id).data.metrics[
         "coefficients_correlation_mean"
-    ])
+    ]
     # df.loc[it, "coefficients_correlation_variance"] = client.get_run(
     #     run_id
     # ).data.metrics["coefficients_correlation_variance"]
@@ -67,7 +70,7 @@ fig = go.Figure(
         go.Parcoords(
             line=dict(
                 color=df["ansatz"],
-                colorscale=px.colors.qualitative.Dark2,
+                colorscale=px.colors.qualitative.T10,
             ),
             dimensions=list(
                 [
