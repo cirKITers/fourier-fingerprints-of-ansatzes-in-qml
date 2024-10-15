@@ -1,11 +1,59 @@
 from qml_essentials.model import Model
+from qml_essentials.ansaetze import Ansaetze, Circuit
 
-from typing import List
-import numpy as np
+from typing import List, Optional
+import pennylane as qml
+import pennylane.numpy as np
 
 import logging
 
 log = logging.getLogger(__name__)
+
+
+class OurAnsaetze(Ansaetze):
+    class Bansatz(Circuit):
+        @staticmethod
+        def n_params_per_layer(n_qubits: int) -> int:
+            if n_qubits > 1:
+                return n_qubits * 3
+            else:
+                log.warning("Number of Qubits < 2, no entanglement available")
+                return 3
+
+        @staticmethod
+        def get_control_indices(n_qubits: int) -> Optional[np.ndarray]:
+            if n_qubits > 1:
+                return [-n_qubits, None, None]
+            else:
+                return None
+
+        @staticmethod
+        def build(w: np.ndarray, n_qubits: int):
+            """
+            Creates a Circuit19 ansatz.
+
+            Length of flattened vector must be n_qubits*3-1
+            because for >1 qubits there are three gates
+
+            Args:
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*3-1)
+                n_qubits (int): number of qubits
+            """
+            w_idx = 0
+            for q in range(n_qubits):
+                qml.RY(w[w_idx], wires=q)
+                w_idx += 1
+                qml.RZ(w[w_idx], wires=q)
+                w_idx += 1
+
+            if n_qubits > 1:
+                for q in range(n_qubits // 2):
+                    qml.CRX(w[w_idx], wires=[(2 * q), (2 * q + 1)])
+                    w_idx += 1
+
+                for q in range((n_qubits - 1) // 2):
+                    qml.CRX(w[w_idx], wires=[(2 * q + 1), (2 * q + 2)])
+                    w_idx += 1
 
 
 def create_model(
@@ -17,10 +65,12 @@ def create_model(
     initialization: str,
     seed: int,
 ) -> Model:
+    pqc = getattr(OurAnsaetze, circuit_type or "no_ansatz")
+
     return Model(
         n_qubits=n_qubits,
         n_layers=n_layers,
-        circuit_type=circuit_type,
+        circuit_type=pqc,
         data_reupload=data_reupload,
         output_qubit=output_qubit,
         initialization=initialization,
