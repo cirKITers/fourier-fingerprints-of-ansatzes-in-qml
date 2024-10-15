@@ -61,12 +61,16 @@ def create_model(
     n_layers: int,
     circuit_type: str,
     data_reupload: bool,
-    output_qubit: int,
     initialization: str,
+    initialization_domain: List[float],
+    output_qubit: int,
     seed: int,
 ) -> Model:
     pqc = getattr(OurAnsaetze, circuit_type or "no_ansatz")
 
+    log.info(
+        f"Creating model with {n_qubits} qubits, {n_layers} layers, and {circuit_type} circuit."
+    )
     return Model(
         n_qubits=n_qubits,
         n_layers=n_layers,
@@ -74,6 +78,7 @@ def create_model(
         data_reupload=data_reupload,
         output_qubit=output_qubit,
         initialization=initialization,
+        initialization_domain=initialization_domain,
         random_seed=seed,
     )
 

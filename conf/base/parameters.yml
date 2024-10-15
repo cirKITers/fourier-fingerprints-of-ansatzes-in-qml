@@ -10,6 +10,7 @@ samples: 50 #samples per parameter
 seed: 1000
 output_qubit: -1
 initialization: "random" # random, zero-controlled, pi-controlled
+initialization_domain: [0,6.283185307179586]
 
 noise_params:
   BitFlip: 0.0

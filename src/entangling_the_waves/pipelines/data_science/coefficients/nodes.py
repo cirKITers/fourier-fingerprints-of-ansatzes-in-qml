@@ -14,6 +14,8 @@ log = logging.getLogger(__name__)
 
 def calculate_coefficients(model: Model, samples: int, seed: int, noise_params: Dict):
     total_samples = samples * model.params.size
+    log.info(f"Total number of samples: {total_samples}")
+
     with Progress() as progress:
         sample_coeff_task = progress.add_task("Sampling...", total=total_samples)
 
