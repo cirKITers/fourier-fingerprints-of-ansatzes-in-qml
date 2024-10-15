@@ -76,8 +76,9 @@ class Coefficients:
             rng = np.random.default_rng(seed)
             # sample in terms of samples per parameter
             param_samples = np.ndarray((samples, *model.params.shape))
+            model.initialize_params(rng=rng, repeat=samples)
             for s in range(samples):
-                param_samples[s] = rng.uniform(0, 2 * np.pi, size=model.params.shape)
+                param_samples[s] = model.initialize_params(rng=rng)
 
                 if control_value is not None:
                     indices = model.pqc.get_control_indices(model.n_qubits)
