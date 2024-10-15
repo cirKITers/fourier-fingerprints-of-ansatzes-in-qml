@@ -5,6 +5,7 @@ model.txt
 stats.json
 *.html
 *.pdf
+info.log.*
 ##########################
 # KEDRO PROJECT
 
