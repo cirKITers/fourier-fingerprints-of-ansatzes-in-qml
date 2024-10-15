@@ -57,3 +57,5 @@ qml-essentials = "^0.1.13"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+[tool.kedro_telemetry]
+project_id = "c91edbf77bd8405a836ad827e8ab1b1e"
