@@ -18,7 +18,7 @@ noise_params:
   PhaseDamping: 0.0
   Depolarizing: 0.0
 
-steps: 10
+steps: 1000
 learning_rate: 0.01
 batch_size: -1
 n_control_values: 0 # for sweeping control values
