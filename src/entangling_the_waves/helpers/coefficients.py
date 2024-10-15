@@ -114,7 +114,9 @@ class Coefficients:
         for i, param_set in enumerate(param_samples):
             model.params = param_set
             coeffs = Coefficients.calculate_coefficients(model, **kwargs)
-            # TODO: currently we're using the abs value -> maybe check if real/imag part has some contrib as well
+
+            # append the parameters and absolute values of coefficients
+            # calculation would raise an error if the imaginary part wouldn't sum up to 0
             df.loc[i] = [*param_set.flatten().tolist(), *np.abs(coeffs).tolist()]
             if progress is not None:
                 progress.update(sample_coeff_task, advance=1)
