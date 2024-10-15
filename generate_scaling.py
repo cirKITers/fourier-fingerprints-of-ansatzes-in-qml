@@ -6,6 +6,7 @@ import json
 import pandas as pd
 import numpy as np
 import plotly.io as pio
+import hashlib
 from runs import run_ids, experiment_id
 
 pio.kaleido.scope.mathjax = None
@@ -22,7 +23,7 @@ def read_from_html(path):
 
 global_df = pd.DataFrame()
 all_ansaetze = []
-qubits=[]
+qubits = []
 for it, run_id in enumerate(run_ids):
     client = mlflow.tracking.MlflowClient()
     all_ansaetze.append(client.get_run(run_id).data.params["circuit_type"])
@@ -61,7 +62,14 @@ for it, run_id in enumerate(run_ids):
 df.sort_values(by="n_qubits", inplace=True)
 
 fig = go.Figure(
-    data=[go.Scatter(x=df[df["ansatz"]==id].n_qubits, y=df[df["ansatz"]==id].coefficients_correlation_mean, name=ansatz) for id, ansatz in enumerate(ansaetze)]
+    data=[
+        go.Scatter(
+            x=df[df["ansatz"] == id].n_qubits,
+            y=df[df["ansatz"] == id].coefficients_correlation_mean,
+            name=ansatz,
+        )
+        for id, ansatz in enumerate(ansaetze)
+    ]
 )
 
 fig.update_layout(
@@ -71,4 +79,8 @@ fig.update_layout(
     xaxis=dict(title="Qubits"),
 )
 
-fig.write_image(f"coefficient_correlation_qubits.pdf")
+hs = hashlib.md5(repr(run_ids).encode("utf-8")).hexdigest()
+filename = f"coefficient_correlation_qubits_{hs}.pdf"
+
+print(f"Output to {filename}")
+fig.write_image(filename)

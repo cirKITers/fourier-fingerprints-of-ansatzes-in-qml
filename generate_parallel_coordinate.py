@@ -8,8 +8,10 @@ import numpy as np
 import plotly.io as pio
 import plotly.express as px
 from runs import run_ids, experiment_id
+import hashlib
 
 pio.kaleido.scope.mathjax = None
+
 
 def read_from_html(path):
     with open(path) as f:
@@ -28,7 +30,6 @@ for it, run_id in enumerate(run_ids):
         ansaetze.append(ansatz)
 
 
-
 df = pd.DataFrame(
     columns=[
         "ansatz",
@@ -41,21 +42,23 @@ df = pd.DataFrame(
 
 for it, run_id in enumerate(run_ids):
     client = mlflow.tracking.MlflowClient()
-    if client.get_run(run_id).info.status == "FAILED":
-        print(f"Run {run_id} failed")
+    if client.get_run(run_id).info.status != "FINISHED":
+        print(f"Run {run_id} not finished")
+        continue
+    if int(client.get_run(run_id).data.params["n_qubits"]) != 6:
         continue
 
     df.loc[it, "ansatz"] = ansaetze.index(
         client.get_run(run_id).data.params["circuit_type"]
     )
 
-    
     df.loc[it, "n_qubits"] = int(client.get_run(run_id).data.params["n_qubits"])
     # df.loc[it, "mse"] = np.log(client.get_run(run_id).data.metrics["mse"])
-    df.loc[it, "mse"] = client.get_run(run_id).data.metrics["mse"]
+    df.loc[it, "mse"] = np.log(client.get_run(run_id).data.metrics["mse"])
     df.loc[it, "coefficients_correlation_mean"] = client.get_run(run_id).data.metrics[
         "coefficients_correlation_mean"
     ]
+
     # df.loc[it, "coefficients_correlation_variance"] = client.get_run(
     #     run_id
     # ).data.metrics["coefficients_correlation_variance"]
@@ -77,7 +80,7 @@ fig = go.Figure(
                     dict(
                         label="Ansatz",
                         values=df["ansatz"],
-                        tickvals=df["ansatz"],
+                        tickvals=list(set(df["ansatz"])),
                         ticktext=ansaetze,
                     ),
                     dict(label="# Qubits", values=df["n_qubits"]),
@@ -86,7 +89,7 @@ fig = go.Figure(
                     #     values=df["coefficients_correlation_variance"],
                     # ),
                     dict(
-                        label="Coeff. Correlation Mean (log)",
+                        label="Coeff. Correlation Mean",
                         values=df["coefficients_correlation_mean"],
                     ),
                     dict(label="mse (log)", values=df["mse"]),
@@ -102,4 +105,8 @@ fig.update_layout(
     margin=dict(l=120),
 )
 
-fig.write_image("parcoords.pdf")
+hs = hashlib.md5(repr(run_ids).encode("utf-8")).hexdigest()
+filename = f"parcoords_{hs}.pdf"
+
+print(f"Output to {filename}")
+fig.write_image(filename)
