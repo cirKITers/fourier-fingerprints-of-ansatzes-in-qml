@@ -20,14 +20,14 @@ def create_pipeline() -> Pipeline:
                 outputs="model",
                 name="create_model",
             ),
-            node(
-                func=print_model,
-                inputs={
-                    "model": "model",
-                },
-                outputs="model_str",
-                name="print_model",
-            ),
+            # node(
+            #     func=print_model,
+            #     inputs={
+            #         "model": "model",
+            #     },
+            #     outputs="model_str",
+            #     name="print_model",
+            # ),
             node(
                 func=sample_domain,
                 inputs={
