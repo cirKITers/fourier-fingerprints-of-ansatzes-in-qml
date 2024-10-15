@@ -74,11 +74,14 @@ class Coefficients:
         if samples > 0:
             # TODO: maybe switch to JAX rng
             rng = np.random.default_rng(seed)
-            # sample in terms of samples per parameter
+            # create empty samples and fill them later
             param_samples = np.ndarray((samples, *model.params.shape))
-            model.initialize_params(rng=rng, repeat=samples)
+
             for s in range(samples):
-                param_samples[s] = model.initialize_params(rng=rng)
+                # sample using the model internal sampler, because it
+                # respects the init. domain and strategy
+                model.initialize_params(rng=rng)
+                param_samples[s] = model.params
 
                 if control_value is not None:
                     indices = model.pqc.get_control_indices(model.n_qubits)
