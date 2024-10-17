@@ -28,25 +28,25 @@ trained_grads:
     filepath: "grads.csv"
 
 fig_coefficients_correlated:
-  type: entangling_the_waves.helpers.dataset.MlFlowPlotlyArtifact
+  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "coefficients_correlated.html"
 
 fig_parameters_correlated:
-  type: entangling_the_waves.helpers.dataset.MlFlowPlotlyArtifact
+  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "parameters_correlated.html"
 
 fig_parameters_coefficients_correlated:
-  type: entangling_the_waves.helpers.dataset.MlFlowPlotlyArtifact
+  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "parameters_coefficients_correlated.html"
   
 fig_coefficients_correlated_control:
-  type: entangling_the_waves.helpers.dataset.MlFlowPlotlyArtifact
+  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "coefficients_correlated_control.html"
 
 fig_model_initial:
-  type: entangling_the_waves.helpers.dataset.MlFlowPlotlyArtifact
+  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "model_initial.html"
 
 fig_model_trained:
-  type: entangling_the_waves.helpers.dataset.MlFlowPlotlyArtifact
+  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "model_trained.html"

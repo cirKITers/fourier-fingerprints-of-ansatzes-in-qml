@@ -5,21 +5,21 @@ from typing import Dict
 from kedro.framework.project import find_pipelines
 from kedro.pipeline import Pipeline
 
-from entangling_the_waves.pipelines.data_generation.pipeline import (
+from saqml.pipelines.data_generation.pipeline import (
     create_pipeline as create_data_generation_pipeline,
 )
-from entangling_the_waves.pipelines.data_science.coefficients.pipeline import (
+from saqml.pipelines.data_science.coefficients.pipeline import (
     create_pipeline as create_coefficients_pipeline,
 )
-from entangling_the_waves.pipelines.data_science.training.pipeline import (
+from saqml.pipelines.data_science.training.pipeline import (
     create_pipeline as create_training_pipeline,
 )
 
-from entangling_the_waves.pipelines.visualization.pipeline import (
+from saqml.pipelines.visualization.pipeline import (
     create_pipeline as create_visualization_pipeline,
 )
 
-from entangling_the_waves.pipelines.visualization.pipeline import (
+from saqml.pipelines.visualization.pipeline import (
     create_model_pipeline as create_model_visualization_pipeline,
 )
 

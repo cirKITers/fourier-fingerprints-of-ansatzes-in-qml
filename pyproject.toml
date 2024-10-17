@@ -1,14 +1,14 @@
 [project]
-name = "entangling_the_waves"
+name = "saqml"
 readme = "README.md"
 dynamic = [ "dependencies", "version",]
 
 [project.scripts]
-entangling_the_waves = "entangling_the_waves.__main__:main"
+saqml = "saqml.__main__:main"
 
 [tool.kedro]
-package_name = "entangling_the_waves"
-project_name = "entangling_the_waves"
+package_name = "saqml"
+project_name = "saqml"
 kedro_init_version = "0.19.6"
 tools = [ "Testing", "Custom Logging", "Kedro Viz",]
 example_pipeline = "False"
@@ -17,7 +17,7 @@ source_dir = "src"
 [project.entry-points."kedro.hooks"]
 
 [tool.pytest.ini_options]
-addopts = "--cov-report term-missing --cov src/entangling_the_waves -ra"
+addopts = "--cov-report term-missing --cov src/saqml -ra"
 
 [tool.coverage.report]
 fail_under = 0
@@ -28,7 +28,7 @@ exclude_lines = [ "pragma: no cover", "raise NotImplementedError",]
 file = "requirements.txt"
 
 [tool.setuptools.dynamic.version]
-attr = "entangling_the_waves.__version__"
+attr = "saqml.__version__"
 
 [tool.setuptools.packages.find]
 where = [ "src",]
@@ -36,7 +36,7 @@ namespaces = false
 
 
 [tool.poetry]
-name = "entangling_the_waves"
+name = "saqml"
 version = "0.1.0"
 description = ""
 authors = ["Melvin Strobl <lc3267@kit.edu>"]

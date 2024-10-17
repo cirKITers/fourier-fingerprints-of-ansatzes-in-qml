@@ -1,4 +1,4 @@
-# Entangling the Waves
+# Spectral Ansatzes for Quantum Machine Learning (SAQML)
 
 
 ## Getting Started :rocket:
@@ -9,7 +9,7 @@ This repository uses [Kedro](https://kedro.org/). To get started, follow these s
 3. Run the experiment: `kedro run`
 
 Experiments are automatically recorded using [MlFlow](https://mlflow.org/). You can view the experiments by
-1. Running `poetry run kedru mlflow ui`
+1. Running `poetry run kedro mlflow ui`
 2. Navigating to [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
 To visualize the nodes and pipeline
