@@ -55,9 +55,9 @@ for it, run_id in enumerate(run_ids):
     )
     df.loc[it, "n_qubits"] = int(client.get_run(run_id).data.params["n_qubits"])
     # df.loc[it, "mse"] = np.log(client.get_run(run_id).data.metrics["mse"])
-    df.loc[it, "coefficients_correlation_mean"] = client.get_run(run_id).data.metrics[
-        "coefficients_correlation_mean"
-    ]
+    df.loc[it, "coefficients_correlation_mean"] = np.log(
+        client.get_run(run_id).data.metrics["coefficients_correlation_mean"]
+    )
 
 df.sort_values(by="n_qubits", inplace=True)
 
@@ -75,7 +75,7 @@ fig = go.Figure(
 fig.update_layout(
     title=f"Coefficient Correlation Mean for Different Ansaetze over Qubits",
     template="plotly_white",
-    yaxis=dict(title="Coefficient Correlation Mean"),
+    yaxis=dict(title="Coefficient Correlation Mean (log)"),
     xaxis=dict(title="Qubits"),
 )
 
