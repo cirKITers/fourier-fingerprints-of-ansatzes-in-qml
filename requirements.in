@@ -1,0 +1,8 @@
+mlflow
+pytest
+kedro
+kedro-mlflow
+plotly
+tenacity
+kaleido
+qml-essentials
