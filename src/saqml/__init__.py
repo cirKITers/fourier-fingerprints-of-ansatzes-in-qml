@@ -1,4 +1,4 @@
-"""entangling_the_waves
+"""saqml
 """
 
 __version__ = "0.1"
