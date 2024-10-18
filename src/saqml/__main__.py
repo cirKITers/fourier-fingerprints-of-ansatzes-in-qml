@@ -1,5 +1,5 @@
-"""entangling_the_waves file for ensuring the package is executable
-as `entangling_the_waves` and `python -m entangling_the_waves`
+"""saqml file for ensuring the package is executable
+as `saqml` and `python -m saqml`
 """
 
 import importlib

@@ -1,4 +1,4 @@
-from entangling_the_waves.helpers.coefficients import Coefficients
+from saqml.helpers.coefficients import Coefficients
 from qml_essentials.model import Model
 import pennylane.numpy as np
 from rich.progress import Progress, Task

@@ -12,7 +12,7 @@ from typing import List
 
 import logging
 
-from entangling_the_waves.helpers.coefficients import Coefficients
+from saqml.helpers.coefficients import Coefficients
 
 log = logging.getLogger(__name__)
 
