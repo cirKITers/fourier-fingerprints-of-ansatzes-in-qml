@@ -55,6 +55,35 @@ class OurAnsaetze(Ansaetze):
                     qml.CRX(w[w_idx], wires=[(2 * q + 1), (2 * q + 2)])
                     w_idx += 1
 
+    class XZX(Circuit):
+        @staticmethod
+        def n_params_per_layer(n_qubits: int) -> int:
+            return n_qubits * 3
+
+        @staticmethod
+        def get_control_indices(n_qubits: int) -> Optional[np.ndarray]:
+            return None
+
+        @staticmethod
+        def build(w: np.ndarray, n_qubits: int):
+            """
+            Creates a XZX ansatz.
+
+            Length of flattened vector must be n_qubits*2
+
+            Args:
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*2)
+                n_qubits (int): number of qubits
+            """
+            w_idx = 0
+            for q in range(n_qubits):
+                qml.RX(w[w_idx], wires=q)
+                w_idx += 1
+                qml.RZ(w[w_idx], wires=q)
+                w_idx += 1
+                qml.RX(w[w_idx], wires=q)
+                w_idx += 1
+
 
 def create_model(
     n_qubits: int,
