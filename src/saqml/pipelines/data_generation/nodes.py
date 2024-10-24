@@ -84,6 +84,106 @@ class OurAnsaetze(Ansaetze):
                 qml.RX(w[w_idx], wires=q)
                 w_idx += 1
 
+    class Circuit_19_N(Ansaetze.Circuit_19):
+        @staticmethod
+        def n_params_per_layer(n_qubits: int) -> int:
+            if n_qubits > 1:
+                return n_qubits * 6
+            else:
+                log.warning("Number of Qubits < 2, no entanglement available")
+                return 2
+
+        @staticmethod
+        def build(w: np.ndarray, n_qubits: int):
+            """
+            Creates a Circuit19 ansatz.
+
+            Length of flattened vector must be n_qubits*3-1
+            because for >1 qubits there are three gates
+
+            Args:
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*3-1)
+                n_qubits (int): number of qubits
+            """
+            n_params_per_layer = Ansaetze.Circuit_19.n_params_per_layer(n_qubits)
+            for i in range(2):  # twice the number of params
+                Ansaetze.Circuit_19.build(
+                    w[i * n_params_per_layer : (i + 1) * n_params_per_layer], n_qubits
+                )
+                qml.Barrier(wires=range(n_qubits))
+
+    class Circuit_XZX_N(Ansaetze.Circuit_XZX):
+        @staticmethod
+        def n_params_per_layer(n_qubits: int) -> int:
+            return n_qubits * 6
+
+        @staticmethod
+        def build(w: np.ndarray, n_qubits: int):
+            """
+            Creates a XZX ansatz.
+
+            Length of flattened vector must be n_qubits*2
+
+            Args:
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*2)
+                n_qubits (int): number of qubits
+            """
+            n_params_per_layer = Ansaetze.Circuit_XZX.n_params_per_layer(n_qubits)
+            for i in range(2):  # twice the number of params
+                Ansaetze.Circuit_XZX.build(
+                    w[i * n_params_per_layer : (i + 1) * n_params_per_layer], n_qubits
+                )
+                qml.Barrier(wires=range(n_qubits))
+
+    class Bansatz_N(Ansaetze.Bansatz):
+        @staticmethod
+        def n_params_per_layer(n_qubits: int) -> int:
+            return n_qubits * 6
+
+        @staticmethod
+        def build(w: np.ndarray, n_qubits: int):
+            """
+            Creates a Bansatz ansatz.
+
+            Length of flattened vector must be n_qubits*2
+
+            Args:
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*2)
+                n_qubits (int): number of qubits
+            """
+            n_params_per_layer = Ansaetze.Bansatz.n_params_per_layer(n_qubits)
+            for i in range(2):  # twice the number of params
+                Ansaetze.Bansatz.build(
+                    w[i * n_params_per_layer : (i + 1) * n_params_per_layer], n_qubits
+                )
+                qml.Barrier(wires=range(n_qubits))
+
+    class Hardware_Efficient_N(Ansaetze.Hardware_Efficient):
+        @staticmethod
+        def n_params_per_layer(n_qubits: int) -> int:
+            return n_qubits * 6
+
+        @staticmethod
+        def build(w: np.ndarray, n_qubits: int):
+            """
+            Creates a Hardware-Efficient ansatz, as proposed in
+            https://arxiv.org/pdf/2309.03279
+
+            Length of flattened vector must be n_qubits*3
+
+            Args:
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*3)
+                n_qubits (int): number of qubits
+            """
+            n_params_per_layer = Ansaetze.Hardware_Efficient.n_params_per_layer(
+                n_qubits
+            )
+            for i in range(2):  # twice the number of params
+                Ansaetze.Hardware_Efficient.build(
+                    w[i * n_params_per_layer : (i + 1) * n_params_per_layer], n_qubits
+                )
+                qml.Barrier(wires=range(n_qubits))
+
 
 def create_model(
     n_qubits: int,
