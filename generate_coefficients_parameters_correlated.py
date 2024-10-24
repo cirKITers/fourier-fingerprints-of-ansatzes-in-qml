@@ -42,7 +42,7 @@ for q in qubits:
         client = mlflow.tracking.MlflowClient()
 
         sub_fig_path = client.download_artifacts(
-            row.run_id, f"coefficients_correlated.html", "./"
+            row.run_id, f"parameters_coefficients_correlated.html", "./"
         )
         sub_fig = read_from_html(sub_fig_path)
         sub_fig_trace = sub_fig.data[0]
@@ -62,11 +62,11 @@ for q in qubits:
         it = it + 1
 
     fig.update_layout(
-        title_text=f"Correlation of Coefficients for Different Ansaetze ({q} Qubits)",
+        title_text=f"Correlation of Coefficients and Parameters for Different Ansaetze ({q} Qubits)",
         template="plotly_white",
         height=400,
         width=300 * it,
         coloraxis={"colorscale": "Bluyl"},
     )
 
-    fig.write_image(f"new_coefficients_correlated_q{q}.pdf")
+    fig.write_image(f"parameters_coefficients_correlated_q{q}.pdf")
