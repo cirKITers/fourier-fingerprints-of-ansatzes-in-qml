@@ -55,7 +55,7 @@ class OurAnsaetze(Ansaetze):
                     qml.CRX(w[w_idx], wires=[(2 * q + 1), (2 * q + 2)])
                     w_idx += 1
 
-    class XZX(Circuit):
+    class Circuit_XZX(Circuit):
         @staticmethod
         def n_params_per_layer(n_qubits: int) -> int:
             return n_qubits * 3
@@ -112,7 +112,7 @@ class OurAnsaetze(Ansaetze):
                 )
                 qml.Barrier(wires=range(n_qubits))
 
-    class Circuit_XZX_N(Ansaetze.Circuit_XZX):
+    class Circuit_XZX_N(Circuit_XZX):
         @staticmethod
         def n_params_per_layer(n_qubits: int) -> int:
             return n_qubits * 6
@@ -128,14 +128,14 @@ class OurAnsaetze(Ansaetze):
                 w (np.ndarray): weight vector of size n_layers*(n_qubits*2)
                 n_qubits (int): number of qubits
             """
-            n_params_per_layer = Ansaetze.Circuit_XZX.n_params_per_layer(n_qubits)
+            n_params_per_layer = OurAnsaetze.Circuit_XZX.n_params_per_layer(n_qubits)
             for i in range(2):  # twice the number of params
-                Ansaetze.Circuit_XZX.build(
+                OurAnsaetze.Circuit_XZX.build(
                     w[i * n_params_per_layer : (i + 1) * n_params_per_layer], n_qubits
                 )
                 qml.Barrier(wires=range(n_qubits))
 
-    class Bansatz_N(Ansaetze.Bansatz):
+    class Bansatz_N(Bansatz):
         @staticmethod
         def n_params_per_layer(n_qubits: int) -> int:
             return n_qubits * 6
@@ -151,9 +151,9 @@ class OurAnsaetze(Ansaetze):
                 w (np.ndarray): weight vector of size n_layers*(n_qubits*2)
                 n_qubits (int): number of qubits
             """
-            n_params_per_layer = Ansaetze.Bansatz.n_params_per_layer(n_qubits)
+            n_params_per_layer = OurAnsaetze.Bansatz.n_params_per_layer(n_qubits)
             for i in range(2):  # twice the number of params
-                Ansaetze.Bansatz.build(
+                OurAnsaetze.Bansatz.build(
                     w[i * n_params_per_layer : (i + 1) * n_params_per_layer], n_qubits
                 )
                 qml.Barrier(wires=range(n_qubits))
