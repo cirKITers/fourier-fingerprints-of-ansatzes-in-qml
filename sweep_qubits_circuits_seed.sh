@@ -12,7 +12,6 @@ do
         kedro run --params=n_qubits=$n_qubits &
     else
         # kedro run --pipeline training --params=omegas=$n_qubits,n_qubits=$n_qubits,circuit_type=$1,seed=$2 &
-        ./slurm_submit $n_qubits $1 $2 &
+        sbatch --job-name "q$n_qubits-c$1-s$2" ./slurm_job.sh "omegas=$n_qubits,n_qubits=$n_qubits,circuit_type=$1,seed=$2" &
     fi
-    sleep 10
 done
