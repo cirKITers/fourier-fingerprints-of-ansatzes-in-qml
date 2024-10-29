@@ -11,12 +11,8 @@ do
     then
         kedro run --params=n_qubits=$n_qubits &
     else
-        if [ -z "$2" ]
-        then
-            kedro run --pipeline training --params=omegas=$n_qubits,n_qubits=$n_qubits,circuit_type=$1 &
-        else
-            kedro run --pipeline training --params=omegas=$n_qubits,n_qubits=$n_qubits,circuit_type=$1,seed=$2 &
-        fi
+        # kedro run --pipeline training --params=omegas=$n_qubits,n_qubits=$n_qubits,circuit_type=$1,seed=$2 &
+        ./slurm_submit $n_qubits $1 $2 &
     fi
     sleep 10
 done
