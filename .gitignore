@@ -6,6 +6,7 @@ stats.json
 *.html
 *.pdf
 info.log.*
+results
 ##########################
 # KEDRO PROJECT
 

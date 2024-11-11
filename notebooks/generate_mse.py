@@ -1,11 +1,12 @@
 import mlflow
 import plotly
-from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 import re
 import json
 import pandas as pd
+import numpy as np
 import plotly.io as pio
-from runs import run_ids, experiment_id
+from notebooks.runs import run_ids, experiment_id
 
 pio.kaleido.scope.mathjax = None
 
@@ -32,41 +33,34 @@ n_ansaetze = len(set(all_ansaetze))
 global_df["ansatz"] = all_ansaetze
 global_df["qubits"] = qubits
 global_df["run_id"] = run_ids
+
 # ----------------------------------
 
 for q in qubits:
-    fig = make_subplots(rows=1, cols=n_ansaetze, subplot_titles=ansaetze)
+    loss_precision = 1e3
+    df = pd.DataFrame()
 
-    it = 1
     for index, row in global_df[global_df.qubits == q].iterrows():
+
         client = mlflow.tracking.MlflowClient()
 
-        sub_fig_path = client.download_artifacts(
-            row.run_id, f"coefficients_correlated.html", "./"
-        )
-        sub_fig = read_from_html(sub_fig_path)
-        sub_fig_trace = sub_fig.data[0]
-        sub_fig_trace.update(coloraxis=f"coloraxis")
+        mse_hist = client.get_metric_history(row.run_id, "mse")
+        df[row.ansatz] = [
+            np.trunc(entity.value * loss_precision) / loss_precision
+            for entity in mse_hist
+        ]
 
-        fig.add_trace(sub_fig_trace, row=1, col=it)
-        fig.update_xaxes(dict(title="Coefficients"), row=1, col=it)
-        fig.update_yaxes(
-            dict(
-                title="Coefficients" if it == 1 else "",
-                autorange="reversed",
-                scaleanchor="x",
-            ),
-            row=1,
-            col=it,
-        )
-        it = it + 1
-
-    fig.update_layout(
-        title_text=f"Correlation of Coefficients for Different Ansaetze ({q} Qubits)",
-        template="plotly_white",
-        height=400,
-        width=300 * it,
-        coloraxis={"colorscale": "Bluyl"},
+    fig = go.Figure(
+        data=[go.Scatter(x=df.index, y=df[ansatz], name=ansatz) for ansatz in ansaetze]
     )
 
-    fig.write_image(f"new_coefficients_correlated_q{q}.pdf")
+    fig.update_layout(
+        title=f"Loss for Different Ansaetze ({q} Qubits)",
+        template="plotly_white",
+        yaxis=dict(
+            title="MSE", type="log", range=[np.log(1 / loss_precision), np.log(1)]
+        ),
+        xaxis=dict(title="Epochs", type="log"),
+    )
+
+    fig.write_image(f"mse_q{q}.pdf")
