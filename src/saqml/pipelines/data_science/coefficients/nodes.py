@@ -76,7 +76,17 @@ def correlate(df: pd.DataFrame, method: str) -> pd.DataFrame:
     if method == "pearson" or method == "spearman":
         return df.corr(method=method)
     elif method == "dcor":
-        result = dcor.rowwise(dcor.distance_correlation, df.to_numpy(), df.to_numpy())
+        data = df.to_numpy().transpose()  # -> (n_rvs, n_samples)
+
+        dcor_data = lambda rv: dcor.rowwise(
+            dcor.distance_correlation,
+            data,
+            np.tile(rv, (data.shape[0], 1)),  # repeat over n_rvs
+        )
+
+        # TODO: this can get really slow for large n_rvs
+        result = np.array([dcor_data(rv) for rv in data])
+        return pd.DataFrame(result, index=df.columns, columns=df.columns)
     else:
         raise ValueError(f"Unknown correlation method: {method}")
 
