@@ -200,7 +200,8 @@ def create_model(
     log.info(
         f"Creating model with {n_qubits} qubits, {n_layers} layers, and {circuit_type} circuit."
     )
-    return Model(
+
+    model = Model(
         n_qubits=n_qubits,
         n_layers=n_layers,
         circuit_type=pqc,
@@ -210,6 +211,8 @@ def create_model(
         initialization_domain=initialization_domain,
         random_seed=seed,
     )
+    # model.draw(figure=True)[0].savefig(f"{circuit_type}.png")
+    return model
 
 
 def print_model(model: Model):

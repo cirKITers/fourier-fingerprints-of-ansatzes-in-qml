@@ -4,7 +4,7 @@
 # second argument: seed
 
 # run experiments with all different qubits
-for n_qubits in 3 4 5 6 7 8 9
+for n_qubits in 2
 do
     echo "Running with $n_qubits qubits"
     if [ -z "$1" ]

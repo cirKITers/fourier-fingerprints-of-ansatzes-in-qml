@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 import plotly.io as pio
 import hashlib
-from runs import run_ids, experiment_id
+from notebooks.runs import run_ids, experiment_id
 
 pio.kaleido.scope.mathjax = None
 
