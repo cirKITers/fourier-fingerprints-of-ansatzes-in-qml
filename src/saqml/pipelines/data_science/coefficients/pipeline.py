@@ -33,6 +33,7 @@ def create_pipeline() -> Pipeline:
                 func=correlate,
                 inputs={
                     "df": "coefficients",
+                    "method": "params:correlation_method",
                 },
                 outputs="coefficients_correlated",
                 name="correlate",
