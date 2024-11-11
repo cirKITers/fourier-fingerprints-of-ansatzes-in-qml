@@ -92,7 +92,6 @@ def correlate(df: pd.DataFrame, method: str) -> pd.DataFrame:
 
 
 def normalize(df: pd.DataFrame) -> pd.DataFrame:
-    # return (df - df.min()) / (df.max() - df.min())
     """
     Normalize the given dataframe.
 
