@@ -1,29 +1,38 @@
-domain: [-3.1415, 3.1415] # domain of x values
-omegas: 4
-coefficients: 0.5 #[1.0,1.0,1.0,1.0]
+data:
+  domain: [-3.1415, 3.1415] # domain of x values
+  omegas: 4
+  amplitude: 0.5 #[1.0,1.0,1.0,1.0]
 
-n_qubits: 4
-n_layers: 1
-circuit_type: "Bansatz" # Circuit_1, Circuit_5, Circuit_6, Circuit_9, Circuit_15, Circuit_18, Circuit_19, Hardware_Efficient, Strongly_Entangling, No_Entangling
-data_reupload: True
-samples: 10 #samples per parameter
+coefficients:
+  samples: 100 #samples per parameter
+  correlation_method: "dcor" #dcor, pearson, spearman
+
+model:
+  n_qubits: 4
+  n_layers: 1
+  circuit_type: "Circuit_19" # Circuit_1, Circuit_5, Circuit_6, Circuit_9, Circuit_15, Circuit_18, Circuit_19, Hardware_Efficient, Strongly_Entangling, No_Entangling
+  data_reupload: True
+  output_qubit: -1
+  initialization: "random" # random, zero-controlled, pi-controlled
+  initialization_domain: [0, 6.283185307179586]
+  noise_params:
+    BitFlip: 0.0
+    PhaseFlip: 0.0
+    AmplitudeDamping: 0.0
+    PhaseDamping: 0.0
+    Depolarizing: 0.0
+
 seed: 1000
-output_qubit: -1
-initialization: "random" # random, zero-controlled, pi-controlled
-initialization_domain: [0, 6.283185307179586]
 
-correlation_method: "dcor" #dcor, pearson, spearman
-
-noise_params:
-  BitFlip: 0.0
-  PhaseFlip: 0.0
-  AmplitudeDamping: 0.0
-  PhaseDamping: 0.0
-  Depolarizing: 0.0
-
-steps: 10
-learning_rate: 0.01
-batch_size: -1
 n_control_values: 0 # for sweeping control values
-log_entangling: False
-positive_coeffs_only: True
+
+training:
+  steps: 1000
+  learning_rate: 0.01
+  batch_size: -1
+  log_entangling: False
+  positive_coeffs_only: True
+  convergence:
+    threshold: -1 # threshold for the cost, -1 to disable
+    gradient: 1e-5 # threshold for the cost gradient, -1 to disable
+    steps: 50 # gradient is checked for the last n steps
