@@ -9,13 +9,13 @@ def create_pipeline() -> Pipeline:
             node(
                 func=create_model,
                 inputs={
-                    "n_qubits": "params:n_qubits",
-                    "n_layers": "params:n_layers",
-                    "circuit_type": "params:circuit_type",
-                    "data_reupload": "params:data_reupload",
-                    "initialization": "params:initialization",
-                    "initialization_domain": "params:initialization_domain",
-                    "output_qubit": "params:output_qubit",
+                    "n_qubits": "params:model.n_qubits",
+                    "n_layers": "params:model.n_layers",
+                    "circuit_type": "params:model.circuit_type",
+                    "data_reupload": "params:model.data_reupload",
+                    "initialization": "params:model.initialization",
+                    "initialization_domain": "params:model.initialization_domain",
+                    "output_qubit": "params:model.output_qubit",
                     "seed": "params:seed",
                 },
                 outputs="model",
@@ -32,8 +32,8 @@ def create_pipeline() -> Pipeline:
             node(
                 func=sample_domain,
                 inputs={
-                    "domain": "params:domain",
-                    "omegas": "params:omegas",
+                    "domain": "params:data.domain",
+                    "omegas": "params:data.omegas",
                 },
                 outputs="domain_samples",
                 name="sample_domain",
@@ -42,8 +42,8 @@ def create_pipeline() -> Pipeline:
                 func=generate_fourier_series,
                 inputs={
                     "domain_samples": "domain_samples",
-                    "omegas": "params:omegas",
-                    "coefficients": "params:coefficients",
+                    "omegas": "params:data.omegas",
+                    "coefficients": "params:data.amplitude",
                 },
                 outputs="fourier_series",
                 name="generate_fourier_series",

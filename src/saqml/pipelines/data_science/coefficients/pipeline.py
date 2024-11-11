@@ -10,8 +10,8 @@ def create_pipeline() -> Pipeline:
                 func=calculate_coefficients,
                 inputs={
                     "model": "model",
-                    "samples": "params:samples",
-                    "noise_params": "params:noise_params",
+                    "samples": "params:coefficients.samples",
+                    "noise_params": "params:model.noise_params",
                     "seed": "params:seed",
                 },
                 outputs="coefficients",
@@ -21,8 +21,8 @@ def create_pipeline() -> Pipeline:
                 func=sweep_control_values,
                 inputs={
                     "model": "model",
-                    "samples": "params:samples",
-                    "noise_params": "params:noise_params",
+                    "samples": "params:coefficients.samples",
+                    "noise_params": "params:model.noise_params",
                     "seed": "params:seed",
                     "n_control_values": "params:n_control_values",
                 },
@@ -33,7 +33,7 @@ def create_pipeline() -> Pipeline:
                 func=correlate,
                 inputs={
                     "df": "coefficients",
-                    "method": "params:correlation_method",
+                    "method": "params:coefficients.correlation_method",
                 },
                 outputs="coefficients_correlated",
                 name="correlate",

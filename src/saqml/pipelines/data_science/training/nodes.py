@@ -40,7 +40,9 @@ def train_model(
     steps: int,
     learning_rate: float,
     batch_size: int,
-    log_entangling: bool = True,
+    log_entangling: bool,
+    convergence_threshold: float,
+    convergence_steps: int,
 ):
     # Indices for logging params and gradients
     df_param_index_names = ["layer_dim", "param_dim"]
