@@ -18,6 +18,7 @@ def create_pipeline() -> Pipeline:
                     "batch_size": "params:training.batch_size",
                     "log_entangling": "params:training.log_entangling",
                     "convergence_threshold": "params:training.convergence.threshold",
+                    "convergence_gradient": "params:training.convergence.gradient",
                     "convergence_steps": "params:training.convergence.steps",
                 },
                 outputs={

@@ -42,6 +42,7 @@ def train_model(
     batch_size: int,
     log_entangling: bool,
     convergence_threshold: float,
+    convergence_gradient: float,
     convergence_steps: int,
 ):
     # Indices for logging params and gradients
@@ -70,6 +71,8 @@ def train_model(
         return mse(model(params=params, **kwargs), fourier_series)
 
     log.info(f"Training model for {steps} steps")
+
+    costs = np.zeros(steps)
 
     for step in track(range(steps), description="Training..", total=steps):
         if log_entangling:
@@ -114,9 +117,6 @@ def train_model(
             force_mean=True,
         )
 
-        log.debug(f"Cost in step {step}: {cost_val}")
-        mlflow.log_metric("mse", cost_val, step)
-
         control_params = np.array(
             [
                 model.pqc.get_control_angles(params, model.n_qubits)
@@ -143,6 +143,25 @@ def train_model(
                 ),
             ]
         )
+
+        log.debug(f"Cost in step {step}: {cost_val}")
+        mlflow.log_metric("mse", cost_val, step)
+        costs[step] = cost_val
+
+        if cost_val < convergence_threshold:
+            log.info(
+                f"Convergence threshold {convergence_threshold} reached after {step} steps."
+            )
+            break
+        elif (
+            step >= convergence_steps
+            and np.abs(np.gradient(costs)[step - convergence_steps : step].mean())
+            < convergence_gradient
+        ):
+            log.info(
+                f"Convergence gradient {convergence_gradient} reached after {step} steps."
+            )
+            break
 
     # Convert indices to columns
     df_params = df_params.rename_axis(df_param_index_names).reset_index()
