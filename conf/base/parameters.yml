@@ -35,4 +35,4 @@ training:
   convergence:
     threshold: -1 # threshold for the cost, -1 to disable
     gradient: 1e-5 # threshold for the cost gradient, -1 to disable
-    steps: 50 # gradient is checked for the last n steps
+    steps: 50 # gradient is checked for the last n steps (mavg)
