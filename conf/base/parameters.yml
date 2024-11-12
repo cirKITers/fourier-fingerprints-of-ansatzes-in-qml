@@ -4,7 +4,7 @@ data:
   amplitude: 0.5 #[1.0,1.0,1.0,1.0]
 
 coefficients:
-  samples: 100 #samples per parameter
+  samples: 300 #samples per parameter
   correlation_method: "dcor" #dcor, pearson, spearman
 
 model:
