@@ -7,6 +7,11 @@ coefficients:
   samples: 300 #samples per parameter
   correlation_method: "dcor" #dcor, pearson, spearman
 
+expressibility:
+  samples: 200
+  n_bins: 1
+  n_input_samples: 1
+
 model:
   n_qubits: 4
   n_layers: 1

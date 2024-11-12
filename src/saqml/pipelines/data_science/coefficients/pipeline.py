@@ -1,6 +1,12 @@
 from kedro.pipeline import Pipeline, node, pipeline
 
-from .nodes import calculate_coefficients, correlate, normalize, sweep_control_values
+from .nodes import (
+    calculate_coefficients,
+    correlate,
+    normalize,
+    expressibility,
+    sweep_control_values,
+)
 
 
 def create_pipeline() -> Pipeline:
@@ -28,6 +34,20 @@ def create_pipeline() -> Pipeline:
                 },
                 outputs="coefficients_correlated_control",
                 name="sweep_control_values",
+            ),
+            node(
+                func=expressibility,
+                inputs={
+                    "model": "model",
+                    "samples": "params:expressibility.samples",
+                    "seed": "params:seed",
+                    "n_bins": "params:expressibility.n_bins",
+                    "n_input_samples": "params:expressibility.n_input_samples",
+                    "input_domain": "params:data.domain",
+                    "noise_params": "params:model.noise_params",
+                },
+                outputs="expressibility",
+                name="expressibility",
             ),
             node(
                 func=correlate,
