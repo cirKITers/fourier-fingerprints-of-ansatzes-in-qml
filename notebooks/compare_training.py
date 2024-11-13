@@ -76,18 +76,22 @@ for q in qubits:
             np_mse[i][0 : len(j)] = j
             np_mse[i][len(j) :] = np.nan
 
+        shortest = np.array(min(mse_seeds, key=lambda x: len(x)))
         mse_low = np.nanmin(np_mse, axis=0)
+        mse_var = np.nanstd(np_mse, axis=0)
         mse_high = np.nanmax(np_mse, axis=0)
         mse_mean = np.nanmean(np_mse, axis=0)
 
         main_color_sel = next(main_colors_it)
         sec_color_sel = rgb_to_rgba(next(sec_colors_it), 0.2)
 
+        length = len(mse_mean)
+
         # now add scatter plot for this ansatz and qubit with error bands as mse_low and mse_high
         fig.add_trace(
             go.Scatter(
-                x=list(range(mse_mean.size)),
-                y=mse_mean,
+                x=list(range(len(shortest))),
+                y=shortest,
                 name=f"{ansatz}",
                 visible=True,
                 mode="lines",
@@ -97,7 +101,7 @@ for q in qubits:
         )
         fig.add_trace(
             go.Scatter(
-                x=list(range(mse_high.size)),
+                x=list(range(length)),
                 y=mse_high,
                 name=f"upper-{ansatz}",
                 visible=True,
@@ -108,7 +112,7 @@ for q in qubits:
         )
         fig.add_trace(
             go.Scatter(
-                x=list(range(mse_low.size)),
+                x=list(range(length)),
                 y=mse_low,
                 name=f"lower-{ansatz}",
                 visible=True,
@@ -124,11 +128,13 @@ for q in qubits:
     fig.update_layout(
         title=f"Loss for Different Ansaetze ({q} Qubits)",
         template="plotly_white",
-        yaxis=dict(title="MSE"),
+        yaxis=dict(title="MSE", type="log"),
         xaxis=dict(title="Epochs"),
         # sliders=sliders,
+        hovermode="x",
+        showlegend=False,
     )
 
-    fig.show()
+    # fig.show()
     hs = generate_hash(run_ids)
-    fig.write_image(f"mse_q{q}_{hs}.pdf")
+    fig.write_image(f"results/mse_q{q}_{hs}.png")
