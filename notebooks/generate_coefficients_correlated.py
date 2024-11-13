@@ -5,7 +5,7 @@ import re
 import json
 import pandas as pd
 import plotly.io as pio
-from notebooks.runs import run_ids, experiment_id
+from coefficient_runs import run_ids
 
 pio.kaleido.scope.mathjax = None
 
@@ -24,8 +24,8 @@ all_ansaetze = []
 qubits = []
 for it, run_id in enumerate(run_ids):
     client = mlflow.tracking.MlflowClient()
-    all_ansaetze.append(client.get_run(run_id).data.params["circuit_type"])
-    qubits.append(int(client.get_run(run_id).data.params["n_qubits"]))
+    all_ansaetze.append(client.get_run(run_id).data.params["model.circuit_type"])
+    qubits.append(int(client.get_run(run_id).data.params["model.n_qubits"]))
 ansaetze = list(set(all_ansaetze))
 n_ansaetze = len(set(all_ansaetze))
 
@@ -69,4 +69,4 @@ for q in qubits:
         coloraxis={"colorscale": "Bluyl"},
     )
 
-    fig.write_image(f"new_coefficients_correlated_q{q}.pdf")
+    fig.write_image(f"results/coefficients_correlated_q{q}.png")

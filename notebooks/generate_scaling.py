@@ -7,7 +7,8 @@ import pandas as pd
 import numpy as np
 import plotly.io as pio
 import hashlib
-from notebooks.runs import run_ids, experiment_id
+from coefficient_runs import run_ids
+from helper import generate_hash
 
 pio.kaleido.scope.mathjax = None
 
@@ -26,8 +27,8 @@ all_ansaetze = []
 qubits = []
 for it, run_id in enumerate(run_ids):
     client = mlflow.tracking.MlflowClient()
-    all_ansaetze.append(client.get_run(run_id).data.params["circuit_type"])
-    qubits.append(int(client.get_run(run_id).data.params["n_qubits"]))
+    all_ansaetze.append(client.get_run(run_id).data.params["model.circuit_type"])
+    qubits.append(int(client.get_run(run_id).data.params["model.n_qubits"]))
 ansaetze = list(set(all_ansaetze))
 n_ansaetze = len(set(all_ansaetze))
 
@@ -51,9 +52,9 @@ for it, run_id in enumerate(run_ids):
         continue
 
     df.loc[it, "ansatz"] = ansaetze.index(
-        client.get_run(run_id).data.params["circuit_type"]
+        client.get_run(run_id).data.params["model.circuit_type"]
     )
-    df.loc[it, "n_qubits"] = int(client.get_run(run_id).data.params["n_qubits"])
+    df.loc[it, "n_qubits"] = int(client.get_run(run_id).data.params["model.n_qubits"])
     # df.loc[it, "mse"] = np.log(client.get_run(run_id).data.metrics["mse"])
     df.loc[it, "coefficients_correlation_mean"] = np.log(
         client.get_run(run_id).data.metrics["coefficients_correlation_mean"]
@@ -79,8 +80,5 @@ fig.update_layout(
     xaxis=dict(title="Qubits"),
 )
 
-hs = hashlib.md5(repr(run_ids).encode("utf-8")).hexdigest()
-filename = f"coefficient_correlation_qubits_{hs}.pdf"
-
-print(f"Output to {filename}")
-fig.write_image(filename)
+hs = generate_hash(run_ids)
+fig.write_image(f"results/coefficient_correlation_qubits_{hs}.pdf")
