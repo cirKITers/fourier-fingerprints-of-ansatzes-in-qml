@@ -55,7 +55,7 @@ class OurAnsaetze(Ansaetze):
                     qml.CRX(w[w_idx], wires=[(2 * q + 1), (2 * q + 2)])
                     w_idx += 1
 
-    class Circuit_XZX(Circuit):
+    class Circuit_YZY(Circuit):
         @staticmethod
         def n_params_per_layer(n_qubits: int) -> int:
             return n_qubits * 3
@@ -77,11 +77,11 @@ class OurAnsaetze(Ansaetze):
             """
             w_idx = 0
             for q in range(n_qubits):
-                qml.RX(w[w_idx], wires=q)
+                qml.RY(w[w_idx], wires=q)
                 w_idx += 1
                 qml.RZ(w[w_idx], wires=q)
                 w_idx += 1
-                qml.RX(w[w_idx], wires=q)
+                qml.RY(w[w_idx], wires=q)
                 w_idx += 1
 
     class Circuit_19_N(Ansaetze.Circuit_19):
@@ -112,7 +112,7 @@ class OurAnsaetze(Ansaetze):
                 )
                 qml.Barrier(wires=range(n_qubits))
 
-    class Circuit_XZX_N(Circuit_XZX):
+    class Circuit_YZY_N(Circuit_XZX):
         @staticmethod
         def n_params_per_layer(n_qubits: int) -> int:
             return n_qubits * 6
