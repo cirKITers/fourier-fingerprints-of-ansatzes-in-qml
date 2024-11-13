@@ -107,7 +107,7 @@ for it, run_id in enumerate(coefficient_run_ids):
 
     # df.loc[it, "expressibility"] = client.get_run(run_id).data.metrics["expressibility"]
 
-    df.loc[it, "mse"] = np.log(
+    df.loc[it, "mse"] = np.log10(
         mse_qubit_ansatz[df.loc[it, "n_qubits"]][ansaetze[df.loc[it, "ansatz"]]]
     )
 
