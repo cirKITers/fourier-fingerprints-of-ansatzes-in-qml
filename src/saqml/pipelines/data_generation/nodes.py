@@ -112,7 +112,7 @@ class OurAnsaetze(Ansaetze):
                 )
                 qml.Barrier(wires=range(n_qubits))
 
-    class Circuit_YZY_N(Circuit_XZX):
+    class Circuit_YZY_N(Circuit_YZY):
         @staticmethod
         def n_params_per_layer(n_qubits: int) -> int:
             return n_qubits * 6
