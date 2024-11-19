@@ -67,7 +67,7 @@ class OurAnsaetze(Ansaetze):
         @staticmethod
         def build(w: np.ndarray, n_qubits: int):
             """
-            Creates a XZX ansatz.
+            Creates a YZY ansatz.
 
             Length of flattened vector must be n_qubits*2
 
@@ -120,7 +120,7 @@ class OurAnsaetze(Ansaetze):
         @staticmethod
         def build(w: np.ndarray, n_qubits: int):
             """
-            Creates a XZX ansatz.
+            Creates a YZY ansatz.
 
             Length of flattened vector must be n_qubits*2
 
@@ -128,9 +128,9 @@ class OurAnsaetze(Ansaetze):
                 w (np.ndarray): weight vector of size n_layers*(n_qubits*2)
                 n_qubits (int): number of qubits
             """
-            n_params_per_layer = OurAnsaetze.Circuit_XZX.n_params_per_layer(n_qubits)
+            n_params_per_layer = OurAnsaetze.Circuit_YZY.n_params_per_layer(n_qubits)
             for i in range(2):  # twice the number of params
-                OurAnsaetze.Circuit_XZX.build(
+                OurAnsaetze.Circuit_YZY.build(
                     w[i * n_params_per_layer : (i + 1) * n_params_per_layer], n_qubits
                 )
                 qml.Barrier(wires=range(n_qubits))
