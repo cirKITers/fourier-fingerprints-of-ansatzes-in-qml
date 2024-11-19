@@ -8,9 +8,8 @@ coefficients:
   correlation_method: "dcor" #dcor, pearson, spearman
 
 expressibility:
-  samples: 200
+  samples: 100
   n_bins: 10
-  n_input_samples: 0
 
 model:
   n_qubits: 4
