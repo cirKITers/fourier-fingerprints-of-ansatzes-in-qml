@@ -159,11 +159,11 @@ def visualize_model(
         plot_bgcolor="rgba(0,0,0,0)",
         template="plotly_white",
         xaxis=dict(
-            title="Control Value",
+            title="Input Value",
             showgrid=False,
         ),
         yaxis=dict(
-            title="Correlation Mean",
+            # title="Correlation Mean",
             showgrid=False,
         ),
     )
