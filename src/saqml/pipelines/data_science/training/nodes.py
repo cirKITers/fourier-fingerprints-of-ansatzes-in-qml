@@ -107,6 +107,7 @@ def train_model(
             ]
         )
 
+        # optimization step
         model.params, cost_val = opt.step_and_cost(
             cost,
             model.params,
@@ -117,19 +118,7 @@ def train_model(
             force_mean=True,
         )
 
-        control_params = np.array(
-            [
-                model.pqc.get_control_angles(params, model.n_qubits)
-                for params in model.params
-            ]
-        )
-        if control_params.any() != None:
-            control_rotation_mean = (
-                np.sum(np.abs(control_params) % (2 * np.pi)) / control_params.size
-            )
-
-            mlflow.log_metric("control_rotation_mean", control_rotation_mean, step)
-
+        # log coefficients
         coeffs = Coefficients.calculate_coefficients(model, cache=False)
         df_coeffs = pd.concat(
             [
@@ -144,10 +133,12 @@ def train_model(
             ]
         )
 
+        # log cost
         log.debug(f"Cost in step {step}: {cost_val}")
         mlflow.log_metric("mse", cost_val, step)
         costs[step] = cost_val
 
+        # early stopping
         if cost_val < convergence_threshold:
             log.info(
                 f"Convergence threshold {convergence_threshold} reached after {step} steps."
