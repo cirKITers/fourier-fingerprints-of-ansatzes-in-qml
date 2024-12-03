@@ -123,7 +123,7 @@ def correlate(df: pd.DataFrame, method: str) -> pd.DataFrame:
         If the given method is not supported.
     """
     if method == "pearson" or method == "spearman":
-        return df.corr(method=method)
+        result = df.corr(method=method)
     elif method == "dcor":
         data = df.to_numpy().transpose()  # -> (n_rvs, n_samples)
 
@@ -134,10 +134,15 @@ def correlate(df: pd.DataFrame, method: str) -> pd.DataFrame:
         )
 
         # TODO: this can get really slow for large n_rvs
-        result = np.array([dcor_data(rv) for rv in data])
-        return pd.DataFrame(result, index=df.columns, columns=df.columns)
+        result = pd.DataFrame(
+            np.array([dcor_data(rv) for rv in data]),
+            index=df.columns,
+            columns=df.columns,
+        )
     else:
         raise ValueError(f"Unknown correlation method: {method}")
+
+    return result
 
 
 def normalize(df: pd.DataFrame) -> pd.DataFrame:
