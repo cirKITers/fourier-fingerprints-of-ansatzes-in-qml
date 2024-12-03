@@ -21,7 +21,9 @@ def visualize_heatmap_filtered(
             y=df.index,
             x=df.columns,
             hoverongaps=False,
-            colorscale="Bluyl",
+            colorscale="Sunset",
+            zmax=1.0,
+            zmin=0.0,
         )
     )
     fig.update_layout(
@@ -34,12 +36,22 @@ def visualize_heatmap_filtered(
 
 
 def visualize_coefficients_correlated(
-    df: pd.DataFrame, model: Model, positive_only=True
+    df: pd.DataFrame, model: Model, discard_negative=True, triu=False
 ) -> go.Figure:
-    if positive_only:
-        df_filtered = df.filter(regex="c_\+.*", axis=0).filter(regex="c_\+.*", axis=1)
+    if discard_negative:
+        df_filtered = df.filter(regex="c_\+?\d+", axis=0).filter(
+            regex="c_\+?\d+", axis=1
+        )
     else:
         df_filtered = df.filter(regex="c.*", axis=0).filter(regex="c.*", axis=1)
+
+    if triu:
+        for i in range(df_filtered.shape[0]):
+            for j in range(df_filtered.shape[1]):
+                if i <= j:
+                    df_filtered.iloc[i, j] = np.nan
+        df_filtered = df_filtered.dropna(how="all", axis=0).dropna(how="all", axis=1)
+
     mlflow.log_metric("coefficients_correlation_variance", df_filtered.var().var())
     mlflow.log_metric("coefficients_correlation_mean", df_filtered.mean().mean())
     fig = visualize_heatmap_filtered(
@@ -78,12 +90,12 @@ def visualize_parameters_correlated(
 
 
 def visualize_parameters_coefficients_correlated(
-    df: pd.DataFrame, model: Model, positive_only=True
+    df: pd.DataFrame, model: Model, discard_negative=True
 ) -> go.Figure:
-    if positive_only:
-        df_filtered = df.filter(regex="p_.*", axis=0).filter(regex="c_\+.*", axis=1)
+    if discard_negative:
+        df_filtered = df.filter(regex="p_\d+", axis=0).filter(regex="c_\+?\d+", axis=1)
     else:
-        df_filtered = df.filter(regex="p.*", axis=0).filter(regex="c.*", axis=1)
+        df_filtered = df.filter(regex="p_\d+", axis=0).filter(regex="c.*", axis=1)
     mlflow.log_metric(
         "parameters_coefficients_correlation_variance", df_filtered.var().var()
     )
