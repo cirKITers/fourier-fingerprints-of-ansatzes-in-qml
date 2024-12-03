@@ -5,7 +5,6 @@ from .nodes import (
     sample_coefficients,
     correlate,
     normalize,
-    expressibility,
     sweep_control_values,
 )
 
@@ -45,19 +44,6 @@ def create_pipeline() -> Pipeline:
                 },
                 outputs="coefficients_correlated_control",
                 name="sweep_control_values",
-            ),
-            node(
-                func=expressibility,
-                inputs={
-                    "model": "model",
-                    "samples": "params:expressibility.samples",
-                    "seed": "params:seed",
-                    "n_bins": "params:expressibility.n_bins",
-                    "input_domain": "params:data.domain",
-                    "noise_params": "params:model.noise_params",
-                },
-                outputs="expressibility",
-                name="expressibility",
             ),
             node(
                 func=correlate,
