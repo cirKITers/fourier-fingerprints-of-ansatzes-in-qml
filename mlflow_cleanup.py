@@ -5,7 +5,7 @@ import shutil
 
 mlflow_path = "./mlruns/744162421450326497"
 backup_dir = "./.mlruns_bckp"
-dry_run = True
+dry_run = False
 
 cut_after = 0  # set to 0 to disable
 
@@ -33,10 +33,12 @@ for r in runs:
             mark_for_deprecation = True
             content["lifecycle_stage"] = "deleted"
 
-    if not dry_run and mark_for_deletion:
+    if mark_for_deletion:
         print(f"Moving {r} to trash")
-        shutil.move(r, os.path.join(backup_dir, os.path.basename(r)))
-    elif not dry_run and mark_for_deprecation:
+        if not dry_run:
+            shutil.move(r, os.path.join(backup_dir, os.path.basename(r)))
+    elif mark_for_deprecation:
         print(f"Marking {r} as deprecated. Will be deleted next run.")
-        with open(os.path.join(r, "meta.yaml"), "w") as f:
-            yaml.safe_dump(content, f)
+        if not dry_run:
+            with open(os.path.join(r, "meta.yaml"), "w") as f:
+                yaml.safe_dump(content, f)
