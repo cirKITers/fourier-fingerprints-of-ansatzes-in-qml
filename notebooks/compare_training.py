@@ -42,7 +42,6 @@ for it, run_id in enumerate(run_ids):
     seeds.append(int(client.get_run(run_id).data.params["seed"]))
 ansaetze = list(set(all_ansaetze))
 qubits = list(set(all_qubits))
-n_ansaetze = len(set(all_ansaetze))
 
 global_df["ansatz"] = all_ansaetze
 global_df["qubits"] = all_qubits
@@ -76,6 +75,8 @@ for q in qubits:
             np_mse[i][0 : len(j)] = j
             np_mse[i][len(j) :] = np.nan
 
+            np_mse[i] = np_mse[i][:max_steps]
+
         shortest = np.array(min(mse_seeds, key=lambda x: len(x)))
         mse_low = np.nanmin(np_mse, axis=0)
         mse_var = np.nanstd(np_mse, axis=0)
@@ -90,8 +91,8 @@ for q in qubits:
         # now add scatter plot for this ansatz and qubit with error bands as mse_low and mse_high
         fig.add_trace(
             go.Scatter(
-                x=list(range(len(shortest))),
-                y=shortest,
+                x=list(range(length)),
+                y=mse_mean,
                 name=f"{ansatz}",
                 visible=True,
                 mode="lines",
@@ -132,7 +133,7 @@ for q in qubits:
         xaxis=dict(title="Epochs"),
         # sliders=sliders,
         hovermode="x",
-        showlegend=False,
+        showlegend=True,
     )
 
     # fig.show()

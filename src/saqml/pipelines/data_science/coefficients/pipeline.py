@@ -2,6 +2,7 @@ from kedro.pipeline import Pipeline, node, pipeline
 
 from .nodes import (
     calculate_coefficients,
+    sample_coefficients,
     correlate,
     normalize,
     expressibility,
@@ -22,6 +23,16 @@ def create_pipeline() -> Pipeline:
                 },
                 outputs="coefficients",
                 name="calculate_coefficients",
+            ),
+            node(
+                func=sample_coefficients,
+                inputs={
+                    "model": "model",
+                    "samples": "params:coefficients.samples",
+                    "seed": "params:seed",
+                },
+                outputs="random_coefficients",
+                name="sample_coefficients",
             ),
             node(
                 func=sweep_control_values,
@@ -55,7 +66,16 @@ def create_pipeline() -> Pipeline:
                     "method": "params:coefficients.correlation_method",
                 },
                 outputs="coefficients_correlated",
-                name="correlate",
+                name="correlate_coefficients",
+            ),
+            node(
+                func=correlate,
+                inputs={
+                    "df": "random_coefficients",
+                    "method": "params:coefficients.correlation_method",
+                },
+                outputs="random_coefficients_correlated",
+                name="correlate_random_coefficients",
             ),
             node(
                 func=normalize,
@@ -63,7 +83,15 @@ def create_pipeline() -> Pipeline:
                     "df": "coefficients_correlated",
                 },
                 outputs="coefficients_correlated_normalized",
-                name="normalize",
+                name="normalize_coefficients",
+            ),
+            node(
+                func=normalize,
+                inputs={
+                    "df": "random_coefficients_correlated",
+                },
+                outputs="random_coefficients_correlated_normalized",
+                name="normalize_random_coefficients",
             ),
         ]
     )

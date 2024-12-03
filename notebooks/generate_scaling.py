@@ -13,6 +13,16 @@ from helper import generate_hash
 pio.kaleido.scope.mathjax = None
 
 
+def rgb_to_rgba(rgb_value: str, alpha: float):
+    """
+    Adds the alpha channel to an RGB Value and returns it as an RGBA Value
+    :param rgb_value: Input RGB Value
+    :param alpha: Alpha Value to add  in range [0,1]
+    :return: RGBA Value
+    """
+    return f"rgba{rgb_value[3:-1]}, {alpha})"
+
+
 def read_from_html(path):
     with open(path) as f:
         html = f.read()
@@ -30,8 +40,7 @@ for it, run_id in enumerate(run_ids):
     all_ansaetze.append(client.get_run(run_id).data.params["model.circuit_type"])
     qubits.append(int(client.get_run(run_id).data.params["model.n_qubits"]))
 ansaetze = list(set(all_ansaetze))
-n_ansaetze = len(set(all_ansaetze))
-
+n_qubits = list(set(qubits))
 
 # ----------------------------------
 
@@ -56,27 +65,70 @@ for it, run_id in enumerate(run_ids):
     )
     df.loc[it, "n_qubits"] = int(client.get_run(run_id).data.params["model.n_qubits"])
     # df.loc[it, "mse"] = np.log(client.get_run(run_id).data.metrics["mse"])
-    df.loc[it, "coefficients_correlation_mean"] = np.log(
-        client.get_run(run_id).data.metrics["coefficients_correlation_mean"]
-    )
+    df.loc[it, "coefficients_correlation_mean"] = client.get_run(run_id).data.metrics[
+        "coefficients_correlation_mean"
+    ]
 
 df.sort_values(by="n_qubits", inplace=True)
 
-fig = go.Figure(
-    data=[
-        go.Scatter(
-            x=df[df["ansatz"] == id].n_qubits,
-            y=df[df["ansatz"] == id].coefficients_correlation_mean,
-            name=ansatz,
+main_colors_it = iter(plotly.colors.qualitative.Dark2)
+sec_colors_it = iter(plotly.colors.qualitative.Pastel2)
+
+fig = go.Figure()
+for it, ansatz in enumerate(ansaetze):
+    main_color_sel = next(main_colors_it)
+    sec_color_sel = rgb_to_rgba(next(sec_colors_it), 0.2)
+
+    correlation_means = []
+    for q in n_qubits:
+        correlation_means.append(
+            df[(df.ansatz == it) & (df.n_qubits == q)].coefficients_correlation_mean
         )
-        for id, ansatz in enumerate(ansaetze)
-    ]
-)
+    correlation_means = np.array(correlation_means)
+    correlation_means_mean = np.array(correlation_means).mean(axis=1)
+    correlation_means_min = np.array(correlation_means).min(axis=1)
+    correlation_means_max = np.array(correlation_means).max(axis=1)
+
+    fig.add_trace(
+        go.Scatter(
+            x=n_qubits,
+            y=correlation_means_mean,
+            name=ansatz,
+            mode="lines",
+            line=dict(color=main_color_sel),
+            marker=dict(color=main_color_sel),
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=n_qubits,
+            y=correlation_means_max,
+            name=f"upper-{ansatz}",
+            visible=True,
+            mode="lines",
+            line=dict(width=0),
+            showlegend=False,
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=n_qubits,
+            y=correlation_means_min,
+            name=f"lower-{ansatz}",
+            visible=True,
+            mode="lines",
+            fill="tonexty",
+            fillcolor=sec_color_sel,
+            marker=dict(color=main_color_sel),
+            line=dict(width=0),
+            showlegend=False,
+        )
+    )
 
 fig.update_layout(
     title=f"Coefficient Correlation Mean for Different Ansaetze over Qubits",
     template="plotly_white",
-    yaxis=dict(title="Coefficient Correlation Mean (log)"),
+    yaxis=dict(title="Coefficient Correlation Mean", type="log"),
     xaxis=dict(title="Qubits"),
 )
 

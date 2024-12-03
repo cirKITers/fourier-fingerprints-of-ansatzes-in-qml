@@ -17,10 +17,22 @@ def create_pipeline() -> Pipeline:
                 inputs={
                     "df": "coefficients_correlated_normalized",
                     "model": "model",
-                    "positive_only": "params:training.positive_coeffs_only",
+                    "discard_negative": "params:training.positive_coeffs_only",
+                    "triu": "params:coefficients.zero_diagonal",
                 },
                 outputs="fig_coefficients_correlated",
                 name="visualize_coefficients_correlated",
+            ),
+            node(
+                func=visualize_coefficients_correlated,
+                inputs={
+                    "df": "random_coefficients_correlated_normalized",
+                    "model": "model",
+                    "discard_negative": "params:training.positive_coeffs_only",
+                    "triu": "params:coefficients.zero_diagonal",
+                },
+                outputs="fig_random_coefficients_correlated",
+                name="visualize_random_coefficients_correlated",
             ),
             node(
                 func=visualize_parameters_correlated,
