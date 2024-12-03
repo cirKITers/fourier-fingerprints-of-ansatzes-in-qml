@@ -28,7 +28,6 @@ def create_pipeline() -> Pipeline:
                 func=sample_coefficients,
                 inputs={
                     "model": "model",
-                    "omegas": "params:data.omegas",
                     "samples": "params:coefficients.samples",
                     "seed": "params:seed",
                 },

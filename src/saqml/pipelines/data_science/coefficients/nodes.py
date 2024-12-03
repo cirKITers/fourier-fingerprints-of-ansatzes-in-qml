@@ -51,12 +51,10 @@ def calculate_coefficients(model: Model, samples: int, seed: int, noise_params: 
     return coefficients
 
 
-def sample_coefficients(
-    model: Model, omegas: List[List[float]], samples: int, seed: int, mean: float = 0
-):
+def sample_coefficients(model: Model, samples: int, seed: int, mean: float = 0):
     rng = np.random.default_rng(seed)
     total_samples = samples * model.params.size
-    degree = omegas if isinstance(omegas, int) else len(omegas)
+    log.info(f"Total number of samples: {total_samples}")
 
     def pascal_triangle(n):
         triangle = [[1]]
@@ -70,10 +68,12 @@ def sample_coefficients(
         return triangle / np.linalg.norm(triangle)
 
     # calculate variances using normalised pascal triangle
-    variances = pascal_triangle(2 * degree + 1)
+    variances = pascal_triangle(2 * model.degree + 1)
+
+    log.info(f"Using variances {variances[len(variances) // 2 :]}")
 
     # calculate positive coefficients including zero
-    coeffs_pz = np.zeros((degree + 1, total_samples))
+    coeffs_pz = np.zeros((model.degree + 1, total_samples))
     for i, variance in enumerate(variances[len(variances) // 2 :]):
         coeffs_pz[i] = rng.normal(loc=mean, scale=variance, size=total_samples)
 
@@ -86,7 +86,8 @@ def sample_coefficients(
     df = pd.DataFrame(
         columns=[
             *[
-                f"c_{i}" if i <= 0 else f"c_+{i}" for i in range(-degree, degree + 1)
+                f"c_{i}" if i <= 0 else f"c_+{i}"
+                for i in range(-model.degree, model.degree + 1)
             ],  # symmetric + zero frequency
         ]
     )
