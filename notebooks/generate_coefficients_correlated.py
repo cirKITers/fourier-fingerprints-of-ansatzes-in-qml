@@ -6,6 +6,7 @@ import json
 import pandas as pd
 import plotly.io as pio
 from coefficient_runs import run_ids
+from helper import generate_hash
 
 pio.kaleido.scope.mathjax = None
 
@@ -22,23 +23,29 @@ def read_from_html(path):
 global_df = pd.DataFrame()
 all_ansaetze = []
 qubits = []
+seeds = []
 for it, run_id in enumerate(run_ids):
     client = mlflow.tracking.MlflowClient()
     all_ansaetze.append(client.get_run(run_id).data.params["model.circuit_type"])
     qubits.append(int(client.get_run(run_id).data.params["model.n_qubits"]))
+    seeds.append(int(client.get_run(run_id).data.params["seed"]))
 ansaetze = list(set(all_ansaetze))
 n_ansaetze = len(set(all_ansaetze))
 
 global_df["ansatz"] = all_ansaetze
 global_df["qubits"] = qubits
 global_df["run_id"] = run_ids
+global_df["seed"] = seeds
 # ----------------------------------
 
+SEED = 1000
 for q in qubits:
     fig = make_subplots(rows=1, cols=n_ansaetze, subplot_titles=ansaetze)
 
     it = 1
-    for index, row in global_df[global_df.qubits == q].iterrows():
+    for index, row in global_df[
+        (global_df.qubits == q) & (global_df.seed == 1000)
+    ].iterrows():
         client = mlflow.tracking.MlflowClient()
 
         sub_fig_path = client.download_artifacts(
@@ -68,5 +75,6 @@ for q in qubits:
         width=300 * it,
         coloraxis={"colorscale": "Bluyl"},
     )
+    hs = generate_hash(run_ids)
 
-    fig.write_image(f"results/coefficients_correlated_q{q}.png")
+    fig.write_image(f"results/coefficients_correlated_q{q}_{hs}.png")

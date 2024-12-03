@@ -49,15 +49,19 @@ df = pd.DataFrame(
 )
 
 mse_qubit_ansatz = {}
+steps_qubit_ansatz = {}
 for q in qubits:
     fig = go.Figure()
     main_colors_it = iter(plotly.colors.qualitative.Dark2)
     sec_colors_it = iter(plotly.colors.qualitative.Pastel2)
 
     mse_qubit_ansatz[q] = {}
+    steps_qubit_ansatz[q] = {}
     for ansatz in ansaetze:
         max_steps = 0
         mse_seeds = []
+        mse_steps = []
+        steps_qubit_ansatz[q][ansatz] = []
         # iterate global_df where qubits and ansatz match q and ansatz
         for index, row in global_training_df[
             (global_training_df.qubits == q) & (global_training_df.ansatz == ansatz)
@@ -69,6 +73,7 @@ for q in qubits:
             max_steps = max(max_steps, len(mse_hist))
             mse = [entity.value for entity in mse_hist]
             mse_seeds.append(mse)
+            mse_steps.append(len(mse))
 
         np_mse = np.zeros([len(mse_seeds), len(max(mse_seeds, key=lambda x: len(x)))])
         for i, j in enumerate(mse_seeds):
@@ -80,8 +85,9 @@ for q in qubits:
         mse_var = np.nanstd(np_mse, axis=0)
         mse_high = np.nanmax(np_mse, axis=0)
         mse_mean = np.nanmean(np_mse, axis=0)
-
+        steps_mean = np.mean(mse_steps, axis=0)
         mse_qubit_ansatz[q][ansatz] = np.min(mse_mean)
+        steps_qubit_ansatz[q][ansatz] = iter(mse_steps)
 
 
 for it, run_id in enumerate(coefficient_run_ids):
@@ -105,16 +111,19 @@ for it, run_id in enumerate(coefficient_run_ids):
 
     df.loc[it, "n_qubits"] = int(client.get_run(run_id).data.params["model.n_qubits"])
 
-    # df.loc[it, "expressibility"] = client.get_run(run_id).data.metrics["expressibility"]
-
     df.loc[it, "mse"] = np.log10(
         mse_qubit_ansatz[df.loc[it, "n_qubits"]][ansaetze[df.loc[it, "ansatz"]]]
+    )
+    df.loc[it, "steps"] = next(
+        steps_qubit_ansatz[df.loc[it, "n_qubits"]][ansaetze[df.loc[it, "ansatz"]]]
     )
 
     # df.loc[it, "mse"] = client.get_run(run_id).data.metrics["mse"]
     df.loc[it, "coefficients_correlation_mean"] = client.get_run(run_id).data.metrics[
         "coefficients_correlation_mean"
     ]
+
+    df.loc[it, "expressibility"] = client.get_run(run_id).data.metrics["expressibility"]
 
     # df.loc[it, "coefficients_correlation_variance"] = client.get_run(
     #     run_id
@@ -154,15 +163,16 @@ for q in qubits:
                         #     label="# Parameters",
                         #     values=df["n_params"],
                         # ),
-                        # dict(
-                        #     label="Expressibility",
-                        #     values=df[df.n_qubits == q].expressibility,
-                        # ),
+                        dict(
+                            label="Expressibility",
+                            values=df[df.n_qubits == q].expressibility,
+                        ),
                         dict(
                             label="Coeff. Correlation Mean",
                             values=df[df.n_qubits == q].coefficients_correlation_mean,
                         ),
-                        dict(label="mse (log)", values=df[df.n_qubits == q].mse),
+                        # dict(label="mse (log)", values=df[df.n_qubits == q].mse),
+                        dict(label="Steps", values=df[df.n_qubits == q].steps),
                     ]
                 ),
             )

@@ -211,7 +211,7 @@ def create_model(
         initialization_domain=initialization_domain,
         random_seed=seed,
     )
-    # model.draw(figure=True)[0].savefig(f"{circuit_type}.png")
+    # model.draw(figure=True)[0].savefig(f"docs/{circuit_type}.png")
     return model
 
 
