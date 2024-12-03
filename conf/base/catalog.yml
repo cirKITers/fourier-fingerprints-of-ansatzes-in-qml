@@ -1,4 +1,3 @@
-
 # trained_model:
 #   type: kedro_mlflow.io.models.MlflowModelTrackingDataset
 #   flavor: python_function
@@ -31,6 +30,10 @@ fig_coefficients_correlated:
   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "coefficients_correlated.html"
 
+fig_random_coefficients_correlated:
+  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  filepath: "random_coefficients_correlated.html"
+
 fig_parameters_correlated:
   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "parameters_correlated.html"
@@ -38,7 +41,7 @@ fig_parameters_correlated:
 fig_parameters_coefficients_correlated:
   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "parameters_coefficients_correlated.html"
-  
+
 fig_coefficients_correlated_control:
   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "coefficients_correlated_control.html"

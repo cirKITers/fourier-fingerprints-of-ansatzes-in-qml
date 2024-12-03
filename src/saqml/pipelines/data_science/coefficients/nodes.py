@@ -51,6 +51,52 @@ def calculate_coefficients(model: Model, samples: int, seed: int, noise_params: 
     return coefficients
 
 
+def sample_coefficients(
+    model: Model, omegas: List[List[float]], samples: int, seed: int, mean: float = 0
+):
+    rng = np.random.default_rng(seed)
+    total_samples = samples * model.params.size
+    degree = omegas if isinstance(omegas, int) else len(omegas)
+
+    def pascal_triangle(n):
+        triangle = [[1]]
+        for line in range(2, n + 1):
+            row = [1]  # first entry
+            for i in range(1, line - 1):
+                row.append(triangle[-1][i - 1] + triangle[-1][i])
+            row.append(1)  # last entry
+            triangle.append(row)
+        triangle = np.array(triangle[-1])
+        return triangle / np.linalg.norm(triangle)
+
+    # calculate variances using normalised pascal triangle
+    variances = pascal_triangle(2 * degree + 1)
+
+    # calculate positive coefficients including zero
+    coeffs_pz = np.zeros((degree + 1, total_samples))
+    for i, variance in enumerate(variances[len(variances) // 2 :]):
+        coeffs_pz[i] = rng.normal(loc=mean, scale=variance, size=total_samples)
+
+    # mirror the coefficients for the negative spectrum and transpose
+    # such that we end up with a shape of [n_samples, 2*degree+1]
+    coefficients = np.concatenate(
+        (np.flip(coeffs_pz[1:], axis=0), coeffs_pz), axis=0
+    ).transpose()
+
+    df = pd.DataFrame(
+        columns=[
+            *[
+                f"c_{i}" if i <= 0 else f"c_+{i}" for i in range(-degree, degree + 1)
+            ],  # symmetric + zero frequency
+        ]
+    )
+
+    for i in range(total_samples):
+        df.loc[i] = coefficients[i]
+
+    return df
+
+
 def correlate(df: pd.DataFrame, method: str) -> pd.DataFrame:
     """
     Calculate correlation matrix of given dataframe.

@@ -23,6 +23,16 @@ def create_pipeline() -> Pipeline:
                 name="visualize_coefficients_correlated",
             ),
             node(
+                func=visualize_coefficients_correlated,
+                inputs={
+                    "df": "random_coefficients_correlated_normalized",
+                    "model": "model",
+                    "positive_only": "params:training.positive_coeffs_only",
+                },
+                outputs="fig_random_coefficients_correlated",
+                name="visualize_random_coefficients_correlated",
+            ),
+            node(
                 func=visualize_parameters_correlated,
                 inputs={
                     "df": "coefficients_correlated_normalized",
