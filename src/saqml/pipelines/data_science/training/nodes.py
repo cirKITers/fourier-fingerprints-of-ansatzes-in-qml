@@ -41,6 +41,7 @@ def train_model(
     learning_rate: float,
     batch_size: int,
     log_entangling: bool,
+    log_coefficients: bool,
     convergence_threshold: float,
     convergence_gradient: float,
     convergence_steps: int,
@@ -118,20 +119,21 @@ def train_model(
             force_mean=True,
         )
 
-        # log coefficients
-        coeffs = Coefficients.calculate_coefficients(model, cache=False)
-        df_coeffs = pd.concat(
-            [
-                df_coeffs,
-                pd.DataFrame(
-                    {
-                        "coeffs": coeffs.real,
-                        "step": step,
-                    },
-                    index=df_coeffs_index,
-                ),
-            ]
-        )
+        if log_coefficients:
+            # log coefficients
+            coeffs = Coefficients.calculate_coefficients(model, cache=False)
+            df_coeffs = pd.concat(
+                [
+                    df_coeffs,
+                    pd.DataFrame(
+                        {
+                            "coeffs": coeffs.real,
+                            "step": step,
+                        },
+                        index=df_coeffs_index,
+                    ),
+                ]
+            )
 
         # log cost
         log.debug(f"Cost in step {step}: {cost_val}")

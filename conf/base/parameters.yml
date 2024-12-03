@@ -6,6 +6,7 @@ data:
 coefficients:
   samples: 300 #samples per parameter
   correlation_method: "dcor" #dcor, pearson, spearman
+  log_coefficients: False
 
 expressibility:
   samples: 100
