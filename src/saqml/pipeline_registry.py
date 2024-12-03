@@ -11,6 +11,9 @@ from saqml.pipelines.data_generation.pipeline import (
 from saqml.pipelines.data_science.coefficients.pipeline import (
     create_pipeline as create_coefficients_pipeline,
 )
+from saqml.pipelines.data_science.expressibility.pipeline import (
+    create_pipeline as create_expressibility_pipeline,
+)
 from saqml.pipelines.data_science.training.pipeline import (
     create_pipeline as create_training_pipeline,
 )
@@ -42,5 +45,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         "coefficients": create_data_generation_pipeline()
         + create_coefficients_pipeline()
         + create_visualization_pipeline(),
+        "expressibility": create_data_generation_pipeline()
+        + create_expressibility_pipeline(),
     }
     return pipelines
