@@ -1,8 +1,8 @@
 import plotly.graph_objects as go
 import plotly.io as pio
-from runs.coefficient_runs import run_ids
+from runs.coefficient_runs import run_ids, experiment_id
 from helper import (
-    generate_hash,
+    save_fig,
     get_coefficient_df,
     rgb_to_rgba,
     get_color_iterator,
@@ -73,5 +73,4 @@ fig.update_layout(
     xaxis=dict(title="Qubits"),
 )
 
-hs = generate_hash(run_ids)
-fig.write_image(f"results/coefficient_correlation_qubits_{hs}.pdf")
+save_fig(fig, "coefficient_correlation_qubits", run_ids, experiment_id)

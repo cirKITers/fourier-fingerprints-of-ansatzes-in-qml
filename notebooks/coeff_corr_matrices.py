@@ -1,10 +1,10 @@
 from plotly.subplots import make_subplots
 import plotly.io as pio
-from runs.coefficient_runs import run_ids
+from runs.coefficient_runs import run_ids, experiment_id
 from helper import (
     get_coefficient_df,
     assign_ansatz_id,
-    generate_hash,
+    save_fig,
     get_correlation_matrix,
 )
 
@@ -53,6 +53,5 @@ for q in qubits:
         width=300 * it,
         coloraxis={"colorscale": "Sunset"},
     )
-    hs = generate_hash(run_ids)
 
-    fig.write_image(f"results/coefficients_correlated_q{q}_{hs}.png")
+    save_fig(fig, f"coefficients_correlated_q{q}", run_ids, experiment_id)

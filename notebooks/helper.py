@@ -9,6 +9,13 @@ import os
 from rich.progress import track
 
 
+def save_fig(fig, name, run_ids, experiment_id):
+    hs = generate_hash(run_ids)
+    os.makedirs(f"results/{hs}/", exist_ok=True)
+    print(f"Saving figure to results/{experiment_id}/{hs}/{name}.png")
+    fig.write_image(f"results/{hs}/{name}.png")
+
+
 def get_color_iterator():
     main_colors_it = iter(plotly.colors.qualitative.Dark2)
     sec_colors_it = iter(plotly.colors.qualitative.Pastel2)

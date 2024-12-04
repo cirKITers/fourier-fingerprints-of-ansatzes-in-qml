@@ -3,8 +3,9 @@ import plotly.graph_objects as go
 import pandas as pd
 import plotly.io as pio
 from runs.training_runs import run_ids as training_run_ids
+from runs.training_runs import experiment_id
 from runs.coefficient_runs import run_ids as coefficient_run_ids
-from helper import generate_hash, get_training_df, get_coefficient_df, assign_ansatz_id
+from helper import save_fig, get_training_df, get_coefficient_df, assign_ansatz_id
 
 pio.kaleido.scope.mathjax = None
 
@@ -76,7 +77,6 @@ for q in qubits:
         margin=dict(l=120),
     )
 
-    hs = generate_hash(coefficient_run_ids)
-
-    # fig.show()
-    fig.write_image(f"results/parcords_q{q}_{hs}.png")
+    save_fig(
+        fig, f"parcords_q{q}", coefficient_run_ids + training_run_ids, experiment_id
+    )

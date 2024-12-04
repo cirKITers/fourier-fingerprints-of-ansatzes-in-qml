@@ -1,6 +1,6 @@
-experiment_id = "133108847950146141"
 
 # november-training-1
+experiment_id = "133108847950146141"
 run_ids = [
     "4e54242828494456ae41d1b4e840a430",
     "0c6f9b2c143f4b7eaff53d82a37b675c",
@@ -275,6 +275,7 @@ run_ids = [
 ]
 
 # november-training-2
+experiment_id = "813577009207004762"
 run_ids = [
     "21569672f8c84133aab154faa0472e13",
     "8fefc3b36dd04c458801fefa2a20a4c0",

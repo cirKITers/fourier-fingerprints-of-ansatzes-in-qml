@@ -2,8 +2,8 @@ import plotly
 import plotly.graph_objects as go
 import numpy as np
 import plotly.io as pio
-from runs.training_runs import run_ids
-from helper import generate_hash, get_training_df, rgb_to_rgba
+from runs.training_runs import run_ids, experiment_id
+from helper import save_fig, get_training_df, rgb_to_rgba
 
 pio.kaleido.scope.mathjax = None
 
@@ -84,6 +84,4 @@ for qubit in qubits:
         showlegend=True,
     )
 
-    # fig.show()
-    hs = generate_hash(run_ids)
-    fig.write_image(f"results/mse_q{qubit}_{hs}.png")
+    save_fig(fig, f"mse_q{qubit}", run_ids, experiment_id)
