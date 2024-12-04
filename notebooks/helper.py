@@ -11,9 +11,10 @@ from rich.progress import track
 
 def save_fig(fig, name, run_ids, experiment_id):
     hs = generate_hash(run_ids)
-    os.makedirs(f"results/{hs}/", exist_ok=True)
-    print(f"Saving figure to results/{experiment_id}/{hs}/{name}.png")
-    fig.write_image(f"results/{hs}/{name}.png")
+    path = f"results/{experiment_id}/{hs}/"
+    os.makedirs(path, exist_ok=True)
+    print(f"Saving figure to {path}/{name}.png")
+    fig.write_image(f"{path}/{name}.png")
 
 
 def get_color_iterator():
@@ -38,15 +39,17 @@ def read_from_html(path):
     return plotly.io.from_json(json.dumps(plotly_json))
 
 
-def get_correlation_matrix(run_id):
+def get_correlation_matrix(run_id, identifier="coefficients_correlated"):
     client = mlflow.tracking.MlflowClient()
 
-    sub_fig_path = client.download_artifacts(
-        run_id, f"coefficients_correlated.html", "./"
-    )
+    sub_fig_path = client.download_artifacts(run_id, f"{identifier}.html", "./")
     sub_fig = read_from_html(sub_fig_path)
     sub_fig_trace = sub_fig.data[0]
-    sub_fig_trace.update(coloraxis=f"coloraxis")
+    sub_fig_trace.update(
+        # coloraxis=f"coloraxis",
+        zmax=1.0,
+        zmin=0.0,
+    )
 
     os.remove(sub_fig_path)
 
@@ -96,7 +99,7 @@ def get_training_df(run_ids):
         mse_values[: len(mse_hist)] = [entity.value for entity in mse_hist]
 
         df.loc[it, "mse"] = mse_values
-        df.loc[it, "steps"] = len(mse_values)
+        df.loc[it, "steps"] = len(mse_hist)
 
     return df
 
@@ -138,9 +141,10 @@ def get_coefficient_df(run_ids):
             run_id
         ).data.metrics["coefficients_correlation_variance"]
 
-        df.loc[it, "expressibility"] = client.get_run(run_id).data.metrics[
-            "expressibility"
-        ]
+        if "expressibility" in client.get_run(run_id).data.metrics:
+            df.loc[it, "expressibility"] = client.get_run(run_id).data.metrics[
+                "expressibility"
+            ]
 
     return df
 
