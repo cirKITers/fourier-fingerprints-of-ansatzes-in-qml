@@ -1,98 +1,46 @@
-import mlflow
 import plotly
 import plotly.graph_objects as go
-import re
-import json
-import pandas as pd
 import numpy as np
 import plotly.io as pio
-from training_runs import run_ids, experiment_id
-from helper import generate_hash
+from runs.training_runs import run_ids
+from helper import generate_hash, get_training_df, rgb_to_rgba
 
 pio.kaleido.scope.mathjax = None
 
+max_steps = 500
 
-def rgb_to_rgba(rgb_value: str, alpha: float):
-    """
-    Adds the alpha channel to an RGB Value and returns it as an RGBA Value
-    :param rgb_value: Input RGB Value
-    :param alpha: Alpha Value to add  in range [0,1]
-    :return: RGBA Value
-    """
-    return f"rgba{rgb_value[3:-1]}, {alpha})"
+training_df = get_training_df(run_ids)
+training_df.sort_values(by="qubits", inplace=True)
+
+qubits = training_df.qubits.unique()
+ansaetze = training_df.ansatz.unique()
 
 
-def read_from_html(path):
-    with open(path) as f:
-        html = f.read()
-    call_arg_str = re.findall(r"Plotly\.newPlot\((.*)\)", html[-(2**16) :])[0]
-    call_args = json.loads(f"[{call_arg_str}]")
-    plotly_json = {"data": call_args[1], "layout": call_args[2]}
-    return plotly.io.from_json(json.dumps(plotly_json))
-
-
-global_df = pd.DataFrame()
-all_ansaetze = []
-all_qubits = []
-seeds = []
-for it, run_id in enumerate(run_ids):
-    client = mlflow.tracking.MlflowClient()
-    all_ansaetze.append(client.get_run(run_id).data.params["model.circuit_type"])
-    all_qubits.append(int(client.get_run(run_id).data.params["model.n_qubits"]))
-    seeds.append(int(client.get_run(run_id).data.params["seed"]))
-ansaetze = list(set(all_ansaetze))
-qubits = list(set(all_qubits))
-
-global_df["ansatz"] = all_ansaetze
-global_df["qubits"] = all_qubits
-global_df["run_id"] = run_ids
-
-# ----------------------------------
-
-
-for q in qubits:
+for qubit in qubits:
     fig = go.Figure()
     main_colors_it = iter(plotly.colors.qualitative.Dark2)
     sec_colors_it = iter(plotly.colors.qualitative.Pastel2)
 
     for ansatz in ansaetze:
-        max_steps = 0
-        mse_seeds = []
-        # iterate global_df where qubits and ansatz match q and ansatz
-        for index, row in global_df[
-            (global_df.qubits == q) & (global_df.ansatz == ansatz)
-        ].iterrows():
-
-            client = mlflow.tracking.MlflowClient()
-
-            mse_hist = client.get_metric_history(row.run_id, "mse")
-            max_steps = max(max_steps, len(mse_hist))
-            mse = [entity.value for entity in mse_hist]
-            mse_seeds.append(mse)
-
-        np_mse = np.zeros([len(mse_seeds), len(max(mse_seeds, key=lambda x: len(x)))])
-        for i, j in enumerate(mse_seeds):
-            np_mse[i][0 : len(j)] = j
-            np_mse[i][len(j) :] = np.nan
-
-            np_mse[i] = np_mse[i][:max_steps]
-
-        shortest = np.array(min(mse_seeds, key=lambda x: len(x)))
-        mse_low = np.nanmin(np_mse, axis=0)
-        mse_var = np.nanstd(np_mse, axis=0)
-        mse_high = np.nanmax(np_mse, axis=0)
-        mse_mean = np.nanmean(np_mse, axis=0)
-
         main_color_sel = next(main_colors_it)
         sec_color_sel = rgb_to_rgba(next(sec_colors_it), 0.2)
 
-        length = len(mse_mean)
+        mse_values = np.stack(
+            training_df[
+                (training_df.qubits == qubit) & (training_df.ansatz == ansatz)
+            ].mse.values
+        )
+        if max_steps is not None:
+            steps = list(range(max_steps))
+            mse_values = mse_values[:, :max_steps]
+        else:
+            steps = list(range(mse_values.shape[1]))
 
         # now add scatter plot for this ansatz and qubit with error bands as mse_low and mse_high
         fig.add_trace(
             go.Scatter(
-                x=list(range(length)),
-                y=mse_mean,
+                x=steps,
+                y=np.nanmean(mse_values, axis=0),
                 name=f"{ansatz}",
                 visible=True,
                 mode="lines",
@@ -102,8 +50,8 @@ for q in qubits:
         )
         fig.add_trace(
             go.Scatter(
-                x=list(range(length)),
-                y=mse_high,
+                x=steps,
+                y=np.nanmax(mse_values, axis=0),
                 name=f"upper-{ansatz}",
                 visible=True,
                 mode="lines",
@@ -113,8 +61,8 @@ for q in qubits:
         )
         fig.add_trace(
             go.Scatter(
-                x=list(range(length)),
-                y=mse_low,
+                x=steps,
+                y=np.nanmin(mse_values, axis=0),
                 name=f"lower-{ansatz}",
                 visible=True,
                 mode="lines",
@@ -127,7 +75,7 @@ for q in qubits:
         )
 
     fig.update_layout(
-        title=f"Loss for Different Ansaetze ({q} Qubits)",
+        title=f"Loss for Different Ansaetze ({qubit} Qubits)",
         template="plotly_white",
         yaxis=dict(title="MSE", type="log"),
         xaxis=dict(title="Epochs"),
@@ -138,4 +86,4 @@ for q in qubits:
 
     # fig.show()
     hs = generate_hash(run_ids)
-    fig.write_image(f"results/mse_q{q}_{hs}.png")
+    fig.write_image(f"results/mse_q{qubit}_{hs}.png")
