@@ -10,7 +10,7 @@ from helper import (
 
 pio.kaleido.scope.mathjax = None
 
-selected_seed = 1000
+selected_seed = 1004
 
 coefficient_df = get_coefficient_df(run_ids)
 coefficient_df.sort_values(by="qubits", inplace=True)
