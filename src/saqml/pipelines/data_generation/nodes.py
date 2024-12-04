@@ -184,6 +184,34 @@ class OurAnsaetze(Ansaetze):
                 )
                 qml.Barrier(wires=range(n_qubits))
 
+    class ML_Bansatz(Bansatz):
+        layer_multiplier = 1
+
+        @staticmethod
+        def n_params_per_layer(n_qubits: int) -> int:
+            return n_qubits * 3 * OurAnsaetze.ML_Bansatz.layer_multiplier
+
+        @staticmethod
+        def build(w: np.ndarray, n_qubits: int, layer_multiplier=1):
+            """
+            Creates a multi-layered Bansatz ansatz.
+
+            Length of flattened vector must be n_qubits*2
+
+            Args:
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*2)
+                n_qubits (int): number of qubits
+            """
+            n_params_per_layer = OurAnsaetze.Bansatz.n_params_per_layer(n_qubits)
+
+            for i in range(
+                OurAnsaetze.ML_Bansatz.layer_multiplier
+            ):  # twice the number of params
+                OurAnsaetze.Bansatz.build(
+                    w[i * n_params_per_layer : (i + 1) * n_params_per_layer], n_qubits
+                )
+                qml.Barrier(wires=range(n_qubits))
+
 
 def create_model(
     n_qubits: int,
@@ -194,8 +222,12 @@ def create_model(
     initialization_domain: List[float],
     output_qubit: int,
     seed: int,
+    layer_multiplier: int,
 ) -> Model:
     pqc = getattr(OurAnsaetze, circuit_type or "no_ansatz")
+
+    if layer_multiplier > 1:
+        pqc.layer_multiplier = layer_multiplier
 
     log.info(
         f"Creating model with {n_qubits} qubits, {n_layers} layers, and {circuit_type} circuit."

@@ -47,5 +47,9 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + create_visualization_pipeline(),
         "expressibility": create_data_generation_pipeline()
         + create_expressibility_pipeline(),
+        "coeffexpr": create_data_generation_pipeline()
+        + create_coefficients_pipeline()
+        + create_expressibility_pipeline()
+        + create_visualization_pipeline(),
     }
     return pipelines

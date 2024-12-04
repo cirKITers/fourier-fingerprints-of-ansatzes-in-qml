@@ -17,6 +17,7 @@ def create_pipeline() -> Pipeline:
                     "initialization_domain": "params:model.initialization_domain",
                     "output_qubit": "params:model.output_qubit",
                     "seed": "params:seed",
+                    "layer_multiplier": "params:model.layer_multiplier",
                 },
                 outputs="model",
                 name="create_model",
