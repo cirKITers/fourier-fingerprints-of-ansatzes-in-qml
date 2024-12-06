@@ -4,8 +4,8 @@
 # second argument: seed
 
 # run experiments with all different qubits
-for layer_multiplier in 3 4 5 6 7 8
+for layer_multiplier in 1 2 3 4 5
 do
     echo "Running with $layer_multiplier add. layers"
-    sbatch --job-name "l$layer_multiplier-q5-cML_Bansatz-s1000" ./slurm_job.sh "data.omegas=5,model.layer_multiplier=$layer_multiplier,model.n_qubits=5,model.circuit_type=ML_Bansatz,seed=1000" &
+    sbatch --job-name "l$layer_multiplier-q4-cML_Bansatz-s$1" ./slurm_job.sh "model.layer_multiplier=$layer_multiplier,model.circuit_type=ML_Bansatz,seed=$1" &
 done
