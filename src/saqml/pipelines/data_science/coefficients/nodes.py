@@ -224,6 +224,8 @@ def sweep_control_values(
             )
             coefficients_correlated_control.loc[i] = {
                 "coeff_mean": coefficients_correlated.mean().mean(),
+                "coeff_max": coefficients_correlated.max().max(),
+                "coeff_min": coefficients_correlated.min().min(),
                 "control_value": cv.item(),
             }
             # coefficients_correlated_mean.append(coefficients.mean().mean())
