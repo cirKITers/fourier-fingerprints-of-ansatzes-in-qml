@@ -39,6 +39,7 @@ def create_pipeline() -> Pipeline:
                 inputs={
                     "df": "coefficients_correlated_normalized",
                     "model": "model",
+                    "triu": "params:coefficients.zero_diagonal",
                 },
                 outputs="fig_parameters_correlated",
                 name="visualize_parameters_correlated",

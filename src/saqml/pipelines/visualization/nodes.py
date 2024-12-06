@@ -74,10 +74,17 @@ def visualize_coefficients_correlated(
 
 
 def visualize_parameters_correlated(
-    df: pd.DataFrame,
-    model: Model,
+    df: pd.DataFrame, model: Model, triu=False
 ) -> go.Figure:
     df_filtered = df.filter(regex="p.*", axis=0).filter(regex="p.*", axis=1)
+
+    if triu:
+        for i in range(df_filtered.shape[0]):
+            for j in range(df_filtered.shape[1]):
+                if i <= j:
+                    df_filtered.iloc[i, j] = np.nan
+        df_filtered = df_filtered.dropna(how="all", axis=0).dropna(how="all", axis=1)
+
     mlflow.log_metric("parameters_correlation_variance", df_filtered.var().var())
     mlflow.log_metric("parameters_correlation_mean", df_filtered.mean().mean())
     mlflow.log_metric("parameters_correlation_max", df_filtered.max().max())
