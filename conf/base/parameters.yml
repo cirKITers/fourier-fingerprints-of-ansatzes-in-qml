@@ -10,8 +10,8 @@ coefficients:
   zero_diagonal: True
 
 expressibility:
-  samples: 300
-  n_bins: 75
+  samples: 300 #samples per parameter scaling exp. with n qubits
+  n_bins: 20 #scaling lin. with n qubits
 
 model:
   n_qubits: 4
