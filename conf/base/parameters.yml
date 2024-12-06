@@ -10,8 +10,8 @@ coefficients:
   zero_diagonal: True
 
 expressibility:
-  samples: 100
-  n_bins: 10
+  samples: 300
+  n_bins: 75
 
 model:
   n_qubits: 4
