@@ -40,6 +40,6 @@ training:
   log_entangling: False
   positive_coeffs_only: True
   convergence:
-    threshold: 1e-4 # threshold for the cost, -1 to disable
+    threshold: 5e-4 # threshold for the cost, -1 to disable
     gradient: -1 # threshold for the cost gradient, -1 to disable
     steps: 50 # gradient is checked for the last n steps (mavg)
