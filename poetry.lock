@@ -2345,12 +2345,12 @@ testing = ["docopt", "pytest"]
 
 [[package]]
 name = "pennylane"
-version = "0.38.0"
+version = "0.39.0"
 description = "PennyLane is a cross-platform Python library for quantum computing, quantum machine learning, and quantum chemistry. Train a quantum computer the same way as a neural network."
 optional = false
 python-versions = "*"
 files = [
-    {file = "PennyLane-0.38.0-py3-none-any.whl", hash = "sha256:6a6f4e96feaffa0aafbf460be901140d6c14481cf26dc92fd050d74aaa793b47"},
+    {file = "PennyLane-0.39.0-py3-none-any.whl", hash = "sha256:e11928a8ffd652b9c1b4f11955b50210c3b637f36ee3d8cea64a3a9a6a830977"},
 ]
 
 [package.dependencies]
@@ -2359,9 +2359,9 @@ autograd = "*"
 autoray = ">=0.6.11"
 cachetools = "*"
 networkx = "*"
-numpy = "<2.0"
+numpy = "<2.1"
 packaging = "*"
-pennylane-lightning = ">=0.38"
+pennylane-lightning = ">=0.39"
 requests = "*"
 rustworkx = ">=0.14.0"
 scipy = "*"
@@ -3054,17 +3054,17 @@ files = [
 
 [[package]]
 name = "qml-essentials"
-version = "0.1.17"
+version = "0.1.18"
 description = ""
 optional = false
 python-versions = "<3.13,>=3.10"
 files = [
-    {file = "qml_essentials-0.1.17-py3-none-any.whl", hash = "sha256:7f1b78ae9134c1cebdf207f428360b90a43a9fa3825c599bc556432696bf67c0"},
-    {file = "qml_essentials-0.1.17.tar.gz", hash = "sha256:c90c59b733b7b216e0bd98bd1b119e60603f190d003c2acd8a6c65f0f59f0bc9"},
+    {file = "qml_essentials-0.1.18-py3-none-any.whl", hash = "sha256:033d416c2c8dc99fe0fab8907d55b936c56356a29f2e29660c0a923bc13bb45a"},
+    {file = "qml_essentials-0.1.18.tar.gz", hash = "sha256:700724589521d9efae528e5f611eca1a0ba6d3f2e14f55184a1c09822b2d7890"},
 ]
 
 [package.dependencies]
-pennylane = ">=0.38.0,<0.39.0"
+pennylane = ">=0.39.0,<0.40.0"
 
 [[package]]
 name = "requests"
@@ -4079,4 +4079,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "a5a0e2980ea8822543c4583a80a153ce35da7ec37a206faaab3820db13573b0f"
+content-hash = "97126c4d1204e673d05429b251ec5c705ac975180d39e538138ddd6b82513b86"

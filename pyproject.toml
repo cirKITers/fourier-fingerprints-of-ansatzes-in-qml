@@ -52,7 +52,7 @@ kedro-viz = "^9.1.0"
 plotly = "^5.22.0"
 tenacity = "^8.5.0"
 kaleido = "0.2.1"
-qml-essentials = "^0.1.17"
+qml-essentials = "^0.1.18"
 dcor = "^0.6"
 
 [build-system]
