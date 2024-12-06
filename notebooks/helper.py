@@ -110,6 +110,7 @@ def get_coefficient_df(run_ids):
             "run_id",
             "ansatz",
             "qubits",
+            "layer_multiplier",
             "seed",
             "expressibility",
             "coefficients_correlation_mean",
@@ -141,6 +142,10 @@ def get_coefficient_df(run_ids):
             run_id
         ).data.metrics["coefficients_correlation_variance"]
 
+        if "model.layer_multiplier" in client.get_run(run_id).data.params:
+            df.loc[it, "layer_multiplier"] = int(
+                client.get_run(run_id).data.params["model.layer_multiplier"]
+            )
         if "expressibility" in client.get_run(run_id).data.metrics:
             df.loc[it, "expressibility"] = client.get_run(run_id).data.metrics[
                 "expressibility"
