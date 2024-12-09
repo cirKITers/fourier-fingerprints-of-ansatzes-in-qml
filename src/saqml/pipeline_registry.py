@@ -35,7 +35,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
     """
     pipelines = {
         "__default__": create_data_generation_pipeline()
-        + create_coefficients_pipeline()
+        + create_coefficients_pipeline()["coefficients"]
         + create_training_pipeline()
         + create_visualization_pipeline()
         + create_model_visualization_pipeline(),
@@ -43,12 +43,15 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + create_training_pipeline()
         + create_model_visualization_pipeline(),
         "coefficients": create_data_generation_pipeline()
-        + create_coefficients_pipeline()
+        + create_coefficients_pipeline()["coefficients"]
+        + create_visualization_pipeline(),
+        "randcoeffs": create_data_generation_pipeline()
+        + create_coefficients_pipeline()["randcoeffs"]
         + create_visualization_pipeline(),
         "expressibility": create_data_generation_pipeline()
         + create_expressibility_pipeline(),
         "coeffexpr": create_data_generation_pipeline()
-        + create_coefficients_pipeline()
+        + create_coefficients_pipeline()["coefficients"]
         + create_expressibility_pipeline()
         + create_visualization_pipeline(),
     }
