@@ -8,6 +8,7 @@ stats.json
 info.log.*
 logs/*
 results
+*tar.gz
 ##########################
 # KEDRO PROJECT
 
