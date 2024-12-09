@@ -53,7 +53,6 @@ def visualize_coefficients_correlated(
         df_filtered = df_filtered.dropna(how="all", axis=0).dropna(how="all", axis=1)
 
     mlflow.log_metric("coefficients_correlation_variance", df_filtered.var().var())
-
     mlflow.log_metric("coefficients_correlation_mean", df_filtered.mean().mean())
     mlflow.log_metric("coefficients_correlation_max", df_filtered.max().max())
     mlflow.log_metric("coefficients_correlation_min", df_filtered.min().min())
@@ -111,6 +110,7 @@ def visualize_parameters_coefficients_correlated(
         df_filtered = df.filter(regex="p_\d+", axis=0).filter(regex="c_\+?\d+", axis=1)
     else:
         df_filtered = df.filter(regex="p_\d+", axis=0).filter(regex="c.*", axis=1)
+
     mlflow.log_metric(
         "parameters_coefficients_correlation_variance", df_filtered.var().var()
     )
