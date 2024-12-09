@@ -21,7 +21,7 @@ model:
   output_qubit: -1
   initialization: "random" # random, zero-controlled, pi-controlled
   initialization_domain: [0, 6.283185307179586]
-  layer_multiplier: 3
+  layer_multiplier: 1
   noise_params:
     BitFlip: 0.0
     PhaseFlip: 0.0
