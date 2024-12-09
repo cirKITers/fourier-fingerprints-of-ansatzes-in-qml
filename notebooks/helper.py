@@ -114,6 +114,8 @@ def get_coefficient_df(run_ids):
             "seed",
             "expressibility",
             "coefficients_correlation_mean",
+            "coefficients_correlation_max",
+            "coefficients_correlation_min",
             "coefficients_correlation_variance",
         ]
     )
@@ -137,6 +139,16 @@ def get_coefficient_df(run_ids):
         df.loc[it, "coefficients_correlation_mean"] = client.get_run(
             run_id
         ).data.metrics["coefficients_correlation_mean"]
+
+        if "coefficients_correlation_max" in client.get_run(run_id).data.metrics:
+            df.loc[it, "coefficients_correlation_max"] = client.get_run(
+                run_id
+            ).data.metrics["coefficients_correlation_max"]
+
+        if "coefficients_correlation_min" in client.get_run(run_id).data.metrics:
+            df.loc[it, "coefficients_correlation_min"] = client.get_run(
+                run_id
+            ).data.metrics["coefficients_correlation_min"]
 
         df.loc[it, "coefficients_correlation_variance"] = client.get_run(
             run_id
