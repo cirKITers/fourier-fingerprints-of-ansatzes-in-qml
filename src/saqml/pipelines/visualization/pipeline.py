@@ -24,17 +24,6 @@ def create_pipeline() -> Pipeline:
                 name="visualize_coefficients_correlated",
             ),
             node(
-                func=visualize_coefficients_correlated,
-                inputs={
-                    "df": "random_coefficients_correlated_normalized",
-                    "model": "model",
-                    "discard_negative": "params:training.positive_coeffs_only",
-                    "triu": "params:coefficients.triu",
-                },
-                outputs="fig_random_coefficients_correlated",
-                name="visualize_random_coefficients_correlated",
-            ),
-            node(
                 func=visualize_parameters_correlated,
                 inputs={
                     "df": "coefficients_correlated_normalized",
@@ -61,6 +50,24 @@ def create_pipeline() -> Pipeline:
                 },
                 outputs="fig_coefficients_correlated_control",
                 name="visualize_coefficients_correlated_control",
+            ),
+        ]
+    )
+
+
+def create_randcoeffs_pipeline() -> Pipeline:
+    return pipeline(
+        [
+            node(
+                func=visualize_coefficients_correlated,
+                inputs={
+                    "df": "random_coefficients_correlated_normalized",
+                    "model": "model",
+                    "discard_negative": "params:training.positive_coeffs_only",
+                    "triu": "params:coefficients.triu",
+                },
+                outputs="fig_random_coefficients_correlated",
+                name="visualize_random_coefficients_correlated",
             ),
         ]
     )
