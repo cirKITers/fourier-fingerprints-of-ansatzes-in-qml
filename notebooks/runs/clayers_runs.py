@@ -1,8 +1,0 @@
-experiment_id = "659361482013761933"
-run_ids = [
-    "9b02ac6e23f444e8ae97940086c2ea85",
-    "84492b663aa54897b236a24d44ed493a",
-    "491d6a5f9df9429b90fa6f31db8aa4a6",
-    "aac490e81b8a46feaac021563d69906e",
-    "b5fbe9a874904557a7a3e0211ce0bbd5",
-]
