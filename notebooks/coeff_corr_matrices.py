@@ -5,7 +5,7 @@ from helper import (
     get_coefficient_df,
     assign_ansatz_id,
     save_fig,
-    get_correlation_matrix,
+    get_plotly_artifact,
 )
 
 pio.kaleido.scope.mathjax = None
@@ -26,7 +26,7 @@ for q in qubits:
 
     for it, ansatz in enumerate(ansaetze):
 
-        sub_fig_trace = get_correlation_matrix(
+        sub_fig_trace = get_plotly_artifact(
             coefficient_df[
                 (coefficient_df.qubits == q)
                 & (coefficient_df.ansatz == ansatz)

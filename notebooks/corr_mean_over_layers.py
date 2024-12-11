@@ -20,7 +20,7 @@ ansaetze = coefficient_df.ansatz.unique()
 
 for metric in [
     "coefficients_correlation_mean",
-    "expressibility",
+    "kl_divergence",
 ]:
     fig = go.Figure()
     main_colors_it, sec_colors_it = get_color_iterator()
@@ -30,7 +30,7 @@ for metric in [
 
         metric_values = (
             coefficient_df[coefficient_df.ansatz == ansatz]
-            .groupby("qubits")[metric]
+            .groupby("layer_multiplier")[metric]
             .agg(["mean", "min", "max"])
         )
 
@@ -75,7 +75,7 @@ for metric in [
         title=f"{title} over Additional Layers",
         template="plotly_white",
         yaxis=dict(title=f"{title} (log)", type="log"),
-        xaxis=dict(title="Additional Layers"),
+        xaxis=dict(title="Layer Multiplier"),
     )
 
     save_fig(fig, f"{metric}_layer_multiplier", run_ids, experiment_id)

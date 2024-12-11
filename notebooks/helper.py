@@ -39,21 +39,21 @@ def read_from_html(path):
     return plotly.io.from_json(json.dumps(plotly_json))
 
 
-def get_correlation_matrix(run_id, identifier="coefficients_correlated"):
+def get_plotly_artifact(run_id, identifier="coefficients_correlated"):
     client = mlflow.tracking.MlflowClient()
 
-    sub_fig_path = client.download_artifacts(run_id, f"{identifier}.html", "./")
-    sub_fig = read_from_html(sub_fig_path)
-    sub_fig_trace = sub_fig.data[0]
-    sub_fig_trace.update(
+    fig_path = client.download_artifacts(run_id, f"{identifier}.html", "./")
+    fig = read_from_html(fig_path)
+    fig_trace = fig.data[0]
+    fig_trace.update(
         # coloraxis=f"coloraxis",
         zmax=1.0,
         zmin=0.0,
     )
 
-    os.remove(sub_fig_path)
+    os.remove(fig_path)
 
-    return sub_fig_trace
+    return fig_trace
 
 
 def rgb_to_rgba(rgb_value: str, alpha: float):
@@ -112,7 +112,7 @@ def get_coefficient_df(run_ids):
             "qubits",
             "layer_multiplier",
             "seed",
-            "expressibility",
+            "kl_divergence",
             "coefficients_correlation_mean",
             "coefficients_correlation_max",
             "coefficients_correlation_min",
@@ -159,7 +159,7 @@ def get_coefficient_df(run_ids):
                 client.get_run(run_id).data.params["model.layer_multiplier"]
             )
         if "expressibility" in client.get_run(run_id).data.metrics:
-            df.loc[it, "expressibility"] = client.get_run(run_id).data.metrics[
+            df.loc[it, "kl_divergence"] = client.get_run(run_id).data.metrics[
                 "expressibility"
             ]
 
