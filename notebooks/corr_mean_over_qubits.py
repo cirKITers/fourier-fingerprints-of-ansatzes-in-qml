@@ -69,7 +69,7 @@ for ansatz in ansaetze:
 fig.update_layout(
     title=f"Coefficient Correlation Mean for Different Ansaetze over Qubits",
     template="plotly_white",
-    yaxis=dict(title="Coefficient Correlation Mean", type="log"),
+    yaxis=dict(title="Coefficient Correlation Mean (log)", type="log"),
     xaxis=dict(title="Qubits"),
 )
 
