@@ -31,6 +31,19 @@
             "justMyCode": false
         },
         {
+            "name": "CoeffExpr",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "kedro",
+            "args": [
+                "run",
+                "--pipeline",
+                "coeffexpr"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
             "name": "Expressibility",
             "type": "debugpy",
             "request": "launch",
