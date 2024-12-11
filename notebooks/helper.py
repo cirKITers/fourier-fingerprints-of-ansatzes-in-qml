@@ -13,8 +13,8 @@ def save_fig(fig, name, run_ids, experiment_id):
     hs = generate_hash(run_ids)
     path = f"results/{experiment_id}/{hs}/"
     os.makedirs(path, exist_ok=True)
-    print(f"Saving figure to {path}/{name}.png")
-    fig.write_image(f"{path}/{name}.png")
+    print(f"Saving figure to {path}{name}.png")
+    fig.write_image(f"{path}{name}.png")
 
 
 def get_color_iterator():

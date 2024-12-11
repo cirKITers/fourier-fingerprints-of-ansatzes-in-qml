@@ -1,6 +1,6 @@
 import plotly.graph_objects as go
 import plotly.io as pio
-from runs.clayers_runs import run_ids, experiment_id
+from runs.coeffexpr_runs import run_ids, experiment_id
 from helper import (
     save_fig,
     get_coefficient_df,
@@ -40,33 +40,33 @@ for i, metric in enumerate(["expressibility"]):
             yaxis=f"y{i+1}",
         )
     )
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=metric_values.index,
-    #         y=metric_values["max"],
-    #         name=f"upper-{metric}",
-    #         visible=True,
-    #         mode="lines",
-    #         line=dict(width=0),
-    #         showlegend=False,
-    #         yaxis=f"y{i+1}",
-    #     )
-    # )
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=metric_values.index,
-    #         y=metric_values["min"],
-    #         name=f"lower-{metric}",
-    #         visible=True,
-    #         mode="lines",
-    #         fill="tonexty",
-    #         fillcolor=sec_color_sel,
-    #         marker=dict(color=main_color_sel),
-    #         line=dict(width=0),
-    #         showlegend=False,
-    #         yaxis=f"y{i+1}",
-    #     )
-    # )
+    fig.add_trace(
+        go.Scatter(
+            x=metric_values.index,
+            y=metric_values["max"],
+            name=f"upper-{metric}",
+            visible=True,
+            mode="lines",
+            line=dict(width=0),
+            showlegend=False,
+            yaxis=f"y{i+1}",
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=metric_values.index,
+            y=metric_values["min"],
+            name=f"lower-{metric}",
+            visible=True,
+            mode="lines",
+            fill="tonexty",
+            fillcolor=sec_color_sel,
+            marker=dict(color=main_color_sel),
+            line=dict(width=0),
+            showlegend=False,
+            yaxis=f"y{i+1}",
+        )
+    )
 
 fig.update_layout(
     title=f"Coefficient Correlation and Expressibility over Layers",
