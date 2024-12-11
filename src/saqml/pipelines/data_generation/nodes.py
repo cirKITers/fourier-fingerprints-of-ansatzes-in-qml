@@ -196,18 +196,46 @@ class OurAnsaetze(Ansaetze):
             """
             Creates a multi-layered Bansatz ansatz.
 
-            Length of flattened vector must be n_qubits*2
+            Length of flattened vector must be n_qubits*3*layer_multiplier
 
             Args:
-                w (np.ndarray): weight vector of size n_layers*(n_qubits*2)
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*3*layer_multiplier)
                 n_qubits (int): number of qubits
             """
             n_params_per_layer = OurAnsaetze.Bansatz.n_params_per_layer(n_qubits)
 
             for i in range(
                 OurAnsaetze.ML_Bansatz.layer_multiplier
-            ):  # twice the number of params
+            ):
                 OurAnsaetze.Bansatz.build(
+                    w[i * n_params_per_layer : (i + 1) * n_params_per_layer], n_qubits
+                )
+                qml.Barrier(wires=range(n_qubits))
+
+    class ML_Hardware_Efficient(Ansaetze.Hardware_Efficient):
+        layer_multiplier = 1
+
+        @staticmethod
+        def n_params_per_layer(n_qubits: int) -> int:
+            return n_qubits * 3 * OurAnsaetze.ML_Hardware_Efficient.layer_multiplier
+
+        @staticmethod
+        def build(w: np.ndarray, n_qubits: int):
+            """
+            Creates a multi-layered Hardware-Efficient ansatz
+
+            Length of flattened vector must be n_qubits*3*layer_multiplier
+
+            Args:
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*3*layer_multiplier)
+                n_qubits (int): number of qubits
+            """
+            n_params_per_layer = Ansaetze.Hardware_Efficient.n_params_per_layer(
+                n_qubits
+            )
+
+            for i in range(OurAnsaetze.ML_Hardware_Efficient.layer_multiplier):
+                Ansaetze.Hardware_Efficient.build(
                     w[i * n_params_per_layer : (i + 1) * n_params_per_layer], n_qubits
                 )
                 qml.Barrier(wires=range(n_qubits))
