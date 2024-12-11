@@ -6,7 +6,6 @@ data:
 coefficients:
   samples: 300 #samples per parameter
   correlation_method: "pearson" #dcor, pearson, spearman
-  log_coefficients: False # track coefficients during training?
   triu: True # only use  the upper triangular part of the correlation matrix?
 
 expressibility:
@@ -38,6 +37,7 @@ training:
   learning_rate: 0.01
   batch_size: -1
   log_entangling: False
+  log_coefficients: False # track coefficients during training?
   positive_coeffs_only: True
   convergence:
     threshold: 5e-4 # threshold for the cost, -1 to disable
