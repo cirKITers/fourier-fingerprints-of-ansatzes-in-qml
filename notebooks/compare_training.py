@@ -7,7 +7,7 @@ from helper import save_fig, get_training_df, rgb_to_rgba
 
 pio.kaleido.scope.mathjax = None
 
-max_steps = 500
+max_steps = 1000
 
 training_df = get_training_df(run_ids)
 training_df.sort_values(by="qubits", inplace=True)
@@ -40,7 +40,7 @@ for qubit in qubits:
         fig.add_trace(
             go.Scatter(
                 x=steps,
-                y=np.nanmean(mse_values, axis=0),
+                y=np.nanmax(mse_values, axis=0),
                 name=f"{ansatz}",
                 visible=True,
                 mode="lines",
