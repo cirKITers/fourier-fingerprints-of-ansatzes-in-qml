@@ -204,9 +204,7 @@ class OurAnsaetze(Ansaetze):
             """
             n_params_per_layer = OurAnsaetze.Bansatz.n_params_per_layer(n_qubits)
 
-            for i in range(
-                OurAnsaetze.ML_Bansatz.layer_multiplier
-            ):
+            for i in range(OurAnsaetze.ML_Bansatz.layer_multiplier):
                 OurAnsaetze.Bansatz.build(
                     w[i * n_params_per_layer : (i + 1) * n_params_per_layer], n_qubits
                 )
@@ -271,7 +269,7 @@ def create_model(
         initialization_domain=initialization_domain,
         random_seed=seed,
     )
-    # model.draw(figure=True)[0].savefig(f"docs/{circuit_type}.png")
+    model.draw(figure=True)[0].savefig(f"docs/{circuit_type}.png")
     return model
 
 

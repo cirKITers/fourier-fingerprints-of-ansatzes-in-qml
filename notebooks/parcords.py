@@ -13,7 +13,7 @@ training_df = get_training_df(training_run_ids)
 
 coefficients_df = get_coefficient_df(coefficient_run_ids)
 
-combined_df = pd.merge(training_df, coefficients_df, on=["ansatz", "qubits"])
+combined_df = pd.merge(training_df, coefficients_df, on=["ansatz", "qubits", "seed"])
 combined_df.sort_values(by="qubits", inplace=True)
 combined_df = assign_ansatz_id(combined_df)
 
@@ -51,14 +51,16 @@ for q in qubits:
                         #     values=df["n_params"],
                         # ),
                         dict(
-                            label="Expressibility",
-                            values=combined_df[combined_df.qubits == q].expressibility,
-                        ),
-                        dict(
                             label="Coeff. Correlation Mean",
                             values=combined_df[
                                 combined_df.qubits == q
                             ].coefficients_correlation_mean,
+                        ),
+                        dict(
+                            label="Coeff. Correlation Max",
+                            values=combined_df[
+                                combined_df.qubits == q
+                            ].coefficients_correlation_max,
                         ),
                         # dict(label="mse (log)", values=df[df.qubits == q].mse),
                         dict(
@@ -72,7 +74,7 @@ for q in qubits:
     )
 
     fig.update_layout(
-        title=f"Correlation of Coefficients, Expressibility and Loss ({q} Qubits)",
+        title=f"Correlation of Coefficients and Loss ({q} Qubits)",
         # template="plotly_white",
         margin=dict(l=120),
     )
