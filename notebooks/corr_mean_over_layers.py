@@ -20,6 +20,7 @@ ansaetze = coefficient_df.ansatz.unique()
 
 for metric in [
     "coefficients_correlation_mean",
+    "coefficients_correlation_max",
     "kl_divergence",
 ]:
     fig = go.Figure()
