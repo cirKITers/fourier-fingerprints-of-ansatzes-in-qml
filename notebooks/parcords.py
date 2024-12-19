@@ -74,9 +74,9 @@ for q in qubits:
     )
 
     fig.update_layout(
-        title=f"Correlation of Coefficients and Loss ({q} Qubits)",
+        title=f"Correlation of Coefficients and Training Performance ({q} Qubits)",
         # template="plotly_white",
-        margin=dict(l=120),
+        margin=dict(l=150, r=30, b=30),
     )
 
     save_fig(
