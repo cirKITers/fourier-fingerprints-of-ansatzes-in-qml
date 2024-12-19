@@ -9,12 +9,13 @@ import os
 from rich.progress import track
 
 
-def save_fig(fig, name, run_ids, experiment_id):
+def save_fig(fig, name, run_ids, experiment_id, font_size=16, scale=1):
     hs = generate_hash(run_ids)
     path = f"results/{experiment_id}/{hs}/"
     os.makedirs(path, exist_ok=True)
     print(f"Saving figure to {path}{name}.pdf")
-    fig.write_image(f"{path}{name}.pdf")
+    fig.update_layout(font=dict(size=font_size))
+    fig.write_image(f"{path}{name}.pdf", scale=scale)
 
 
 def get_color_iterator():
