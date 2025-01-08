@@ -249,6 +249,7 @@ def create_model(
     output_qubit: int,
     seed: int,
     layer_multiplier: int,
+    draw=False,
 ) -> Model:
     pqc = getattr(OurAnsaetze, circuit_type or "no_ansatz")
 
@@ -269,7 +270,8 @@ def create_model(
         initialization_domain=initialization_domain,
         random_seed=seed,
     )
-    model.draw(figure=True)[0].savefig(f"docs/{circuit_type}.png")
+    if draw:
+        model.draw(figure=True)[0].savefig(f"docs/{circuit_type}.png")
     return model
 
 
