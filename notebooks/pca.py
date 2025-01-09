@@ -1,4 +1,3 @@
-from plotly.subplots import make_subplots
 import plotly.io as pio
 import pandas as pd
 from runs.training_runs import run_ids as training_run_ids
@@ -53,8 +52,6 @@ pca_dataset = pd.DataFrame(
 idx = 0
 for q in qubits:
     for seed in seeds:
-        fig = make_subplots(rows=1, cols=len(ansaetze), subplot_titles=ansaetze)
-
         for it, ansatz in enumerate(ansaetze):
             current_dataset = combined_df[
                 (combined_df.qubits == q)
