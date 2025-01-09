@@ -1,4 +1,5 @@
 import plotly
+from plotly.validators.scatter.marker import SymbolValidator
 import re
 import json
 import hashlib
@@ -23,6 +24,15 @@ def get_color_iterator():
     sec_colors_it = iter(plotly.colors.qualitative.Pastel2)
 
     return main_colors_it, sec_colors_it
+
+
+def get_symbol_iterator():
+    raw_symbols = SymbolValidator().values
+    symbols = []
+    for i in range(0, len(raw_symbols), 12):
+        symbols.append(raw_symbols[i])
+
+    return iter(symbols)
 
 
 def generate_hash(run_ids):
