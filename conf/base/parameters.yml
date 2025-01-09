@@ -27,6 +27,7 @@ model:
     AmplitudeDamping: 0.0
     PhaseDamping: 0.0
     Depolarizing: 0.0
+  draw: True
 
 seed: 1000
 
