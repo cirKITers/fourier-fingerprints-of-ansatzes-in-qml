@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 import numpy as np
 import plotly.io as pio
 from runs.training_runs import run_ids, experiment_id
-from helper import save_fig, get_training_df, rgb_to_rgba
+from helper import save_fig, get_training_df, rgb_to_rgba, get_color_iterator
 
 pio.kaleido.scope.mathjax = None
 
@@ -18,8 +18,7 @@ ansaetze = training_df.ansatz.unique()
 
 for qubit in qubits:
     fig = go.Figure()
-    main_colors_it = iter(plotly.colors.qualitative.Dark2)
-    sec_colors_it = iter(plotly.colors.qualitative.Pastel2)
+    main_colors_it, sec_colors_it = get_color_iterator()
 
     for ansatz in ansaetze:
         main_color_sel = next(main_colors_it)
