@@ -13,6 +13,7 @@ def create_pipeline() -> Pipeline:
                     "n_layers": "params:model.n_layers",
                     "circuit_type": "params:model.circuit_type",
                     "data_reupload": "params:model.data_reupload",
+                    "encoding": "params:model.encoding",
                     "initialization": "params:model.initialization",
                     "initialization_domain": "params:model.initialization_domain",
                     "output_qubit": "params:model.output_qubit",

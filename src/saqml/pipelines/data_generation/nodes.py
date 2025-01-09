@@ -1,7 +1,7 @@
 from qml_essentials.model import Model
 from qml_essentials.ansaetze import Ansaetze, Circuit
 
-from typing import List, Optional
+from typing import List, Optional, Union, Callable
 import pennylane as qml
 import pennylane.numpy as np
 
@@ -184,6 +184,30 @@ class OurAnsaetze(Ansaetze):
                 )
                 qml.Barrier(wires=range(n_qubits))
 
+    class Circuit_9_N(Ansaetze.Circuit_9):
+        @staticmethod
+        def n_params_per_layer(n_qubits: int) -> int:
+            return n_qubits * 6
+
+        @staticmethod
+        def build(w: np.ndarray, n_qubits: int):
+            """
+            Creates a multi-layered Circuit19 ansatz.
+
+            Length of flattened vector must be n_qubits*3*layer_multiplier
+
+            Args:
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*3*layer_multiplier)
+                n_qubits (int): number of qubits
+            """
+            n_params_per_layer = Ansaetze.Circuit_9.n_params_per_layer(n_qubits)
+
+            for i in range(2):
+                Ansaetze.Circuit_9.build(
+                    w[i * n_params_per_layer : (i + 1) * n_params_per_layer], n_qubits
+                )
+                qml.Barrier(wires=range(n_qubits))
+
     class ML_Bansatz(Bansatz):
         layer_multiplier = 1
 
@@ -244,6 +268,7 @@ def create_model(
     n_layers: int,
     circuit_type: str,
     data_reupload: bool,
+    encoding: Union[str, Callable, List[str], List[Callable]],
     initialization: str,
     initialization_domain: List[float],
     output_qubit: int,
@@ -251,6 +276,9 @@ def create_model(
     layer_multiplier: int,
     draw=False,
 ) -> Model:
+    if "Circuit_9" in circuit_type:
+        encoding = "RY"
+
     pqc = getattr(OurAnsaetze, circuit_type or "no_ansatz")
 
     if layer_multiplier > 1:
@@ -265,6 +293,7 @@ def create_model(
         n_layers=n_layers,
         circuit_type=pqc,
         data_reupload=data_reupload,
+        encoding=encoding,
         output_qubit=output_qubit,
         initialization=initialization,
         initialization_domain=initialization_domain,
