@@ -1,4 +1,6 @@
+import plotly
 import plotly.io as pio
+import plotly.graph_objects as go
 import pandas as pd
 from runs.training_runs import run_ids as training_run_ids
 from runs.training_runs import experiment_id
@@ -9,6 +11,7 @@ from helper import (
     assign_ansatz_id,
     generate_hash,
     get_plotly_artifact,
+    save_fig,
 )
 import numpy as np
 from sklearn.decomposition import PCA
@@ -86,9 +89,7 @@ for q in qubits:
 
         pass
 
-sel_pca_dataset = pca_dataset.drop(
-    columns=["qubits", "ansatz_id", "corr_max", "corr_min", "corr_var"]
-)
+sel_pca_dataset = pca_dataset.drop(columns=["corr_max", "corr_min", "corr_var"])
 pca_dataset_scaled = (sel_pca_dataset - sel_pca_dataset.mean()) / sel_pca_dataset.std()
 coeff_pca = PCA(n_components=2).fit(pca_dataset_scaled)
 print(
@@ -99,8 +100,10 @@ scores = coeff_pca.transform(pca_dataset_scaled)
 # biplot
 fig, ax = plt.subplots(figsize=(8, 8))
 colormap = plt.cm.Dark2
-all_ansatz_ids = pca_dataset.ansatz_id.to_list()
-ansatz_colors = [colormap.colors[i] for i in all_ansatz_ids]
+# ansatz_colors = [
+#     plotly.colors.qualitative.Dark2[i] for i in pca_dataset.ansatz_id.to_list()
+# ]
+ansatz_colors = [colormap.colors[i] for i in pca_dataset.ansatz_id.to_list()]
 ax.scatter(
     scores[:, 0],
     scores[:, 1],
@@ -108,6 +111,17 @@ ax.scatter(
     # edgecolor=ansatz_colors,
     # alpha=0.5,
 )
+
+# fig = go.Figure()
+# fig.add_trace(
+#     go.Scatter(
+#         x=scores[:, 0],
+#         y=scores[:, 1],
+#         mode="markers",
+#         marker=dict(color=ansatz_colors),
+#         name="ansatz",
+#     )
+# )
 
 prop = dict(arrowstyle="-|>,head_width=0.4,head_length=0.8", shrinkA=0, shrinkB=0)
 for i in range(coeff_pca.components_.shape[1]):
@@ -133,15 +147,27 @@ for i in range(coeff_pca.components_.shape[1]):
         ha="center",
         va="center",
     )
-# for i in range(scores.shape[0]):
-#     ax.text(
-#         scores[i, 0] + 0.2,
-#         scores[i, 1],
-#         pca_dataset_scaled.index[i],
-#         color="blue",
-#         ha="center",
-#         va="center",
-#     )
+    # fig.add_annotation(
+    #     x=0,
+    #     y=0,
+    #     ax=coeff_pca.components_[0, i],
+    #     ay=coeff_pca.components_[1, i],
+    #     xref="x",
+    #     yref="y",
+    #     axref="x",
+    #     ayref="y",
+    #     text=pca_dataset_scaled.columns[i],
+    #     showarrow=True,
+    #     arrowhead=0,
+    #     arrowsize=1,
+    #     arrowwidth=2,
+    #     standoff=0,
+    #     startarrowhead=1,
+    #     startarrowsize=1,
+    #     startstandoff=4,
+    #     arrowcolor="black",
+    #     textangle=angle * 180 / np.pi,
+    # )
 ax.set_xlabel(
     f"PC1 ({coeff_pca.explained_variance_ratio_[1] * 100:.1f}% Variance Ratio)"
 )
@@ -149,8 +175,20 @@ ax.set_ylabel(
     f"PC2 ({coeff_pca.explained_variance_ratio_[0] * 100:.1f}% Variance Ratio)"
 )
 ax.set_title("Biplot - Qubits, # of Steps, Ansatz and Correlation Mean")
-hs = generate_hash(coefficient_run_ids + training_run_ids)
+# fig.update_layout(
+#     title_text="Biplot - Qubits, # of Steps, Ansatz and Correlation Mean",
+#     template="plotly_white",
+#     xaxis=dict(
+#         title=f"PC1 ({coeff_pca.explained_variance_ratio_[1] * 100:.1f}% Variance Ratio)",
+#     ),
+#     yaxis=dict(
+#         title=f"PC2 ({coeff_pca.explained_variance_ratio_[0] * 100:.1f}% Variance Ratio)",
+#     ),
+# )
+
 name = "pca"
+# save_fig(fig, name, coefficient_run_ids + training_run_ids, experiment_id)
+hs = generate_hash(coefficient_run_ids + training_run_ids)
 path = f"results/{experiment_id}/{hs}/"
 print(f"Saving figure to {path}{name}.pdf")
 plt.savefig(f"{path}{name}.pdf", format="pdf", bbox_inches="tight")
