@@ -184,6 +184,39 @@ class OurAnsaetze(Ansaetze):
                 )
                 qml.Barrier(wires=range(n_qubits))
 
+    class Circuit_2(Circuit):
+        @staticmethod
+        def n_params_per_layer(n_qubits: int) -> int:
+            return n_qubits * 2
+
+        @staticmethod
+        def get_control_indices(n_qubits: int):
+            return None
+
+        @staticmethod
+        def build(w: np.ndarray, n_qubits: int):
+            """
+            Creates a multi-layered Circuit19 ansatz.
+
+            Length of flattened vector must be n_qubits*2
+
+            Args:
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*2)
+                n_qubits (int): number of qubits
+            """
+            n_params_per_layer = OurAnsaetze.Circuit_2.n_params_per_layer(n_qubits)
+
+            w_idx = 0
+            for i in range(n_qubits):
+                qml.RX(w[w_idx], wires=i)
+                w_idx += 1
+                qml.RZ(w[w_idx], wires=i)
+                w_idx += 1
+
+            if n_qubits > 1:
+                for q in range(n_qubits - 1):
+                    qml.CNOT(wires=[n_qubits - q - 2, n_qubits - q - 1])
+
     class Circuit_9_N(Ansaetze.Circuit_9):
         @staticmethod
         def n_params_per_layer(n_qubits: int) -> int:
@@ -202,7 +235,7 @@ class OurAnsaetze(Ansaetze):
             """
             n_params_per_layer = Ansaetze.Circuit_9.n_params_per_layer(n_qubits)
 
-            for i in range(2):
+            for i in range(6):
                 Ansaetze.Circuit_9.build(
                     w[i * n_params_per_layer : (i + 1) * n_params_per_layer], n_qubits
                 )
