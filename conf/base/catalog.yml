@@ -26,11 +26,11 @@ trained_grads:
     type: pandas.CSVDataset
     filepath: "grads.csv"
 
-coefficients:
-  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
-  dataset:
-    type: pandas.CSVDataset
-    filepath: "coefficients.csv"
+# coefficients:
+#   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+#   dataset:
+#     type: pandas.CSVDataset
+#     filepath: "coefficients.csv"
 
 fig_coefficients_correlated:
   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
