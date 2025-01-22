@@ -28,7 +28,7 @@ class OurAnsaetze(Ansaetze):
                 return None
 
         @staticmethod
-        def build(w: np.ndarray, n_qubits: int):
+        def build(w: np.ndarray, n_qubits: int, noise_params=None):
             """
             Creates a Circuit19 ansatz.
 
@@ -65,7 +65,7 @@ class OurAnsaetze(Ansaetze):
             return None
 
         @staticmethod
-        def build(w: np.ndarray, n_qubits: int):
+        def build(w: np.ndarray, n_qubits: int, noise_params=None):
             """
             Creates a YZY ansatz.
 
@@ -84,6 +84,40 @@ class OurAnsaetze(Ansaetze):
                 qml.RY(w[w_idx], wires=q)
                 w_idx += 1
 
+    class Circuit_YZY_Entangling(Circuit):
+        @staticmethod
+        def n_params_per_layer(n_qubits: int) -> int:
+            return n_qubits * 3
+
+        @staticmethod
+        def get_control_indices(n_qubits: int) -> Optional[np.ndarray]:
+            return None
+
+        @staticmethod
+        def build(w: np.ndarray, n_qubits: int, noise_params=None):
+            """
+            Creates a YZY ansatz.
+
+            Length of flattened vector must be n_qubits*2
+
+            Args:
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*2)
+                n_qubits (int): number of qubits
+            """
+            w_idx = 0
+            for q in range(n_qubits):
+                qml.RY(w[w_idx], wires=q)
+                w_idx += 1
+                qml.RZ(w[w_idx], wires=q)
+                w_idx += 1
+                qml.RY(w[w_idx], wires=q)
+                w_idx += 1
+
+            if n_qubits > 1:
+                for q1 in range(n_qubits - 1):  # 0..n_qubits-2
+                    for q2 in range(q1 + 1, n_qubits):  # q1..n_qubits-1
+                        qml.CNOT(wires=[q1, q2])
+
     class Circuit_19_N(Ansaetze.Circuit_19):
         @staticmethod
         def n_params_per_layer(n_qubits: int) -> int:
@@ -94,7 +128,7 @@ class OurAnsaetze(Ansaetze):
                 return 2
 
         @staticmethod
-        def build(w: np.ndarray, n_qubits: int):
+        def build(w: np.ndarray, n_qubits: int, noise_params=None):
             """
             Creates a Circuit19 ansatz.
 
@@ -108,7 +142,9 @@ class OurAnsaetze(Ansaetze):
             n_params_per_layer = Ansaetze.Circuit_19.n_params_per_layer(n_qubits)
             for i in range(2):  # twice the number of params
                 Ansaetze.Circuit_19.build(
-                    w[i * n_params_per_layer : (i + 1) * n_params_per_layer], n_qubits
+                    w[i * n_params_per_layer : (i + 1) * n_params_per_layer],
+                    n_qubits,
+                    noise_params,
                 )
                 qml.Barrier(wires=range(n_qubits))
 
@@ -118,7 +154,7 @@ class OurAnsaetze(Ansaetze):
             return n_qubits * 6
 
         @staticmethod
-        def build(w: np.ndarray, n_qubits: int):
+        def build(w: np.ndarray, n_qubits: int, noise_params=None):
             """
             Creates a YZY ansatz.
 
@@ -131,7 +167,9 @@ class OurAnsaetze(Ansaetze):
             n_params_per_layer = OurAnsaetze.Circuit_YZY.n_params_per_layer(n_qubits)
             for i in range(2):  # twice the number of params
                 OurAnsaetze.Circuit_YZY.build(
-                    w[i * n_params_per_layer : (i + 1) * n_params_per_layer], n_qubits
+                    w[i * n_params_per_layer : (i + 1) * n_params_per_layer],
+                    n_qubits,
+                    noise_params,
                 )
                 qml.Barrier(wires=range(n_qubits))
 
@@ -141,7 +179,7 @@ class OurAnsaetze(Ansaetze):
             return n_qubits * 6
 
         @staticmethod
-        def build(w: np.ndarray, n_qubits: int):
+        def build(w: np.ndarray, n_qubits: int, noise_params=None):
             """
             Creates a Bansatz ansatz.
 
@@ -154,7 +192,9 @@ class OurAnsaetze(Ansaetze):
             n_params_per_layer = OurAnsaetze.Bansatz.n_params_per_layer(n_qubits)
             for i in range(2):  # twice the number of params
                 OurAnsaetze.Bansatz.build(
-                    w[i * n_params_per_layer : (i + 1) * n_params_per_layer], n_qubits
+                    w[i * n_params_per_layer : (i + 1) * n_params_per_layer],
+                    n_qubits,
+                    noise_params,
                 )
                 qml.Barrier(wires=range(n_qubits))
 
@@ -164,7 +204,7 @@ class OurAnsaetze(Ansaetze):
             return n_qubits * 6
 
         @staticmethod
-        def build(w: np.ndarray, n_qubits: int):
+        def build(w: np.ndarray, n_qubits: int, noise_params=None):
             """
             Creates a Hardware-Efficient ansatz, as proposed in
             https://arxiv.org/pdf/2309.03279
@@ -180,7 +220,9 @@ class OurAnsaetze(Ansaetze):
             )
             for i in range(2):  # twice the number of params
                 Ansaetze.Hardware_Efficient.build(
-                    w[i * n_params_per_layer : (i + 1) * n_params_per_layer], n_qubits
+                    w[i * n_params_per_layer : (i + 1) * n_params_per_layer],
+                    n_qubits,
+                    noise_params,
                 )
                 qml.Barrier(wires=range(n_qubits))
 
@@ -194,7 +236,7 @@ class OurAnsaetze(Ansaetze):
             return None
 
         @staticmethod
-        def build(w: np.ndarray, n_qubits: int):
+        def build(w: np.ndarray, n_qubits: int, noise_params=None):
             """
             Creates a multi-layered Circuit19 ansatz.
 
@@ -223,7 +265,7 @@ class OurAnsaetze(Ansaetze):
             return n_qubits * 6
 
         @staticmethod
-        def build(w: np.ndarray, n_qubits: int):
+        def build(w: np.ndarray, n_qubits: int, noise_params=None):
             """
             Creates a multi-layered Circuit19 ansatz.
 
@@ -237,7 +279,9 @@ class OurAnsaetze(Ansaetze):
 
             for i in range(6):
                 Ansaetze.Circuit_9.build(
-                    w[i * n_params_per_layer : (i + 1) * n_params_per_layer], n_qubits
+                    w[i * n_params_per_layer : (i + 1) * n_params_per_layer],
+                    n_qubits,
+                    noise_params,
                 )
                 qml.Barrier(wires=range(n_qubits))
 
@@ -249,7 +293,7 @@ class OurAnsaetze(Ansaetze):
             return n_qubits * 3 * OurAnsaetze.ML_Bansatz.layer_multiplier
 
         @staticmethod
-        def build(w: np.ndarray, n_qubits: int, layer_multiplier=1):
+        def build(w: np.ndarray, n_qubits: int, layer_multiplier=1, noise_params=None):
             """
             Creates a multi-layered Bansatz ansatz.
 
@@ -263,7 +307,9 @@ class OurAnsaetze(Ansaetze):
 
             for i in range(OurAnsaetze.ML_Bansatz.layer_multiplier):
                 OurAnsaetze.Bansatz.build(
-                    w[i * n_params_per_layer : (i + 1) * n_params_per_layer], n_qubits
+                    w[i * n_params_per_layer : (i + 1) * n_params_per_layer],
+                    n_qubits,
+                    noise_params,
                 )
                 qml.Barrier(wires=range(n_qubits))
 
@@ -275,7 +321,7 @@ class OurAnsaetze(Ansaetze):
             return n_qubits * 3 * OurAnsaetze.ML_Hardware_Efficient.layer_multiplier
 
         @staticmethod
-        def build(w: np.ndarray, n_qubits: int):
+        def build(w: np.ndarray, n_qubits: int, noise_params=None):
             """
             Creates a multi-layered Hardware-Efficient ansatz
 
@@ -291,7 +337,9 @@ class OurAnsaetze(Ansaetze):
 
             for i in range(OurAnsaetze.ML_Hardware_Efficient.layer_multiplier):
                 Ansaetze.Hardware_Efficient.build(
-                    w[i * n_params_per_layer : (i + 1) * n_params_per_layer], n_qubits
+                    w[i * n_params_per_layer : (i + 1) * n_params_per_layer],
+                    n_qubits,
+                    noise_params,
                 )
                 qml.Barrier(wires=range(n_qubits))
 
@@ -360,7 +408,7 @@ def sample_domain(domain: List[float], omegas: List[List[float]]) -> np.ndarray:
     dimensions = 1  # len(omega)
 
     if isinstance(omegas, int):
-        omegas = [o for o in range(omegas)]
+        omegas = [o for o in range(omegas + 1)]  # as zero frequency doesn't count
     # using the max of all dimensions because we want uniform sampling
     n_d = int(np.ceil(2 * np.max(np.abs(domain)) * np.max(omegas)))
 
@@ -392,7 +440,7 @@ def generate_fourier_series(
         Fourier series representation of the function.
     """
     if not isinstance(omegas, list):
-        omegas = [o for o in range(omegas)]
+        omegas = [o for o in range(omegas + 1)]  # zero frequency
     if not isinstance(coefficients, list):
         coefficients = [coefficients for _ in omegas]
 
