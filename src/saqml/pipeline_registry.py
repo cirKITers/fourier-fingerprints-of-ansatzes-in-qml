@@ -48,7 +48,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + create_model_visualization_pipeline(),
         "training": create_data_generation_pipeline()
         + create_training_pipeline()
-        + create_model_visualization_pipeline(),
+        + create_model_visualization_pipeline(),    
         "coefficients": create_data_generation_pipeline()
         + create_coefficients_pipeline()
         + create_visualization_pipeline(),
