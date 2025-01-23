@@ -440,7 +440,7 @@ def generate_fourier_series(
         Fourier series representation of the function.
     """
     if not isinstance(omegas, list):
-        omegas = [o for o in range(omegas + 1)]  # zero frequency
+        omegas = [o for o in range(omegas)]  # zero frequency
     if not isinstance(coefficients, list):
         coefficients = [coefficients for _ in omegas]
 
