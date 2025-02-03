@@ -56,12 +56,12 @@ for q in qubits:
                                 combined_df.qubits == q
                             ].coefficients_correlation_mean,
                         ),
-                        dict(
-                            label="Coeff. Correlation Max",
-                            values=combined_df[
-                                combined_df.qubits == q
-                            ].coefficients_correlation_max,
-                        ),
+                        # dict(
+                        #     label="Coeff. Correlation Max",
+                        #     values=combined_df[
+                        #         combined_df.qubits == q
+                        #     ].coefficients_correlation_max,
+                        # ),
                         # dict(label="mse (log)", values=df[df.qubits == q].mse),
                         dict(
                             label="Steps",
