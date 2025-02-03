@@ -3,8 +3,8 @@
 # first argument: seed
 
 # run experiments with all different circuits
-# for circuit in ML_Bansatz ML_Hardware_Efficient
-for circuit in Circuit_YZY_N Circuit_19_N Bansatz_N Strongly_Entangling Hardware_Efficient_N
+# for circuit in Circuit_YZY_N Circuit_19_N Bansatz_N Strongly_Entangling Hardware_Efficient_N
+for circuit in Hardware_Efficient Circuit_YZY_Entangling Circuit_YZY Circuit_19
 do
     echo "Running with Ansatz $circuit"
 
