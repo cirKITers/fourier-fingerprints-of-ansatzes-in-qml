@@ -357,7 +357,7 @@ def create_model(
     layer_multiplier: int,
     draw=False,
 ) -> Model:
-    if "Circuit_9" in circuit_type:
+    if circuit_type in ["Circuit_9"]:
         encoding = "RY"
 
     pqc = getattr(OurAnsaetze, circuit_type or "no_ansatz")
