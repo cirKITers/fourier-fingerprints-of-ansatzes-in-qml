@@ -127,7 +127,7 @@ def train_model(
                     df_coeffs,
                     pd.DataFrame(
                         {
-                            "coeffs": coeffs[len(coeffs) // 2 :].real,
+                            "coeffs": np.abs(coeffs[len(coeffs) // 2 :]),
                             "step": step,
                         },
                         index=df_coeffs_index,
