@@ -57,7 +57,7 @@ def train_model(
     )
     df_coeffs_index_names = ["freq"]
     df_coeffs_index = pd.MultiIndex.from_product(
-        [range(-model.degree, model.degree + 1)], names=df_coeffs_index_names
+        [range(model.degree + 1)], names=df_coeffs_index_names
     )
     df_params = pd.DataFrame()
     df_grads = pd.DataFrame()
@@ -127,7 +127,7 @@ def train_model(
                     df_coeffs,
                     pd.DataFrame(
                         {
-                            "coeffs": coeffs.real,
+                            "coeffs": coeffs[len(coeffs) // 2 :].real,
                             "step": step,
                         },
                         index=df_coeffs_index,
