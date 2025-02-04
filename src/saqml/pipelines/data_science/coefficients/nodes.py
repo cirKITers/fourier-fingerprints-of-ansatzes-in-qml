@@ -1,10 +1,8 @@
 from saqml.helpers.coefficients import Coefficients
 from qml_essentials.model import Model
-from qml_essentials.expressibility import Expressibility
 import pennylane.numpy as np
 from rich.progress import Progress
-import dcor
-import mlflow
+# import dcor
 
 import pandas as pd
 from typing import Dict, List
@@ -127,11 +125,13 @@ def correlate(df: pd.DataFrame, method: str) -> pd.DataFrame:
     elif method == "dcor":
         data = df.to_numpy().transpose()  # -> (n_rvs, n_samples)
 
-        dcor_data = lambda rv: dcor.rowwise(
-            dcor.distance_correlation,
-            data,
-            np.tile(rv, (data.shape[0], 1)),  # repeat over n_rvs
-        )
+        raise NotImplementedError()
+        # temporarily disabled because of issues with llvm
+        # dcor_data = lambda rv: dcor.rowwise(
+        #     dcor.distance_correlation,
+        #     data,
+        #     np.tile(rv, (data.shape[0], 1)),  # repeat over n_rvs
+        # )
 
         # TODO: this can get really slow for large n_rvs
         result = pd.DataFrame(
