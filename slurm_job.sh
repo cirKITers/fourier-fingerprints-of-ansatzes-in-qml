@@ -24,8 +24,7 @@
 # output path
 #SBATCH --output="logs/slurm/slurm-%j-%x.out"
 
-module load compiler/llvm
-module load devel/python/3.11.7
+~/saqml/activate.sh
 ~/saqml/.venv/bin/python -m kedro run --pipeline training --params=$1
 
 # Done
