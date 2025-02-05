@@ -53,7 +53,6 @@ plotly = "^5.22.0"
 tenacity = "^8.5.0"
 kaleido = "0.2.1"
 qml-essentials = "^0.1.20"
-dcor = "^0.6"
 
 [build-system]
 requires = ["poetry-core"]
