@@ -11,7 +11,7 @@
 #
 # expected duration of the job
 #              hh:mm:ss
-#SBATCH --time=10:00:00
+#SBATCH --time=12:00:00
 # 
 # partition the job will run on
 #SBATCH --partition single
@@ -24,8 +24,10 @@
 # output path
 #SBATCH --output="logs/slurm/slurm-%j-%x.out"
 
-~/saqml/activate.sh
-~/saqml/.venv/bin/python -m kedro run --pipeline training --params=$1
+# module load compiler/llvm
+module load devel/python/3.11.7
+
+~/saqml/.venv/bin/python -m kedro run --pipeline coefficients --params=$1
 
 # Done
 exit 0
