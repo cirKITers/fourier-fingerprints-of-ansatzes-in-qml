@@ -32,8 +32,8 @@ coefficients_df = coefficients_df.rename(
 )
 
 combined_df = pd.merge(training_df, coefficients_df, on=["ansatz", "qubits", "seed"])
-combined_df.sort_values(by="qubits", inplace=True)
 combined_df = assign_ansatz_id(combined_df)
+combined_df.sort_values(by="ansatz_id", inplace=True)
 
 qubits = combined_df.qubits.unique()
 ansaetze = combined_df.ansatz.unique()
@@ -83,66 +83,73 @@ for q in qubits:
                 current_dataset.coefficients_correlation_variance.item()
             )
             pca_dataset.loc[idx, "steps"] = current_dataset.steps.item()
+            pca_dataset.loc[idx, "mse_min"] = current_dataset.mse_min.item()
 
             idx += 1
 
         pass
 
-fig = go.Figure()
-
-symbols = get_symbol_iterator()
-for q in qubits:
-    main_colors_it, _ = get_color_iterator()
-    symbol = next(symbols)
-    for ansatz_id in ansatz_ids:
-        fig.add_scatter(
-            x=[
-                pca_dataset[
-                    (pca_dataset.ansatz_id == ansatz_id) & (pca_dataset.qubits == q)
-                ].corr_mean.mean()
-            ],
-            y=[
-                pca_dataset[
-                    (pca_dataset.ansatz_id == ansatz_id) & (pca_dataset.qubits == q)
-                ].steps.mean()
-            ],
-            error_x=dict(
-                type="data",
-                array=[
+for metric in ["steps", "mse_min"]:
+    fig = go.Figure()
+    symbols = get_symbol_iterator()
+    for q in qubits:
+        main_colors_it, _ = get_color_iterator()
+        symbol = next(symbols)
+        for ansatz_id in ansatz_ids:
+            fig.add_scatter(
+                x=[
                     pca_dataset[
                         (pca_dataset.ansatz_id == ansatz_id) & (pca_dataset.qubits == q)
-                    ].corr_mean.std()
+                    ].corr_mean.mean()
                 ],
-                visible=True,
-            ),
-            error_y=dict(
-                type="data",
-                array=[
+                y=[
                     pca_dataset[
                         (pca_dataset.ansatz_id == ansatz_id) & (pca_dataset.qubits == q)
-                    ].steps.std()
+                    ][metric].mean()
                 ],
-                visible=True,
-            ),
-            mode="markers",
-            name=f"{ansaetze[ansatz_id]}, {q} Qubits",
-            marker=dict(color=next(main_colors_it), symbol=symbol),
-        )
+                error_x=dict(
+                    type="data",
+                    array=[
+                        pca_dataset[
+                            (pca_dataset.ansatz_id == ansatz_id)
+                            & (pca_dataset.qubits == q)
+                        ].corr_mean.std()
+                    ],
+                    visible=True,
+                ),
+                error_y=dict(
+                    type="data",
+                    array=[
+                        pca_dataset[
+                            (pca_dataset.ansatz_id == ansatz_id)
+                            & (pca_dataset.qubits == q)
+                        ][metric].std()
+                    ],
+                    visible=True,
+                ),
+                mode="markers",
+                name=f"{ansaetze[ansatz_id]}, {q} Qubits",
+                marker=dict(color=next(main_colors_it), symbol=symbol),
+            )
 
-fig.update_layout(
-    title_text="Direct Correlation",
-    template="plotly_white",
-    xaxis=dict(
-        title="Correlation Mean",
-    ),
-    yaxis=dict(
-        title="Steps",
-        showgrid=False,
-    ),
-    showlegend=True,
-)
-fig.show()
+    fig.update_layout(
+        title_text="Direct Correlation",
+        template="plotly_white",
+        xaxis=dict(
+            title="Correlation Mean",
+        ),
+        yaxis=dict(
+            title=metric.title(),
+            showgrid=False,
+        ),
+        xaxis_type="log",
+        yaxis_type="log",
+        showlegend=True,
+    )
 
-save_fig(
-    fig, "direct_correlation", coefficient_run_ids + training_run_ids, experiment_id
-)
+    save_fig(
+        fig,
+        f"direct_correlation_{metric}",
+        coefficient_run_ids + training_run_ids,
+        experiment_id,
+    )
