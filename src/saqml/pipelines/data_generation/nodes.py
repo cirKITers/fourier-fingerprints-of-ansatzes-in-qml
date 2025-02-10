@@ -4,6 +4,7 @@ from qml_essentials.ansaetze import Ansaetze, Circuit
 from typing import List, Optional, Union, Callable
 import pennylane as qml
 import pennylane.numpy as np
+import pandas as pd
 
 import logging
 
@@ -422,7 +423,11 @@ def sample_domain(domain: List[float], omegas: List[List[float]]) -> np.ndarray:
 def generate_fourier_series(
     domain_samples: np.ndarray,
     omegas: List[List[float]],
-    coefficients: List[List[float]],
+    coefficients_mean: float = 0.5,
+    coefficients_variance: float = 0.0,
+    coefficients_distribution: Optional[str] = None,
+    offset: bool = True,
+    seed: Optional[int] = 1000,
 ) -> np.ndarray:
     """
     Generates the Fourier series representation of a function.
@@ -439,17 +444,36 @@ def generate_fourier_series(
     np.ndarray
         Fourier series representation of the function.
     """
+    rng = np.random.default_rng(seed)
     if not isinstance(omegas, list):
         omegas = [o for o in range(omegas)]  # zero frequency
-    if not isinstance(coefficients, list):
-        coefficients = [coefficients for _ in omegas]
+
+    if coefficients_distribution is None:
+        if isinstance(coefficients_mean, float):
+            coefficients = np.array([coefficients for _ in omegas])
+        elif isinstance(coefficients_mean, list):
+            coefficients = np.array(coefficients_mean)
+        else:
+            raise ValueError(
+                "coefficients_distribution must be specified if coefficients_mean is not a list or float"
+            )
+    elif coefficients_distribution == "uniform":
+        coefficients = rng.uniform(
+            coefficients_mean - coefficients_variance,
+            coefficients_mean + coefficients_variance,
+            len(omegas),
+        )
+    elif coefficients_distribution == "normal":
+        coefficients = rng.normal(coefficients_mean, coefficients_variance, len(omegas))
+
+    if offset:
+        coefficients[0] = 0.0
 
     assert len(omegas) == len(
         coefficients
     ), "Number of frequencies and coefficients must match"
 
     omegas = np.array(omegas)
-    coefficients = np.array(coefficients)
 
     def y(x: np.ndarray) -> float:
         """
@@ -471,4 +495,7 @@ def generate_fourier_series(
 
     values = np.stack([y(x) for x in domain_samples])
 
-    return values
+    return {
+        "fourier_series": values,
+        "target": pd.DataFrame({"omegas": omegas, "coefficients": coefficients}),
+    }
