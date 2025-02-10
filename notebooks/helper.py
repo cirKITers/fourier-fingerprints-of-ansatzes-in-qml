@@ -85,6 +85,7 @@ def get_training_df(run_ids):
             "qubits",
             "seed",
             "mse",
+            "mse_min",
             "steps",
         ]
     )
@@ -110,6 +111,7 @@ def get_training_df(run_ids):
         mse_values[: len(mse_hist)] = [entity.value for entity in mse_hist]
 
         df.loc[it, "mse"] = mse_values
+        df.loc[it, "mse_min"] = np.min(mse_values[: len(mse_hist)])
         df.loc[it, "steps"] = len(mse_hist)
 
     return df
