@@ -46,9 +46,16 @@ def create_pipeline() -> Pipeline:
                 inputs={
                     "domain_samples": "domain_samples",
                     "omegas": "params:data.omegas",
-                    "coefficients": "params:data.amplitude",
+                    "coefficients_mean": "params:data.coefficients.mean",
+                    "coefficients_variance": "params:data.coefficients.variance",
+                    "coefficients_distribution": "params:data.coefficients.distribution",
+                    "offset": "params:data.offset",
+                    "seed": "params:data.coefficients.seed",
                 },
-                outputs="fourier_series",
+                outputs={
+                    "fourier_series": "fourier_series",
+                    "target": "target",
+                },
                 name="generate_fourier_series",
             ),
         ]
