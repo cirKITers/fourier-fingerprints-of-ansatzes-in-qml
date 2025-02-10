@@ -8,6 +8,12 @@ model_str:
     type: text.TextDataset
     filepath: "model.txt"
 
+target:
+  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+  dataset:
+    type: pandas.CSVDataset
+    filepath: "target.csv"
+
 trained_coefficients:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
   dataset:
