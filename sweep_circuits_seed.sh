@@ -12,5 +12,5 @@ do
     # ./sweep_qubits_circuits_seed.sh $circuit $1
 
     # use together with coeffexpr pipeline
-    ./sweep_layer_multiplier.sh $circuit $1
+    ./sweep_training_seed.sh $circuit $1
 done
