@@ -446,7 +446,7 @@ def generate_fourier_series(
     """
     rng = np.random.default_rng(seed)
     if not isinstance(omegas, list):
-        omegas = [o for o in range(omegas)]  # zero frequency
+        omegas = [o for o in range(omegas + 1)]  # zero frequency
 
     if coefficients_distribution is None:
         if isinstance(coefficients_mean, float):
