@@ -54,7 +54,7 @@ def create_pipeline() -> Pipeline:
                 },
                 outputs={
                     "fourier_series": "fourier_series",
-                    "target": "target",
+                    "target": "coeffs_target",
                 },
                 name="generate_fourier_series",
             ),
