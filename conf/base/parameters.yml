@@ -4,8 +4,8 @@ data:
   offset: False
   coefficients:
     distribution: uniform # None, uniform, normal
-    mean: 0.5 # if None, can also be an array with len(omegas)
-    variance: 0.5 # if uniform mean+-variance defines limit
+    mean: 0.25 # if None, can also be an array with len(omegas)
+    variance: 0.25 # if uniform mean+-variance defines limit
     seed: 1000
 
 coefficients:
