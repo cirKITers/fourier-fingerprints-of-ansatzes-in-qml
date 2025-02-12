@@ -139,11 +139,14 @@ def train_model(
                 ]
             )
 
-            fcmse_val = fcmse(
-                coeffs[len(coeffs) // 2 :], coeffs_target.coefficients.to_numpy()
-            )
-
-            mlflow.log_metric("fcmse", fcmse_val, step)
+            try:
+                fcmse_val = fcmse(
+                    np.abs(coeffs[len(coeffs) // 2 :]),
+                    coeffs_target.coefficients.to_numpy(),
+                )
+                mlflow.log_metric("fcmse", fcmse_val, step)
+            except Exception as e:
+                print(e)
 
         # log cost
         log.debug(f"Cost in step {step}: {cost_val}")
