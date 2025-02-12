@@ -9,7 +9,7 @@ data:
     seed: 1000
 
 coefficients:
-  samples: 300 #samples per parameter
+  samples: 400 #samples per parameter
   correlation_method: "pearson" #dcor, pearson, spearman
   triu: True # only use  the upper triangular part of the correlation matrix?
 
@@ -40,7 +40,7 @@ seed: 1000
 n_control_values: 0 # for sweeping control values
 
 training:
-  steps: 1000
+  steps: 2000
   learning_rate: 0.01
   batch_size: -1
   log_entangling: False
