@@ -36,6 +36,7 @@ def train_model(
     model: Model,
     domain_samples: np.ndarray,
     fourier_series: np.ndarray,
+    coeffs_target: pd.DataFrame,
     noise_params: Dict,
     steps: int,
     learning_rate: float,
@@ -67,6 +68,9 @@ def train_model(
 
     def mse(prediction, target):
         return np.mean((prediction - target) ** 2)
+
+    def fcmse(coeffs, target):
+        return mse(coeffs, target)
 
     def cost(params, **kwargs):
         return mse(model(params=params, **kwargs), fourier_series)
@@ -134,6 +138,12 @@ def train_model(
                     ),
                 ]
             )
+
+            fcmse_val = fcmse(
+                coeffs[len(coeffs) // 2 :], coeffs_target.coefficients.to_numpy()
+            )
+
+            mlflow.log_metric("fcmse", fcmse_val, step)
 
         # log cost
         log.debug(f"Cost in step {step}: {cost_val}")
