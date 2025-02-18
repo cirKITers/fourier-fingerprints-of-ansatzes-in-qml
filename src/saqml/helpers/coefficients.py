@@ -1,9 +1,7 @@
 from typing import Callable, Optional, List, Any
 from qml_essentials.coefficients import Coefficients as QMLCoefficients
 
-import pennylane as qml
 import pennylane.numpy as np
-from functools import partial
 import pandas as pd
 from rich.progress import Progress, Task
 
