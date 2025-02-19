@@ -26,7 +26,7 @@ class Coefficients:
             np.ndarray: The Fourier coefficients of the model.
         """
         # freeze the model for the specific parameters
-        coeffs = QMLCoefficients.sample_coefficients(model, shift=True, trim=True, **kwargs)
+        coeffs = QMLCoefficients.get_spectrum(model, shift=True, trim=True, **kwargs)
 
         # reorder coefficients such that [..., c_-1, c_0, c_1, ...]
         # coeffs[: model.degree + 1] = [*coeffs[1 : model.degree + 1], coeffs[0]]
