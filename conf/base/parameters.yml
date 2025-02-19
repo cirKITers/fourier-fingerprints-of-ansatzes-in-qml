@@ -9,7 +9,7 @@ data:
     seed: 1000
 
 coefficients:
-  samples: 400 #samples per parameter
+  samples: 300 #samples per parameter
   correlation_method: "pearson" #dcor, pearson, spearman
   triu: True # only use  the upper triangular part of the correlation matrix?
 
