@@ -1,6 +1,7 @@
 from qml_essentials.model import Model
 
-import pennylane.numpy as np
+import pennylane.numpy as pnp
+import numpy as np
 import plotly.graph_objects as go
 import pandas as pd
 import mlflow
@@ -45,12 +46,28 @@ def visualize_coefficients_correlated(
     else:
         df_filtered = df.filter(regex="c.*", axis=0).filter(regex="c.*", axis=1)
 
+    nc = df_filtered.shape[0]
+    weights = np.flip(np.mgrid[0:nc:1, 0:nc:1].sum(axis=0) / ((nc - 1) * 2))
+    np.fill_diagonal(weights, 1)
+    df_filtered_weighted = df_filtered * weights
+
     if triu:
         for i in range(df_filtered.shape[0]):
             for j in range(df_filtered.shape[1]):
                 if i <= j:
-                    df_filtered.iloc[i, j] = np.nan
+                    df_filtered.iloc[i, j] = pnp.nan
+                    df_filtered_weighted.iloc[i, j] = pnp.nan
         df_filtered = df_filtered.dropna(how="all", axis=0).dropna(how="all", axis=1)
+        df_filtered_weighted = df_filtered_weighted.dropna(how="all", axis=0).dropna(
+            how="all", axis=1
+        )
+
+    mlflow.log_metric(
+        "coefficients_correlation_weighted_variance", df_filtered_weighted.var().var()
+    )
+    mlflow.log_metric(
+        "coefficients_correlation_weighted_mean", df_filtered_weighted.mean().mean()
+    )
 
     mlflow.log_metric("coefficients_correlation_variance", df_filtered.var().var())
     mlflow.log_metric("coefficients_correlation_mean", df_filtered.mean().mean())
@@ -81,7 +98,7 @@ def visualize_parameters_correlated(
         for i in range(df_filtered.shape[0]):
             for j in range(df_filtered.shape[1]):
                 if i <= j:
-                    df_filtered.iloc[i, j] = np.nan
+                    df_filtered.iloc[i, j] = pnp.nan
         df_filtered = df_filtered.dropna(how="all", axis=0).dropna(how="all", axis=1)
 
     mlflow.log_metric("parameters_correlation_variance", df_filtered.var().var())
@@ -166,8 +183,8 @@ def visualize_coefficients_correlated_control(
 
 def visualize_model(
     model: Model,
-    domain_samples: np.ndarray,
-    fourier_series: np.ndarray,
+    domain_samples: pnp.ndarray,
+    fourier_series: pnp.ndarray,
     noise_params: Dict,
 ) -> go.Figure:
     fig = go.Figure(
