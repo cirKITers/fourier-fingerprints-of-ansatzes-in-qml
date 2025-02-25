@@ -12,6 +12,7 @@ coefficients:
   samples: 300 #samples per parameter
   correlation_method: "pearson" #dcor, pearson, spearman
   triu: True # only use  the upper triangular part of the correlation matrix?
+  linear_decay: False
 
 expressibility:
   samples: 300 #samples per parameter scaling exp. with n qubits
