@@ -7,6 +7,7 @@ from .nodes import (
     normalize,
     sweep_control_values,
     calculate_decay,
+    weight_coefficients,
 )
 
 
@@ -54,12 +55,29 @@ def create_pipeline() -> Pipeline:
                 name="correlate_coefficients",
             ),
             node(
+                func=weight_coefficients,
+                inputs={
+                    "coefficients_correlated": "coefficients_correlated",
+                    "coefficients_decay": "coefficients_decay",
+                },
+                outputs="coefficients_correlated_weighted",
+                name="weight_coefficients",
+            ),
+            node(
                 func=normalize,
                 inputs={
                     "df": "coefficients_correlated",
                 },
                 outputs="coefficients_correlated_normalized",
                 name="normalize_coefficients",
+            ),
+            node(
+                func=normalize,
+                inputs={
+                    "df": "coefficients_correlated_weighted",
+                },
+                outputs="coefficients_correlated_weighted_normalized",
+                name="normalize_coefficients_weighted",
             ),
         ]
     )

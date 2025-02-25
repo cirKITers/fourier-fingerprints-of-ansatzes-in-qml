@@ -1,6 +1,7 @@
 from saqml.helpers.coefficients import Coefficients
 from qml_essentials.model import Model
 import pennylane.numpy as np
+import numpy as nnp
 from rich.progress import Progress
 
 # import dcor
@@ -118,6 +119,24 @@ def calculate_decay(df: pd.DataFrame) -> pd.DataFrame:
     coefficients_decay = df_filtered.mean()
 
     return coefficients_decay
+
+
+def weight_coefficients(
+    coefficients_correlated: pd.DataFrame, coefficients_decay: pd.DataFrame
+) -> pd.DataFrame:
+    df_filtered = coefficients_correlated.filter(regex="c_\+?\d+", axis=0).filter(
+        regex="c_\+?\d+", axis=1
+    )
+
+    nc = df_filtered.shape[0]
+    weights = nnp.mgrid[0:nc:1, 0:nc:1].sum(axis=0) / ((nc - 1) * 2)
+    np.fill_diagonal(weights, 1)
+    # weights = np.concat((weights, np.flip(weights, axis=0)), axis=0)
+    # weights = np.concat((weights, np.flip(weights, axis=1)), axis=1)
+
+    df_filtered_weighted = df_filtered * weights
+
+    return df_filtered_weighted
 
 
 def correlate(df: pd.DataFrame, method: str) -> pd.DataFrame:
