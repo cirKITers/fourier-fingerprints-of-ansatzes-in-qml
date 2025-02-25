@@ -6,6 +6,7 @@ from .nodes import (
     correlate,
     normalize,
     sweep_control_values,
+    calculate_decay,
 )
 
 
@@ -34,6 +35,14 @@ def create_pipeline() -> Pipeline:
                 },
                 outputs="coefficients_correlated_control",
                 name="sweep_control_values",
+            ),
+            node(
+                func=calculate_decay,
+                inputs={
+                    "df": "coefficients",
+                },
+                outputs="coefficients_decay",
+                name="calculate_decay",
             ),
             node(
                 func=correlate,

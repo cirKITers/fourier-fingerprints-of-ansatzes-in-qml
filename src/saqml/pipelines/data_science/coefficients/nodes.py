@@ -2,6 +2,7 @@ from saqml.helpers.coefficients import Coefficients
 from qml_essentials.model import Model
 import pennylane.numpy as np
 from rich.progress import Progress
+
 # import dcor
 
 import pandas as pd
@@ -94,6 +95,29 @@ def sample_coefficients(model: Model, samples: int, seed: int, mean: float = 0):
         df.loc[i] = coefficients[i]
 
     return df
+
+
+def calculate_decay(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate the decay of the coefficients in the given dataframe.
+
+    The decay is calculated by taking the mean of the coefficients for each degree.
+    The coefficients are filtered to only include positive coefficients and the zero frequency.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Dataframe containing the coefficients to calculate the decay of.
+
+    Returns
+    -------
+    dict
+        A dictionary containing the decay of the coefficients.
+    """
+    df_filtered = df.filter(regex="c_\+?\d+", axis=1)
+    coefficients_decay = df_filtered.mean()
+
+    return coefficients_decay
 
 
 def correlate(df: pd.DataFrame, method: str) -> pd.DataFrame:

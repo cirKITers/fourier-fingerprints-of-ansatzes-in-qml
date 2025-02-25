@@ -6,6 +6,7 @@ from .nodes import (
     visualize_parameters_coefficients_correlated,
     visualize_coefficients_correlated_control,
     visualize_model,
+    visualize_coefficients_decay,
 )
 
 
@@ -22,6 +23,14 @@ def create_pipeline() -> Pipeline:
                 },
                 outputs="fig_coefficients_correlated",
                 name="visualize_coefficients_correlated",
+            ),
+            node(
+                func=visualize_coefficients_decay,
+                inputs={
+                    "df": "coefficients_decay",
+                },
+                outputs="fig_coefficients_decay",
+                name="visualize_coefficients_decay",
             ),
             node(
                 func=visualize_parameters_correlated,

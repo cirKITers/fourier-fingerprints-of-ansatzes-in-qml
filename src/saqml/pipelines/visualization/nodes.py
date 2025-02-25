@@ -36,6 +36,20 @@ def visualize_heatmap_filtered(
     return fig
 
 
+def visualize_coefficients_decay(df: pd.DataFrame) -> go.Figure:
+    for i, c in enumerate(df):
+        mlflow.log_metric(f"coefficients_decay", c, step=i)
+
+    fig = go.Figure(data=go.Scatter(x=df.index, y=df, mode="markers+lines"))
+    fig.update_layout(
+        template="plotly_white",
+        title="Coefficient Mean",
+        yaxis_type="log",
+    )
+
+    return fig
+
+
 def visualize_coefficients_correlated(
     df: pd.DataFrame, model: Model, discard_negative=True, triu=False
 ) -> go.Figure:
