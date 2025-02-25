@@ -124,15 +124,38 @@ def calculate_decay(df: pd.DataFrame) -> pd.DataFrame:
 def weight_coefficients(
     coefficients_correlated: pd.DataFrame, coefficients_decay: pd.DataFrame
 ) -> pd.DataFrame:
+    """
+    Weight the correlated coefficients by their decay.
+
+    The weights are calculated as the product of the decay of the two coefficients
+    being correlated. The weights are then normalized to have a maximum value of 1.
+    The diagonal of the weights is set to 1.
+
+    Parameters
+    ----------
+    coefficients_correlated : pd.DataFrame
+        Dataframe containing the correlated coefficients.
+    coefficients_decay : pd.DataFrame
+        Dataframe containing the decay of the coefficients.
+
+    Returns
+    -------
+    pd.DataFrame
+        Dataframe containing the weighted correlated coefficients.
+    """
     df_filtered = coefficients_correlated.filter(regex="c_\+?\d+", axis=0).filter(
         regex="c_\+?\d+", axis=1
     )
 
     nc = df_filtered.shape[0]
-    weights = nnp.mgrid[0:nc:1, 0:nc:1].sum(axis=0) / ((nc - 1) * 2)
-    np.fill_diagonal(weights, 1)
+    weights = np.flip(nnp.mgrid[0:nc:1, 0:nc:1].sum(axis=0) / ((nc - 1) * 2))
     # weights = np.concat((weights, np.flip(weights, axis=0)), axis=0)
     # weights = np.concat((weights, np.flip(weights, axis=1)), axis=1)
+    for i in range(df_filtered.shape[0]):
+        for j in range(df_filtered.shape[1]):
+            weights[i, j] = coefficients_decay.iloc[i] * coefficients_decay.iloc[j]
+    weights /= weights.max()
+    np.fill_diagonal(weights, 1)
 
     df_filtered_weighted = df_filtered * weights
 
