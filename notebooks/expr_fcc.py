@@ -138,20 +138,20 @@ for metric in ["steps", "mse_min"]:
             go.Box(
                 x=sorted_pca_dataset.ansatz,
                 y=sorted_pca_dataset.corr_mean,
-                name=f"Corr. Mean",
+                name=f"FCC",
                 marker=dict(color=rgb_to_rgba(next(main_colors_it), 0.5)),
                 yaxis="y",
-                offsetgroup="Correlation Weighted",
+                offsetgroup="FCC Weighted",
             ),
         )
         fig.add_trace(
             go.Box(
                 x=sorted_pca_dataset.ansatz,
                 y=sorted_pca_dataset.corr_w_mean,
-                name=f"Corr. Weight. Mean",
+                name=f"FCC Weighted",
                 marker=dict(color=rgb_to_rgba(next(main_colors_it), 0.5)),
                 yaxis="y",
-                offsetgroup="Correlation",
+                offsetgroup="FCC",
             ),
         )
 
@@ -177,7 +177,7 @@ for metric in ["steps", "mse_min"]:
         fig.update_yaxes(title_text=f"Correlation", secondary_y=False)
         fig.update_yaxes(title_text="KL Divergence", secondary_y=True)
         fig.update_layout(
-            title=f"Correlation and Expressibility ({q} Qubits)",
+            title=f"FCC and Expressibility ({q} Qubits, Metric: {metric})",
             template="plotly_white",
             legend=dict(
                 orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
@@ -196,14 +196,14 @@ for metric in ["steps", "mse_min"]:
                 anchor="x",  # yaxis = "y3", attached to x-axis
                 overlaying="y",
             ),
-            xaxis=dict(title="Circuits", domain=[0.15, 0.9], tickangle=30),
+            xaxis=dict(title="Circuits", domain=[0.15, 0.9], tickangle=20),
             boxmode="group",
-            # margin=dict(l=150, r=30, b=30),
+            margin=dict(l=50, r=0, b=30, t=100),
         )
 
         save_fig(
             fig,
-            f"cor_expr_{metric}_c{cutoff_steps}_q{q}",
+            f"fcc_expr_{metric}_c{cutoff_steps}_q{q}",
             coefficient_run_ids + training_run_ids,
             experiment_id,
         )
