@@ -41,7 +41,6 @@ def create_pipeline() -> Pipeline:
                 func=calculate_decay,
                 inputs={
                     "df": "coefficients",
-                    "linear": "params:coefficients.linear_decay",
                 },
                 outputs="coefficients_decay",
                 name="calculate_decay",
@@ -68,6 +67,7 @@ def create_pipeline() -> Pipeline:
                 inputs={
                     "coefficients_correlated": "coefficients_correlated_normalized",
                     "coefficients_decay": "coefficients_decay",
+                    "linear": "params:coefficients.linear_decay",
                 },
                 outputs="coefficients_correlated_weighted_normalized",
                 name="weight_coefficients",
