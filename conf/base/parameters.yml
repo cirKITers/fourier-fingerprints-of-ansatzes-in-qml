@@ -45,7 +45,7 @@ training:
   learning_rate: 0.01
   batch_size: -1
   log_entangling: False
-  log_coefficients: True # track coefficients during training?
+  log_coefficients: False # track coefficients during training?
   positive_coeffs_only: True
   convergence:
     threshold: -1 # threshold for the cost, -1 to disable
