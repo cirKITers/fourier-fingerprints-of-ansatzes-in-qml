@@ -58,6 +58,9 @@ pca_dataset = pd.DataFrame(
         "corr_var",
         "kl_divergence",
         "steps",
+        "steps_var",
+        "mse_min",
+        "mse_min_var",
     ]
 )
 idx = 0
@@ -96,7 +99,9 @@ for q in qubits:
                 current_dataset.coefficients_correlation_variance.mean()
             )
             pca_dataset.loc[idx, "steps"] = current_dataset.steps.mean()
+            pca_dataset.loc[idx, "steps_var"] = current_dataset.steps.var()
             pca_dataset.loc[idx, "mse_min"] = current_dataset.mse_min.mean()
+            pca_dataset.loc[idx, "mse_min_var"] = current_dataset.mse_min.var()
             pca_dataset.loc[idx, "kl_divergence"] = current_dataset.kl_divergence.mean()
 
             idx += 1
@@ -104,60 +109,70 @@ for q in qubits:
 
 for metric in ["steps", "mse_min"]:
     sorted_pca_dataset = pca_dataset.sort_values(by=metric, ascending=False)
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    fig = make_subplots()
     symbols = get_symbol_iterator()
     for q in qubits:
         symbol = next(symbols)
         main_colors_it, _ = get_color_iterator()
         fig.add_trace(
-            go.Scatter(
+            go.Box(
                 x=sorted_pca_dataset.ansatz,
-                y=sorted_pca_dataset.corr_mean,
-                name=f"Corr. Mean",
-                mode="markers",
-                marker=dict(color=next(main_colors_it), symbol=symbol),
+                y=sorted_pca_dataset[metric],
+                name=f"Metric: {metric.replace('_', ' ')}",
+                marker=dict(color=rgb_to_rgba(next(main_colors_it), 0.5)),
+                yaxis="y3",
+                offsetgroup="Metric",
             ),
-            secondary_y=False,
         )
         fig.add_trace(
-            go.Scatter(
-                x=sorted_pca_dataset.ansatz,
-                y=sorted_pca_dataset.corr_w_mean,
-                name=f"Corr. Weight. Mean",
-                mode="markers",
-                marker=dict(color=next(main_colors_it), symbol=symbol),
-            ),
-            secondary_y=False,
-        )
-        fig.add_trace(
-            go.Scatter(
+            go.Box(
                 x=sorted_pca_dataset.ansatz,
                 y=sorted_pca_dataset.kl_divergence,
                 name=f"KL Divergence",
-                mode="markers",
-                marker=dict(color=next(main_colors_it), symbol=symbol),
+                marker=dict(color=rgb_to_rgba(next(main_colors_it), 0.5)),
+                yaxis="y2",
+                offsetgroup="KL Divergence",
             ),
-            secondary_y=True,
+        )
+        fig.add_trace(
+            go.Box(
+                x=sorted_pca_dataset.ansatz,
+                y=sorted_pca_dataset.corr_mean,
+                name=f"Corr. Mean",
+                marker=dict(color=rgb_to_rgba(next(main_colors_it), 0.5)),
+                yaxis="y",
+                offsetgroup="Correlation Weighted",
+            ),
+        )
+        fig.add_trace(
+            go.Box(
+                x=sorted_pca_dataset.ansatz,
+                y=sorted_pca_dataset.corr_w_mean,
+                name=f"Corr. Weight. Mean",
+                marker=dict(color=rgb_to_rgba(next(main_colors_it), 0.5)),
+                yaxis="y",
+                offsetgroup="Correlation",
+            ),
         )
 
-        fig.add_annotation(
-            dict(
-                x=len(ansaetze),
-                y=1.5,
-                xref="x",
-                yref="y",
-                ax=2,
-                ay=1.5,
-                axref="x",
-                ayref="y",
-                showarrow=True,
-                arrowhead=2,
-                arrowsize=1,
-                arrowwidth=2,
-                arrowcolor="gray",
-                text="Low MSE",
-            )
-        )
+        # fig.add_annotation(
+        #     dict(
+        #         x=len(ansaetze),
+        #         y=1.5,
+        #         xref="x",
+        #         yref="y",
+        #         ax=2,
+        #         ay=1.5,
+        #         axref="x",
+        #         ayref="y",
+        #         showarrow=True,
+        #         arrowhead=2,
+        #         arrowsize=1,
+        #         arrowwidth=2,
+        #         arrowcolor="gray",
+        #         text="Low MSE",
+        #     )
+        # )
 
         fig.update_yaxes(title_text=f"Correlation", secondary_y=False)
         fig.update_yaxes(title_text="KL Divergence", secondary_y=True)
@@ -167,6 +182,22 @@ for metric in ["steps", "mse_min"]:
             legend=dict(
                 orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
             ),
+            yaxis=dict(title="FCC"),  # yaxis = "y", attached to x-axis
+            yaxis2=dict(
+                position=0,
+                title="KL Divergence",  # yaxis = "y2", pos 0, free from x-axis
+                side="left",
+                anchor="free",
+                overlaying="y",
+            ),
+            yaxis3=dict(
+                title="Metric",
+                side="right",
+                anchor="x",  # yaxis = "y3", attached to x-axis
+                overlaying="y",
+            ),
+            xaxis=dict(title="Circuits", domain=[0.15, 0.9], tickangle=30),
+            boxmode="group",
             # margin=dict(l=150, r=30, b=30),
         )
 
