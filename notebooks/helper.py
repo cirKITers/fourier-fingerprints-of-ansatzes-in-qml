@@ -77,7 +77,7 @@ def rgb_to_rgba(rgb_value: str, alpha: float):
     return f"rgba{rgb_value[3:-1]}, {alpha})"
 
 
-def get_training_df(run_ids):
+def get_training_df(run_ids, cutoff_mse=-1, cutoff_steps=-1):
     df = pd.DataFrame(
         columns=[
             "run_id",
@@ -110,28 +110,46 @@ def get_training_df(run_ids):
 
         mse_values[: len(mse_hist)] = [entity.value for entity in mse_hist]
 
-        df.loc[it, "mse"] = mse_values
+        df.loc[it, "mse"] = mse_values[mse_values > cutoff_mse]
         df.loc[it, "mse_min"] = np.min(mse_values[: len(mse_hist)])
-        df.loc[it, "steps"] = len(mse_hist)
+        df.loc[it, "steps"] = mse_values[: len(mse_hist)][
+            mse_values > cutoff_steps
+        ].size
 
     return df
 
 
-def get_coefficient_df(run_ids):
-    df = pd.DataFrame(
-        columns=[
-            "run_id",
-            "ansatz",
-            "qubits",
-            "layer_multiplier",
-            "seed",
-            "kl_divergence",
-            "coefficients_correlation_mean",
-            "coefficients_correlation_max",
-            "coefficients_correlation_min",
-            "coefficients_correlation_variance",
-        ]
-    )
+def get_coefficient_df(run_ids, expr=False):
+    if expr:
+        df = pd.DataFrame(
+            columns=[
+                "run_id",
+                "ansatz",
+                "qubits",
+                "layer_multiplier",
+                "seed",
+                "kl_divergence",
+                "coefficients_correlation_mean",
+                "coefficients_correlation_max",
+                "coefficients_correlation_min",
+                "coefficients_correlation_variance",
+            ]
+        )
+    else:
+        df = pd.DataFrame(
+            columns=[
+                "run_id",
+                "ansatz",
+                "qubits",
+                "layer_multiplier",
+                "seed",
+                "coefficients_correlation_mean",
+                "coefficients_correlation_weighted_mean",
+                "coefficients_correlation_max",
+                "coefficients_correlation_min",
+                "coefficients_correlation_variance",
+            ]
+        )
 
     for it, run_id in track(
         enumerate(run_ids),
@@ -152,6 +170,14 @@ def get_coefficient_df(run_ids):
         df.loc[it, "coefficients_correlation_mean"] = client.get_run(
             run_id
         ).data.metrics["coefficients_correlation_mean"]
+
+        if (
+            "coefficients_correlation_weighted_mean"
+            in client.get_run(run_id).data.metrics
+        ):
+            df.loc[it, "coefficients_correlation_weighted_mean"] = client.get_run(
+                run_id
+            ).data.metrics["coefficients_correlation_weighted_mean"]
 
         if "coefficients_correlation_max" in client.get_run(run_id).data.metrics:
             df.loc[it, "coefficients_correlation_max"] = client.get_run(
@@ -175,6 +201,40 @@ def get_coefficient_df(run_ids):
             df.loc[it, "kl_divergence"] = client.get_run(run_id).data.metrics[
                 "expressibility"
             ]
+
+    return df
+
+
+def get_expressibility_df(run_ids):
+    df = pd.DataFrame(
+        columns=[
+            "run_id",
+            "ansatz",
+            "qubits",
+            "seed",
+            "kl_divergence",
+        ]
+    )
+
+    for it, run_id in track(
+        enumerate(run_ids),
+        description="Collecting expressibility data..",
+        total=len(run_ids),
+    ):
+        client = mlflow.tracking.MlflowClient()
+        if client.get_run(run_id).info.status != "FINISHED":
+            print(f"Run {run_id} not finished")
+            continue
+
+        df.loc[it, "run_id"] = run_id
+        df.loc[it, "ansatz"] = client.get_run(run_id).data.params["model.circuit_type"]
+        df.loc[it, "qubits"] = int(client.get_run(run_id).data.params["model.n_qubits"])
+
+        df.loc[it, "seed"] = int(client.get_run(run_id).data.params["seed"])
+
+        df.loc[it, "kl_divergence"] = client.get_run(run_id).data.metrics[
+            "expressibility"
+        ]
 
     return df
 
