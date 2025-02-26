@@ -196,7 +196,7 @@ for metric in ["steps", "mse_min"]:
                 anchor="x",  # yaxis = "y3", attached to x-axis
                 overlaying="y",
             ),
-            xaxis=dict(title="Circuits", domain=[0.15, 0.9], tickangle=20),
+            xaxis=dict(domain=[0.15, 0.9], tickangle=20),
             boxmode="group",
             margin=dict(l=50, r=0, b=30, t=100),
         )
