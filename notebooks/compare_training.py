@@ -9,7 +9,9 @@ pio.kaleido.scope.mathjax = None
 
 max_steps = 1000
 
-training_df = get_training_df(run_ids)
+cutoff = 1e-4
+
+training_df = get_training_df(run_ids, cutoff_mse=cutoff)
 training_df.sort_values(by="qubits", inplace=True)
 
 qubits = training_df.qubits.unique()
@@ -39,7 +41,7 @@ for qubit in qubits:
         fig.add_trace(
             go.Scatter(
                 x=steps,
-                y=np.nanmax(mse_values, axis=0),
+                y=np.nanmean(mse_values, axis=0),
                 name=f"{ansatz}",
                 visible=True,
                 mode="lines",
@@ -83,4 +85,4 @@ for qubit in qubits:
         showlegend=True,
     )
 
-    save_fig(fig, f"mse_q{qubit}", run_ids, experiment_id)
+    save_fig(fig, f"mse_q{qubit}_c{cutoff}", run_ids, experiment_id)

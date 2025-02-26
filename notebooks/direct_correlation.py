@@ -18,7 +18,9 @@ from helper import (
 
 pio.kaleido.scope.mathjax = None
 
-training_df = get_training_df(training_run_ids)
+cutoff = 1e-2
+
+training_df = get_training_df(training_run_ids, cutoff_steps=cutoff, cutoff_mse=cutoff)
 training_df = training_df.rename(
     columns={
         "run_id": "training_run_id",
@@ -31,7 +33,11 @@ coefficients_df = coefficients_df.rename(
     }
 )
 
-combined_df = pd.merge(training_df, coefficients_df, on=["ansatz", "qubits", "seed"])
+combined_df = pd.merge(
+    training_df,
+    coefficients_df[coefficients_df.qubits == 5],
+    on=["ansatz", "qubits", "seed"],
+)
 combined_df = assign_ansatz_id(combined_df)
 combined_df.sort_values(by="ansatz_id", inplace=True)
 
@@ -68,22 +74,22 @@ for q in qubits:
             #     ].coefficient_run_id.item()
             # )
             pca_dataset.loc[idx, "qubits"] = q
-            pca_dataset.loc[idx, "ansatz_id"] = current_dataset.ansatz_id.item()
+            pca_dataset.loc[idx, "ansatz_id"] = current_dataset.ansatz_id.mean()
             # pca_dataset.loc[idx, "coefficient_correlation"] = np.array(sub_fig_trace.z)
             pca_dataset.loc[idx, "corr_mean"] = (
-                current_dataset.coefficients_correlation_mean.item()
+                current_dataset.coefficients_correlation_mean.mean()
             )
             pca_dataset.loc[idx, "corr_max"] = (
-                current_dataset.coefficients_correlation_max.item()
+                current_dataset.coefficients_correlation_max.mean()
             )
             pca_dataset.loc[idx, "corr_min"] = (
-                current_dataset.coefficients_correlation_min.item()
+                current_dataset.coefficients_correlation_min.mean()
             )
             pca_dataset.loc[idx, "corr_var"] = (
-                current_dataset.coefficients_correlation_variance.item()
+                current_dataset.coefficients_correlation_variance.mean()
             )
-            pca_dataset.loc[idx, "steps"] = current_dataset.steps.item()
-            pca_dataset.loc[idx, "mse_min"] = current_dataset.mse_min.item()
+            pca_dataset.loc[idx, "steps"] = current_dataset.steps.mean()
+            pca_dataset.loc[idx, "mse_min"] = current_dataset.mse_min.mean()
 
             idx += 1
 
@@ -149,7 +155,7 @@ for metric in ["steps", "mse_min"]:
 
     save_fig(
         fig,
-        f"direct_correlation_{metric}",
+        f"direct_correlation_{metric}_c{cutoff}",
         coefficient_run_ids + training_run_ids,
         experiment_id,
     )

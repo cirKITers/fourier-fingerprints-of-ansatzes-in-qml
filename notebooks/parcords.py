@@ -9,11 +9,16 @@ from helper import save_fig, get_training_df, get_coefficient_df, assign_ansatz_
 
 pio.kaleido.scope.mathjax = None
 
-training_df = get_training_df(training_run_ids)
+cutoff_steps = 1e-2
+training_df = get_training_df(training_run_ids, cutoff_steps=cutoff_steps)
 
 coefficients_df = get_coefficient_df(coefficient_run_ids)
 
-combined_df = pd.merge(training_df, coefficients_df, on=["ansatz", "qubits", "seed"])
+combined_df = pd.merge(
+    training_df,
+    coefficients_df[coefficients_df.qubits == 5],
+    on=["ansatz", "qubits", "seed"],
+)
 combined_df = assign_ansatz_id(combined_df)
 combined_df.sort_values(by="ansatz_id", inplace=True)
 
@@ -82,7 +87,7 @@ for metric in ["steps", "mse_min"]:
 
         save_fig(
             fig,
-            f"parcords_q{q}_{metric}",
+            f"parcords_q{q}_{metric}_c{cutoff_steps}",
             coefficient_run_ids + training_run_ids,
             experiment_id,
         )
