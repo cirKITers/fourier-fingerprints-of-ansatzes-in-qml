@@ -60,11 +60,6 @@ def visualize_coefficients_correlated(
     else:
         df_filtered = df.filter(regex="c.*", axis=0).filter(regex="c.*", axis=1)
 
-    # nc = df_filtered.shape[0]
-    # weights = np.flip(np.mgrid[0:nc:1, 0:nc:1].sum(axis=0) / ((nc - 1) * 2))
-    # np.fill_diagonal(weights, 1)
-    # df_filtered_weighted = df_filtered * weights
-
     if triu:
         for i in range(df_filtered.shape[0]):
             for j in range(df_filtered.shape[1]):
@@ -75,13 +70,6 @@ def visualize_coefficients_correlated(
         # df_filtered_weighted = df_filtered_weighted.dropna(how="all", axis=0).dropna(
         #     how="all", axis=1
         # )
-
-    # mlflow.log_metric(
-    #     "coefficients_correlation_weighted_variance", df_filtered_weighted.var().var()
-    # )
-    # mlflow.log_metric(
-    #     "coefficients_correlation_weighted_mean", df_filtered_weighted.mean().mean()
-    # )
 
     mlflow.log_metric("coefficients_correlation_variance", df_filtered.var().var())
     mlflow.log_metric("coefficients_correlation_mean", df_filtered.mean().mean())
@@ -94,6 +82,51 @@ def visualize_coefficients_correlated(
 
     fig.update_layout(
         title_text=f"Correlated Coefficients for {model.pqc.__class__.__name__}",
+        xaxis=dict(
+            title="Coefficients",
+        ),
+        yaxis=dict(title="Coefficients", autorange="reversed", scaleanchor="x"),
+    )
+
+    return fig
+
+
+def visualize_coefficients_correlated_weighted(
+    df: pd.DataFrame, model: Model, discard_negative=True, triu=False
+) -> go.Figure:
+    if discard_negative:
+        df_filtered = df.filter(regex="c_\+?\d+", axis=0).filter(
+            regex="c_\+?\d+", axis=1
+        )
+    else:
+        df_filtered = df.filter(regex="c.*", axis=0).filter(regex="c.*", axis=1)
+
+    if triu:
+        for i in range(df_filtered.shape[0]):
+            for j in range(df_filtered.shape[1]):
+                if i <= j:
+                    df_filtered.iloc[i, j] = pnp.nan
+                    # df_filtered_weighted.iloc[i, j] = pnp.nan
+        df_filtered = df_filtered.dropna(how="all", axis=0).dropna(how="all", axis=1)
+        # df_filtered_weighted = df_filtered_weighted.dropna(how="all", axis=0).dropna(
+        #     how="all", axis=1
+        # )
+
+    mlflow.log_metric(
+        "coefficients_correlation_weighted_variance", df_filtered.var().var()
+    )
+    mlflow.log_metric(
+        "coefficients_correlation_weighted_mean", df_filtered.mean().mean()
+    )
+    mlflow.log_metric("coefficients_correlation_weighted_max", df_filtered.max().max())
+    mlflow.log_metric("coefficients_correlation_weighted_min", df_filtered.min().min())
+
+    fig = visualize_heatmap_filtered(
+        df=df_filtered,
+    )
+
+    fig.update_layout(
+        title_text=f"Weighted Correlated Coefficients for {model.pqc.__class__.__name__}",
         xaxis=dict(
             title="Coefficients",
         ),

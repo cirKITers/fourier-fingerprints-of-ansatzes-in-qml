@@ -7,6 +7,7 @@ from .nodes import (
     visualize_coefficients_correlated_control,
     visualize_model,
     visualize_coefficients_decay,
+    visualize_coefficients_correlated_weighted,
 )
 
 
@@ -25,7 +26,7 @@ def create_pipeline() -> Pipeline:
                 name="visualize_coefficients_correlated",
             ),
             node(
-                func=visualize_coefficients_correlated,
+                func=visualize_coefficients_correlated_weighted,
                 inputs={
                     "df": "coefficients_correlated_weighted_normalized",
                     "model": "model",
