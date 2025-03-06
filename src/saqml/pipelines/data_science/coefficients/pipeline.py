@@ -67,7 +67,7 @@ def create_pipeline() -> Pipeline:
                 inputs={
                     "coefficients_correlated": "coefficients_correlated_normalized",
                     "coefficients_decay": "coefficients_decay",
-                    "linear": "params:coefficients.linear_decay",
+                    "weighting": "params:coefficients.weighting",
                 },
                 outputs="coefficients_correlated_weighted_normalized",
                 name="weight_coefficients",

@@ -9,10 +9,10 @@ data:
     seed: 1000
 
 coefficients:
-  samples: 300 #samples per parameter
+  samples: 30 #samples per parameter
   correlation_method: "pearson" #dcor, pearson, spearman
   triu: True # only use  the upper triangular part of the correlation matrix?
-  linear_decay: False
+  weighting: "frequencies" # linear, coefficients_prod, coefficients_add, frequencies
 
 expressibility:
   samples: 300 #samples per parameter scaling exp. with n qubits
