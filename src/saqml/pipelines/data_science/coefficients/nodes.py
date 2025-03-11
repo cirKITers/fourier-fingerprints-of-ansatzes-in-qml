@@ -177,8 +177,10 @@ def weight_coefficients(
         np.fill_diagonal(weights, 0)
         weights /= weights.max()
         np.fill_diagonal(weights, 1)
-    else:
+    elif weighting == "linear":
         weights = np.flip(nnp.mgrid[0:nc:1, 0:nc:1].sum(axis=0) / ((nc - 1) * 2))
+    else:
+        raise NotImplementedError(f"Weighting {weighting} not implemented.")
 
     df_filtered_weighted = df_filtered * weights
 
