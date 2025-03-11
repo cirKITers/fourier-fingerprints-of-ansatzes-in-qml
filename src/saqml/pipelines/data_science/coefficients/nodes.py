@@ -151,22 +151,15 @@ def weight_coefficients(
 
     nc = df_filtered.shape[0]
     if weighting == "coefficients_add":
-        # weights = np.concat((weights, np.flip(weights, axis=0)), axis=0)
-        # weights = np.concat((weights, np.flip(weights, axis=1)), axis=1)
         weights = np.ones((nc, nc))
         coefficients_decay = coefficients_decay / coefficients_decay.max()
         for i in range(nc):
             for j in range(nc):
-                # weights[i, j] = np.sqrt(
-                #     coefficients_decay.iloc[i] * coefficients_decay.iloc[j]
-                # )
                 weights[i, j] = coefficients_decay.iloc[i] + coefficients_decay.iloc[j]
         np.fill_diagonal(weights, 0)
         weights /= weights.max()
         np.fill_diagonal(weights, 1)
     if weighting == "coefficients_prod":
-        # weights = np.concat((weights, np.flip(weights, axis=0)), axis=0)
-        # weights = np.concat((weights, np.flip(weights, axis=1)), axis=1)
         weights = np.ones((nc, nc))
         coefficients_decay = coefficients_decay / coefficients_decay.max()
         for i in range(nc):
@@ -176,15 +169,10 @@ def weight_coefficients(
         weights /= weights.max()
         np.fill_diagonal(weights, 1)
     elif weighting == "frequencies":
-        # weights = np.concat((weights, np.flip(weights, axis=0)), axis=0)
-        # weights = np.concat((weights, np.flip(weights, axis=1)), axis=1)
         weights = np.ones((nc, nc))
         coefficients_decay = coefficients_decay / coefficients_decay.max()
         for i in range(nc):
             for j in range(nc):
-                # weights[i, j] = np.sqrt(
-                #     coefficients_decay.iloc[i] * coefficients_decay.iloc[j]
-                # )
                 weights[i, j] = 1 / np.sqrt((i + 1) * (j + 1))
         np.fill_diagonal(weights, 0)
         weights /= weights.max()
