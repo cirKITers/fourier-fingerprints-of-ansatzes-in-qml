@@ -167,13 +167,14 @@ def weight_coefficients(
         coefficients_decay = coefficients_decay / coefficients_decay.max()
         for i in range(nc):
             for j in range(nc):
-                weights[i, j] = coefficients_decay.iloc[i] * coefficients_decay.iloc[j]
+                weights[i, j] = np.sqrt(
+                    coefficients_decay.iloc[i] * coefficients_decay.iloc[j]
+                )
         np.fill_diagonal(weights, 0)
         weights /= weights.max()
         np.fill_diagonal(weights, 1)
     elif weighting == "frequencies":
         weights = np.ones((nc, nc))
-        coefficients_decay = coefficients_decay / coefficients_decay.max()
         for i in range(nc):
             for j in range(nc):
                 weights[i, j] = 1 / np.sqrt((i + 1) * (j + 1))
