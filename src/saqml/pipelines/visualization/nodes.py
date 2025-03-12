@@ -61,7 +61,7 @@ def visualize_spectrum(df: pd.DataFrame) -> go.Figure:
                 y=df_filtered[c],
                 name=c,
                 marker=dict(color=pc.qualitative.Dark2[0]),
-                boxpoints="all",
+                boxpoints=False,
             )
         )
     fig.update_layout(template="plotly_white", title="Spectrum", showlegend=False)
