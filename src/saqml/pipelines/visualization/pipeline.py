@@ -7,6 +7,7 @@ from .nodes import (
     visualize_coefficients_correlated_control,
     visualize_model,
     visualize_coefficients_decay,
+    visualize_spectrum,
     visualize_coefficients_correlated_weighted,
 )
 
@@ -43,6 +44,14 @@ def create_pipeline() -> Pipeline:
                 },
                 outputs="fig_coefficients_decay",
                 name="visualize_coefficients_decay",
+            ),
+            node(
+                func=visualize_spectrum,
+                inputs={
+                    "df": "coefficients",
+                },
+                outputs="fig_spectrum",
+                name="visualize_spectrum",
             ),
             node(
                 func=visualize_parameters_correlated,

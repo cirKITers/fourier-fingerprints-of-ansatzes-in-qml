@@ -46,6 +46,10 @@ fig_coefficients_correlated_weighted:
   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "coefficients_correlated_weighted.html"
 
+fig_spectrum:
+  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  filepath: "spectrum.html"
+
 fig_random_coefficients_correlated:
   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "random_coefficients_correlated.html"

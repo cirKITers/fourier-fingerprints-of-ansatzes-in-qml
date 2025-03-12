@@ -3,6 +3,7 @@ from qml_essentials.model import Model
 import pennylane.numpy as pnp
 import numpy as np
 import plotly.graph_objects as go
+import plotly.colors as pc
 import pandas as pd
 import mlflow
 import logging
@@ -46,6 +47,23 @@ def visualize_coefficients_decay(df: pd.DataFrame) -> go.Figure:
         title="Coefficient Mean",
         yaxis_type="log",
     )
+
+    return fig
+
+
+def visualize_spectrum(df: pd.DataFrame) -> go.Figure:
+    df_filtered = df.filter(regex="c.*", axis=1)
+
+    fig = go.Figure()
+    for c in df_filtered.columns:
+        fig.add_trace(
+            go.Box(
+                y=df_filtered[c],
+                name=c,
+                marker=dict(color=pc.qualitative.Dark2[0]),
+            )
+        )
+    fig.update_layout(template="plotly_white", title="Spectrum", showlegend=False)
 
     return fig
 
