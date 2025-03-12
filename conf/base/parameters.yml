@@ -12,8 +12,8 @@ coefficients:
   samples: 300 #samples per parameter
   correlation_method: "pearson" #dcor, pearson, spearman
   triu: True # only use  the upper triangular part of the correlation matrix?
-  weighting: "linear" # linear, coefficients_prod, coefficients_add, frequencies
-  force_same: True
+  weighting: "coefficients_prod" # linear, coefficients_prod, coefficients_add, frequencies
+  force_same: False
 
 expressibility:
   samples: 300 #samples per parameter scaling exp. with n qubits
