@@ -42,6 +42,7 @@ class Coefficients:
         control_value: int = None,
         progress: Optional[Progress] = None,
         sample_coeff_task: Optional[Task] = None,
+        force_same: bool = False,
         **kwargs: Any,
     ) -> float:
         """
@@ -78,10 +79,13 @@ class Coefficients:
             param_samples = np.ndarray((samples, *model.params.shape))
 
             for s in range(samples):
-                # sample using the model internal sampler, because it
-                # respects the init. domain and strategy
-                model.initialize_params(rng=rng)
-                param_samples[s] = model.params
+                if force_same:
+                    param_samples[s] = rng.random() * np.ones(model.params.shape)
+                else:
+                    # sample using the model internal sampler, because it
+                    # respects the init. domain and strategy
+                    model.initialize_params(rng=rng)
+                    param_samples[s] = model.params
 
                 if control_value is not None:
                     indices = model.pqc.get_control_indices(model.n_qubits)

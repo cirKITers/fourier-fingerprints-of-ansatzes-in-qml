@@ -21,6 +21,7 @@ def create_pipeline() -> Pipeline:
                     "samples": "params:coefficients.samples",
                     "noise_params": "params:model.noise_params",
                     "seed": "params:seed",
+                    "force_same": "params:coefficients.force_same",
                 },
                 outputs="coefficients",
                 name="calculate_coefficients",

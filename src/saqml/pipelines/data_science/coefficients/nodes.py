@@ -14,7 +14,9 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def calculate_coefficients(model: Model, samples: int, seed: int, noise_params: Dict):
+def calculate_coefficients(
+    model: Model, samples: int, seed: int, noise_params: Dict, force_same: bool
+):
     """
     Calculate the Fourier coefficients of the given model.
 
@@ -46,6 +48,7 @@ def calculate_coefficients(model: Model, samples: int, seed: int, noise_params: 
             seed=seed,
             progress=progress,
             sample_coeff_task=sample_coeff_task,
+            force_same=force_same,
         )
 
     return coefficients
