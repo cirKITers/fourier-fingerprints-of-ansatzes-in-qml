@@ -22,6 +22,8 @@ from helper import (
 pio.kaleido.scope.mathjax = None
 
 cutoff_steps = 1e-3
+weighted = True
+
 training_df = get_training_df(training_run_ids, cutoff_steps=cutoff_steps)
 
 coefficients_df = get_coefficient_df(coefficient_run_ids)
@@ -134,6 +136,7 @@ for metric in ["steps", "mse_min"]:
                 offsetgroup="KL Divergence",
             ),
         )
+
         fig.add_trace(
             go.Box(
                 x=sorted_pca_dataset.ansatz,
@@ -141,19 +144,21 @@ for metric in ["steps", "mse_min"]:
                 name=f"FCC",
                 marker=dict(color=rgb_to_rgba(next(main_colors_it), 0.5)),
                 yaxis="y",
-                offsetgroup="FCC Weighted",
-            ),
-        )
-        fig.add_trace(
-            go.Box(
-                x=sorted_pca_dataset.ansatz,
-                y=sorted_pca_dataset.corr_w_mean,
-                name=f"FCC Weighted",
-                marker=dict(color=rgb_to_rgba(next(main_colors_it), 0.5)),
-                yaxis="y",
                 offsetgroup="FCC",
             ),
         )
+
+        if weighted:
+            fig.add_trace(
+                go.Box(
+                    x=sorted_pca_dataset.ansatz,
+                    y=sorted_pca_dataset.corr_w_mean,
+                    name=f"FCC Weighted",
+                    marker=dict(color=rgb_to_rgba(next(main_colors_it), 0.5)),
+                    yaxis="y",
+                    offsetgroup="FCC Weighted",
+                ),
+            )
 
         # fig.add_annotation(
         #     dict(
@@ -203,7 +208,7 @@ for metric in ["steps", "mse_min"]:
 
         save_fig(
             fig,
-            f"fcc_expr_{metric}_c{cutoff_steps}_q{q}",
+            f"fcc_expr_{metric}_c{cutoff_steps}_q{q}_weighted_l",
             coefficient_run_ids + training_run_ids,
             experiment_id,
         )

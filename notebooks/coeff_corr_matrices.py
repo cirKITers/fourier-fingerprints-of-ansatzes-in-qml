@@ -10,16 +10,18 @@ from helper import (
 
 pio.kaleido.scope.mathjax = None
 
-selected_seed = 1004
+selected_seed = 1000
 
 coefficient_df = get_coefficient_df(run_ids)
-coefficient_df.sort_values(by="qubits", inplace=True)
+coefficient_df.sort_values(by="ansatz", inplace=True)
 coefficient_df = assign_ansatz_id(coefficient_df)
 
 qubits = coefficient_df.qubits.unique()
 ansaetze = coefficient_df.ansatz.unique()
 
 # ----------------------------------
+
+weighted = True
 
 for q in qubits:
     fig = make_subplots(rows=1, cols=len(ansaetze), subplot_titles=ansaetze)
@@ -31,7 +33,12 @@ for q in qubits:
                 (coefficient_df.qubits == q)
                 & (coefficient_df.ansatz == ansatz)
                 & (coefficient_df.seed == selected_seed)
-            ].run_id.item()
+            ].run_id.item(),
+            (
+                "coefficients_correlated"
+                if not weighted
+                else "coefficients_correlated_weighted"
+            ),
         )
 
         fig.add_trace(sub_fig_trace, row=1, col=it + 1)
@@ -47,11 +54,24 @@ for q in qubits:
         )
 
     fig.update_layout(
-        title_text=f"Correlation of Coefficients for Different Ansaetze ({q} Qubits)",
+        title_text=(
+            f"Correlation of Coefficients for Different Ansaetze ({q} Qubits)"
+            if not weighted
+            else f"Correlation of Weighted Coefficients for Different Ansaetze ({q} Qubits)"
+        ),
         template="plotly_white",
         height=400,
         width=300 * it,
         coloraxis={"colorscale": "Sunset"},
     )
 
-    save_fig(fig, f"coefficients_correlated_q{q}", run_ids, experiment_id)
+    save_fig(
+        fig,
+        (
+            f"coefficients_correlated_q{q}"
+            if not weighted
+            else f"coefficients_correlated_q{q}_weighted_f"
+        ),
+        run_ids,
+        experiment_id,
+    )

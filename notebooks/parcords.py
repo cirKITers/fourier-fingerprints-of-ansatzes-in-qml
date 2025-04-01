@@ -60,7 +60,7 @@ for metric in ["steps", "mse_min"]:
                                 label="Coeff. Correlation Mean",
                                 values=combined_df[
                                     combined_df.qubits == q
-                                ].coefficients_correlation_mean,
+                                ].coefficients_correlation_weighted_mean,
                             ),
                             # dict(
                             #     label="Coeff. Correlation Max",
