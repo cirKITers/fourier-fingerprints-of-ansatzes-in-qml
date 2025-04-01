@@ -11,13 +11,13 @@
 #
 # expected duration of the job
 #              hh:mm:ss
-#SBATCH --time=01:00:00
+#SBATCH --time=30:00:00
 # 
 # partition the job will run on
 #SBATCH --partition single
 # 
 # expected memory requirements
-#SBATCH --mem=10000MB
+#SBATCH --mem=64000MB
 #
 # infos
 #
@@ -28,13 +28,13 @@
 module load devel/python/3.11.7
 
 # ~/saqml/.venv/bin/python -m kedro run --pipeline coefficients --params=$1
-# ~/saqml/.venv/bin/python -m kedro run --pipeline expressibility --params=$1
+~/saqml/.venv/bin/python -m kedro run --pipeline expressibility --params=$1
 
-for seed in 1000 1001 1002 1003 1004 1005 1006 1007 1008 1009
-do
-    echo "Running with seed $seed"
-    ~/saqml/.venv/bin/python -m kedro run --pipeline coefficients --params="$1,seed=$seed"
-done
+# for seed in 1005 1006 1007 1008
+# do
+#     echo "Running with seed $seed"
+#     ~/saqml/.venv/bin/python -m kedro run --pipeline coefficients --params="$1,seed=$seed"
+# done
 
 # for training_seed in 1000 1001 1002 1003 1004 1005 1006 1007 1008 1009
 # do

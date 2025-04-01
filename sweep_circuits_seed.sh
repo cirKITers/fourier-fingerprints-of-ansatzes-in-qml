@@ -9,8 +9,8 @@ do
     echo "Running with Ansatz $circuit"
 
     # use together with training and coefficients pipeline
-    # ./sweep_qubits_circuits_seed.sh $circuit $1
-    ./sweep_qubits_circuits_seed.sh $circuit
+    ./sweep_qubits_circuits_seed.sh $circuit $1
+    # ./sweep_qubits_circuits_seed.sh $circuit
 
     # use together with coeffexpr pipeline
     # ./sweep_training_seed.sh $circuit $1
