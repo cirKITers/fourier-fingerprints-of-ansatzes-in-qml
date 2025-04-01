@@ -591,6 +591,21 @@ gast = "*"
 termcolor = "*"
 
 [[package]]
+name = "dill"
+version = "0.3.9"
+description = "serialize all of Python"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "dill-0.3.9-py3-none-any.whl", hash = "sha256:468dff3b89520b474c0397703366b7b95eebe6303f108adf9b19da1f702be87a"},
+    {file = "dill-0.3.9.tar.gz", hash = "sha256:81aa267dddf68cbfe8029c42ca9ec6a4ab3b22371d1c450abc54422577b4512c"},
+]
+
+[package.extras]
+graph = ["objgraph (>=1.7.2)"]
+profile = ["gprof2dot (>=2022.7.29)"]
+
+[[package]]
 name = "docker"
 version = "7.1.0"
 description = "A Python library for the Docker Engine API."
@@ -2998,16 +3013,17 @@ files = [
 
 [[package]]
 name = "qml-essentials"
-version = "0.1.25"
+version = "0.1.30"
 description = "A toolbox to make working with QML models easier."
 optional = false
 python-versions = "<3.13,>=3.10"
 files = [
-    {file = "qml_essentials-0.1.25-py3-none-any.whl", hash = "sha256:9711e1a7fbd8760399499910d5a57b46043efac7979b1e9c95fd262607155663"},
-    {file = "qml_essentials-0.1.25.tar.gz", hash = "sha256:459cc3e56cee4a8401b32315064ae25c996a408983340f87f6c2b94e7ff8cc06"},
+    {file = "qml_essentials-0.1.30-py3-none-any.whl", hash = "sha256:85905ee9f0cc57babb1823e4804e10ddde0b398c1d78cd01c942b10902494b43"},
+    {file = "qml_essentials-0.1.30.tar.gz", hash = "sha256:b7c09022a12b62187aee258b6c577c62e5fdd38d77274c8ed3bb88d689a41a0c"},
 ]
 
 [package.dependencies]
+dill = ">=0.3.9,<0.4.0"
 pennylane = ">=0.40.0,<0.41.0"
 
 [[package]]
@@ -4113,4 +4129,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "afec23768855a99ab3557045cbcb3e7a92f8cbb4eefe3a2a6abd56b02cac8818"
+content-hash = "376b2c68f3ec6bb2ce35b03475f626f7048f886f52af625d99bd6b9d2993a306"
