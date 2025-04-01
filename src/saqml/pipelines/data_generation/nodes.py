@@ -356,9 +356,8 @@ def create_model(
     output_qubit: int,
     seed: int,
     layer_multiplier: int,
-    draw=False,
 ) -> Model:
-    if circuit_type in ["Circuit_9"]:
+    if circuit_type in ["Circuit_9", "Circuit_15"]:
         encoding = "RY"
 
     pqc = getattr(OurAnsaetze, circuit_type or "no_ansatz")
@@ -381,8 +380,7 @@ def create_model(
         initialization_domain=initialization_domain,
         random_seed=seed,
     )
-    if draw:
-        model.draw(figure=True)[0].savefig(f"docs/{circuit_type}.png")
+
     return model
 
 
