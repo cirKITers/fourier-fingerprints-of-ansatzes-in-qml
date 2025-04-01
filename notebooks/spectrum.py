@@ -21,8 +21,6 @@ ansaetze = coefficient_df.ansatz.unique()
 
 # ----------------------------------
 
-weighted = True
-
 for q in qubits:
     fig = make_subplots(rows=1, cols=len(ansaetze), subplot_titles=ansaetze)
 
@@ -34,11 +32,7 @@ for q in qubits:
                 & (coefficient_df.ansatz == ansatz)
                 & (coefficient_df.seed == selected_seed)
             ].run_id.item(),
-            (
-                "coefficients_correlated"
-                if not weighted
-                else "coefficients_correlated_weighted"
-            ),
+            "spectrum",
         )
 
         fig.add_trace(sub_fig_trace, row=1, col=it + 1)
@@ -54,24 +48,15 @@ for q in qubits:
         )
 
     fig.update_layout(
-        title_text=(
-            f"Correlation of Coefficients for Different Ansaetze ({q} Qubits)"
-            if not weighted
-            else f"Correlation of Weighted Coefficients for Different Ansaetze ({q} Qubits)"
-        ),
+        title_text=(f"Spectrum for different Ansaetze ({q} Qubits)"),
         template="plotly_white",
         height=400,
         width=300 * it,
-        coloraxis={"colorscale": "Sunset"},
     )
 
     save_fig(
         fig,
-        (
-            f"coefficients_correlated_q{q}"
-            if not weighted
-            else f"coefficients_correlated_q{q}_weighted_f"
-        ),
+        (f"coefficients_correlated_q{q}"),
         run_ids,
         experiment_id,
     )

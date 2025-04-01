@@ -108,9 +108,11 @@ def get_training_df(run_ids, cutoff_mse=-1, cutoff_steps=-1):
         mse_values = np.empty((steps))
         mse_values[:] = np.nan
 
-        mse_values[: len(mse_hist)] = [entity.value for entity in mse_hist]
+        mse_values[: len(mse_hist)] = [
+            entity.value if entity.value > cutoff_mse else np.nan for entity in mse_hist
+        ]
 
-        df.loc[it, "mse"] = mse_values[mse_values > cutoff_mse]
+        df.loc[it, "mse"] = mse_values
         df.loc[it, "mse_min"] = np.min(mse_values[: len(mse_hist)])
         df.loc[it, "steps"] = mse_values[: len(mse_hist)][
             mse_values > cutoff_steps

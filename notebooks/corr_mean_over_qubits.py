@@ -19,7 +19,7 @@ ansaetze = coefficient_df.ansatz.unique()
 
 
 for metric in [
-    "coefficients_correlation_mean",
+    "coefficients_correlation_weighted_mean",
     "coefficients_correlation_max",
     "coefficients_correlation_min",
 ]:

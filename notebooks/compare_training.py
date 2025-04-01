@@ -9,7 +9,7 @@ pio.kaleido.scope.mathjax = None
 
 max_steps = 1000
 
-cutoff = 1e-4
+cutoff = 1e-3
 
 training_df = get_training_df(run_ids, cutoff_mse=cutoff)
 training_df.sort_values(by="qubits", inplace=True)
