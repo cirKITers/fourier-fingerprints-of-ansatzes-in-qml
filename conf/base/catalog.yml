@@ -20,17 +20,17 @@ trained_coefficients:
     type: pandas.CSVDataset
     filepath: "coeffs.csv"
 
-trained_params:
-  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
-  dataset:
-    type: pandas.CSVDataset
-    filepath: "params.csv"
+# trained_params:
+#   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+#   dataset:
+#     type: pandas.CSVDataset
+#     filepath: "params.csv"
 
-trained_grads:
-  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
-  dataset:
-    type: pandas.CSVDataset
-    filepath: "grads.csv"
+# trained_grads:
+#   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
+#   dataset:
+#     type: pandas.CSVDataset
+#     filepath: "grads.csv"
 
 coefficients:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
@@ -50,26 +50,26 @@ fig_coefficients_correlated_weighted:
 #   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
 #   filepath: "spectrum.html"
 
-fig_random_coefficients_correlated:
-  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
-  filepath: "random_coefficients_correlated.html"
+# fig_random_coefficients_correlated:
+#   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+#   filepath: "random_coefficients_correlated.html"
 
-fig_parameters_correlated:
-  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
-  filepath: "parameters_correlated.html"
+# fig_parameters_correlated:
+#   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+#   filepath: "parameters_correlated.html"
 
-fig_parameters_coefficients_correlated:
-  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
-  filepath: "parameters_coefficients_correlated.html"
+# fig_parameters_coefficients_correlated:
+#   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+#   filepath: "parameters_coefficients_correlated.html"
 
-fig_coefficients_correlated_control:
-  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
-  filepath: "coefficients_correlated_control.html"
+# fig_coefficients_correlated_control:
+#   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+#   filepath: "coefficients_correlated_control.html"
 
-fig_model_initial:
-  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
-  filepath: "model_initial.html"
+# fig_model_initial:
+#   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+#   filepath: "model_initial.html"
 
-fig_model_trained:
-  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
-  filepath: "model_trained.html"
+# fig_model_trained:
+#   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+#   filepath: "model_trained.html"
