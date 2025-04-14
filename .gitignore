@@ -8,7 +8,9 @@ stats.json
 info.log.*
 logs/*
 results
+notebooks/datasets
 *tar.gz
+606678497984501415
 ##########################
 # KEDRO PROJECT
 
