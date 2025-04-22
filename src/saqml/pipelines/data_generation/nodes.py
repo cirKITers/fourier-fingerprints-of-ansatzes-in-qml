@@ -6,6 +6,8 @@ import pennylane as qml
 import pennylane.numpy as np
 import pandas as pd
 
+from saqml.helpers.hep_dataset import get_data, get_loaders
+
 import logging
 
 log = logging.getLogger(__name__)
@@ -493,4 +495,16 @@ def generate_fourier_series(
     return {
         "fourier_series": values,
         "target": pd.DataFrame({"omegas": omegas, "coefficients": coefficients}),
+    }
+
+
+def get_hep_dataset(batch_size: int, n_events: int, features: List[str], seed: int):
+    train_partons_df, train_jets_df, test_partons_df = get_data()
+    train_loader, valid_loader, test_loader, parton_scaler, jet_scaler = get_loaders(
+        train_partons_df, batch_size, n_events, features, labels=["leading_pt"]
+    )
+
+    return {
+        "train_loader": train_loader,
+        "valid_loader": valid_loader,
     }
