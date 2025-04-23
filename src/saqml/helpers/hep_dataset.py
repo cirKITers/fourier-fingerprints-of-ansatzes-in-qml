@@ -1,10 +1,5 @@
 import torch
-import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader
-from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torch.utils.tensorboard import SummaryWriter
-
-writer = SummaryWriter(log_dir="runs/1")
 
 import h5py
 import numpy as np
@@ -19,19 +14,15 @@ from sklearn.preprocessing import (
 from sklearn.model_selection import train_test_split
 import vector
 
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-import seaborn as sns
-
 import warnings
 import copy
-import itertools
-import random
 
 
 def h5py_to_DataFrame(data, collection, n_events=None):
     """
     Converts a specified collection from an HDF5 (h5py) dataset into a pandas DataFrame.
+
+    Code by @Lucas-vdH
 
     Parameters:
     -----------
@@ -95,6 +86,8 @@ def data_preprocessing(df, collection, encoded=False, scaling_method=None):
     """
     Preprocesses a DataFrame by applying feature engineering and optional scaling and encoding.
 
+    Code by @Lucas-vdH
+
     Parameters:
     -----------
     df : pandas.DataFrame
@@ -139,6 +132,13 @@ def data_preprocessing(df, collection, encoded=False, scaling_method=None):
     # Setting the scaler
     if scaling_method == "MinMax":
         scaler = MinMaxScaler()
+    elif scaling_method == "MinMaxPi":
+        mm_scaler = MinMaxScaler()
+        scaler = FunctionTransformer(
+            func=lambda x: mm_scaler.fit_transform(x) * np.pi,
+            inverse_func=lambda x: mm_scaler.inverse_transform(x / np.pi),
+            validate=True,
+        )
     elif scaling_method == "Standard":
         scaler = StandardScaler()
     elif scaling_method == "MaxAbs":
@@ -267,23 +267,68 @@ def data_preprocessing(df, collection, encoded=False, scaling_method=None):
 
 
 def get_loaders(
-    train_data,
     batch_size,
     n_events,
     features=["E_CM", "M2"],
     labels=["leading_pt"],
-    scaling_method=None,
+    scaling_methods=["MinMaxPi", "MinMax"],
 ):
+    """
+    Prepares data loaders for training, validation, and testing datasets
+    from HDF5 files containing partons and jets data.
+
+    Code by @Lucas-vdH
+
+    Parameters:
+    -----------
+    batch_size : int
+        The number of samples per batch to load.
+
+    n_events : int
+        Number of events to load from the dataset.
+
+    features : list of str, optional
+        List of feature names to be extracted from the partons dataset.
+
+    labels : list of str, optional
+        List of label names to be extracted from the jets dataset.
+
+    scaling_methods : list of str, optional
+        List of scaling methods to be applied to partons and jets datasets.
+
+    Returns:
+    --------
+    train_loader : DataLoader
+        DataLoader for the training dataset.
+
+    valid_loader : DataLoader
+        DataLoader for the validation dataset.
+
+    test_loader : DataLoader
+        DataLoader for the test dataset.
+
+    parton_scaler : Scaler
+        Scaler object used for scaling partons data.
+
+    jet_scaler : Scaler
+        Scaler object used for scaling jets data.
+    """
+    # test_data_file = "data/pp-z-to-jets-500K-54167.h5"
+    train_data_file = "data/pp-z-to-jets-500K-57246.h5"
+
+    # test_data = h5py.File(test_data_file, "r")
+    train_data = h5py.File(train_data_file, "r")
+
     partons_df, parton_scaler = data_preprocessing(
         h5py_to_DataFrame(train_data, "partons", n_events),
         "partons",
         encoded=False,
-        scaling_method=scaling_method,
+        scaling_method=scaling_methods[0],
     )
     jets_df, jet_scaler = data_preprocessing(
         h5py_to_DataFrame(train_data, "jets", n_events),
         "jets",
-        scaling_method=scaling_method,
+        scaling_method=scaling_methods[1],
     )
 
     # Dropping events where there are no recorded jets (energy/pt too small for detection)
@@ -322,6 +367,8 @@ def get_loaders(
     valid_dataset = TensorDataset(partons_valid_tensor, jets_valid_tensor)
     test_dataset = TensorDataset(partons_test_tensor, jets_test_tensor)
 
+    if batch_size < 1:
+        batch_size = len(train_dataset)
     # Loaders
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     valid_loader = DataLoader(valid_dataset, batch_size=batch_size)
@@ -338,8 +385,8 @@ def get_loaders(
 
 
 def get_data():
-    test_data_file = "../.aqora/data/data/pp-z-to-jets-500K-54167.h5"
-    train_data_file = "../.aqora/data/data/pp-z-to-jets-500K-57246.h5"
+    test_data_file = "data/pp-z-to-jets-500K-54167.h5"
+    train_data_file = "data/pp-z-to-jets-500K-57246.h5"
 
     test_data = h5py.File(test_data_file, "r")
     train_data = h5py.File(train_data_file, "r")
