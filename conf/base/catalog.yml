@@ -73,3 +73,11 @@ fig_model_initial:
 fig_model_trained:
   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "model_trained.html"
+
+fig_model_train:
+  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  filepath: "fig_model_train.html"
+
+fig_model_valid:
+  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  filepath: "fig_model_valid.html"
