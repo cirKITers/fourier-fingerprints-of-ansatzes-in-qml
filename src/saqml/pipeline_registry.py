@@ -6,7 +6,9 @@ from kedro.framework.project import find_pipelines
 from kedro.pipeline import Pipeline
 
 from saqml.pipelines.data_generation.pipeline import (
-    create_pipeline as create_data_generation_pipeline,
+    create_model_pipeline,
+    create_fourier_pipeline,
+    create_hep_pipeline,
 )
 from saqml.pipelines.data_science.coefficients.pipeline import (
     create_pipeline as create_coefficients_pipeline,
@@ -28,6 +30,9 @@ from saqml.pipelines.visualization.pipeline import (
 from saqml.pipelines.visualization.pipeline import (
     create_model_pipeline as create_model_visualization_pipeline,
 )
+from saqml.pipelines.visualization.pipeline import (
+    create_data_pipeline as create_data_visualization_pipeline,
+)
 
 from saqml.pipelines.visualization.pipeline import (
     create_randcoeffs_pipeline as create_randcoeffs_viz_pipeline,
@@ -41,24 +46,29 @@ def register_pipelines() -> Dict[str, Pipeline]:
         A mapping from pipeline names to ``Pipeline`` objects.
     """
     pipelines = {
-        "__default__": create_data_generation_pipeline()
+        "__default__": create_model_pipeline()
+        + create_fourier_pipeline()
         + create_coefficients_pipeline()
         + create_training_pipeline()
         + create_visualization_pipeline()
         + create_model_visualization_pipeline(),
-        "visualize": create_data_generation_pipeline(),
-        "training": create_data_generation_pipeline()
+        "visualize": create_model_pipeline(),
+        "training_fourier": create_model_pipeline()
+        + create_fourier_pipeline()
         + create_training_pipeline()
         + create_model_visualization_pipeline(),
-        "coefficients": create_data_generation_pipeline()
+        "training_hep": create_model_pipeline()
+        + create_hep_pipeline()
+        + create_training_pipeline()
+        + create_data_visualization_pipeline(),
+        "coefficients": create_model_pipeline()
         + create_coefficients_pipeline()
         + create_visualization_pipeline(),
-        "randcoeffs": create_data_generation_pipeline()
+        "randcoeffs": create_model_pipeline()
         + create_randcoeffs_pipeline()
         + create_randcoeffs_viz_pipeline(),
-        "expressibility": create_data_generation_pipeline()
-        + create_expressibility_pipeline(),
-        "coeffexpr": create_data_generation_pipeline()
+        "expressibility": create_model_pipeline() + create_expressibility_pipeline(),
+        "coeffexpr": create_model_pipeline()
         + create_coefficients_pipeline()
         + create_expressibility_pipeline()
         + create_visualization_pipeline(),
