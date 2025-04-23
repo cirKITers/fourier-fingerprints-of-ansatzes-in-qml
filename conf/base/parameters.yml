@@ -9,7 +9,7 @@ data:
       variance: 0.25 # if uniform mean+-variance defines limit
       seed: 1000
   hep:
-    n_events: 5000
+    n_events: 10000
     features: ["E_CM"]
     scaling_methods: ["MinMaxPi", "MinMax"]
     labels: ["leading_pt"]
@@ -48,7 +48,7 @@ seed: 1000
 n_control_values: 0 # for sweeping control values
 
 training:
-  steps: 2000
+  steps: 300
   learning_rate: 0.01
   batch_size: -1
   log_entangling: False
