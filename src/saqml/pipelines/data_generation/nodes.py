@@ -1,6 +1,9 @@
 from qml_essentials.model import Model
 from qml_essentials.ansaetze import Ansaetze, Circuit
 
+import torch
+from torch.utils.data import TensorDataset, DataLoader
+
 from typing import List, Optional, Union, Callable
 import pennylane as qml
 import pennylane.numpy as np
@@ -356,6 +359,7 @@ def create_model(
     initialization: str,
     initialization_domain: List[float],
     output_qubit: int,
+    mp_threshold: int,
     seed: int,
     layer_multiplier: int,
 ) -> Model:
@@ -377,6 +381,7 @@ def create_model(
         output_qubit=output_qubit,
         initialization=initialization,
         initialization_domain=initialization_domain,
+        mp_threshold=mp_threshold,
         random_seed=seed,
     )
 
@@ -498,13 +503,31 @@ def generate_fourier_series(
     }
 
 
+def get_fourier_dataset(batch_size: int, domain_samples, fourier_series):
+    if batch_size < 1:
+        batch_size = len(domain_samples)
+    train_loader = DataLoader(
+        TensorDataset(
+            torch.from_numpy(domain_samples), torch.from_numpy(fourier_series)
+        ),
+        batch_size=batch_size,
+        shuffle=False,
+    )
+
+    return {
+        "train_loader": train_loader,
+        "valid_loader": train_loader,
+    }
+
+
 def get_hep_dataset(batch_size: int, n_events: int, features: List[str], seed: int):
-    train_partons_df, train_jets_df, test_partons_df = get_data()
+    # train_partons_df, train_jets_df, test_partons_df = get_data()
     train_loader, valid_loader, test_loader, parton_scaler, jet_scaler = get_loaders(
-        train_partons_df, batch_size, n_events, features, labels=["leading_pt"]
+        batch_size, n_events, features, labels=["leading_pt"]
     )
 
     return {
         "train_loader": train_loader,
         "valid_loader": valid_loader,
+        "scalers": [parton_scaler, jet_scaler],
     }
