@@ -6,6 +6,7 @@ from .nodes import (
     visualize_parameters_coefficients_correlated,
     visualize_coefficients_correlated_control,
     visualize_model,
+    visualize_data,
     visualize_coefficients_decay,
     visualize_spectrum,
     visualize_coefficients_correlated_weighted,
@@ -110,8 +111,7 @@ def create_model_pipeline() -> Pipeline:
                 func=visualize_model,
                 inputs={
                     "model": "trained_model",
-                    "domain_samples": "domain_samples",
-                    "fourier_series": "fourier_series",
+                    "data_loader": "train_loader",
                     "noise_params": "params:model.noise_params",
                 },
                 outputs={"model": "fig_model_trained"},
@@ -121,8 +121,36 @@ def create_model_pipeline() -> Pipeline:
                 func=visualize_model,
                 inputs={
                     "model": "model",
-                    "domain_samples": "domain_samples",
-                    "fourier_series": "fourier_series",
+                    "data_loader": "valid_loader",
+                    "noise_params": "params:model.noise_params",
+                },
+                outputs={"model": "fig_model_initial"},
+                name="visualize_model_initial",
+            ),
+        ]
+    )
+
+
+def create_data_pipeline() -> Pipeline:
+    return pipeline(
+        [
+            node(
+                func=visualize_data,
+                inputs={
+                    "model": "trained_model",
+                    "data_loader": "train_loader",
+                    "scalers": "scalers",
+                    "noise_params": "params:model.noise_params",
+                },
+                outputs={"model": "fig_model_trained"},
+                name="visualize_model_trained",
+            ),
+            node(
+                func=visualize_data,
+                inputs={
+                    "model": "model",
+                    "data_loader": "valid_loader",
+                    "scalers": "scalers",
                     "noise_params": "params:model.noise_params",
                 },
                 outputs={"model": "fig_model_initial"},

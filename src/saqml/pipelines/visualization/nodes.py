@@ -1,5 +1,7 @@
 from qml_essentials.model import Model
-
+from torch.utils.data import DataLoader
+import torch
+import plotly.figure_factory as ff
 import pennylane.numpy as pnp
 import numpy as np
 import plotly.graph_objects as go
@@ -8,7 +10,7 @@ import pandas as pd
 import mlflow
 import logging
 
-from typing import Dict
+from typing import Dict, List
 
 log = logging.getLogger(__name__)
 
@@ -249,10 +251,13 @@ def visualize_coefficients_correlated_control(
 
 def visualize_model(
     model: Model,
-    domain_samples: pnp.ndarray,
-    fourier_series: pnp.ndarray,
+    data_loader: DataLoader,
     noise_params: Dict,
 ) -> go.Figure:
+    # access dataset directly, we don't need batches now
+    domain_samples = data_loader.dataset.tensors[0]
+    fourier_series = data_loader.dataset.tensors[1]
+
     fig = go.Figure(
         data=[
             go.Scatter(
@@ -281,6 +286,49 @@ def visualize_model(
         ),
         yaxis=dict(
             # title="Correlation Mean",
+            showgrid=False,
+        ),
+    )
+
+    return {"model": fig}
+
+
+def visualize_data(
+    model: Model,
+    data_loader: DataLoader,
+    scalers: List,
+    noise_params: Dict,
+) -> go.Figure:
+    # access dataset directly, we don't need batches now
+    domain_samples = data_loader.dataset.tensors[0].numpy()
+    fourier_series = data_loader.dataset.tensors[1].numpy()
+    prediction = model(
+        params=model.params,
+        inputs=domain_samples,
+        noise_params=noise_params,
+        execution_type="expval",
+        force_mean=True,
+    )
+
+    fourier_series = scalers[1].inverse_transform(fourier_series.reshape(-1, 1))
+    prediction = scalers[1].inverse_transform(prediction.reshape(-1, 1))
+
+    fig = ff.create_distplot(
+        [fourier_series.flatten(), prediction.flatten()],
+        ["Ground Truth", "Prediction"],
+        bin_size=2,
+        curve_type="kde",
+        show_hist=True,
+    )
+    fig.update_layout(
+        title_text=f"Ground Truth and Model Prediction",
+        plot_bgcolor="rgba(0,0,0,0)",
+        template="plotly_white",
+        xaxis=dict(
+            title="pt",
+            showgrid=False,
+        ),
+        yaxis=dict(
             showgrid=False,
         ),
     )
