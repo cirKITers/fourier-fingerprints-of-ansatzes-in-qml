@@ -115,6 +115,7 @@ def data_preprocessing(df, collection, encoded=False, scaling_method=None):
     ), f"Unidentified collection of data. Expected 'partons' or 'jets', found '{collection}'"
     scaling_methods = [
         "MinMax",
+        "MinMaxPi",
         "Standard",
         "MaxAbs",
         "QuantileTransformer_Uniform",
@@ -269,9 +270,10 @@ def data_preprocessing(df, collection, encoded=False, scaling_method=None):
 def get_loaders(
     batch_size,
     n_events,
-    features=["E_CM", "M2"],
-    labels=["leading_pt"],
-    scaling_methods=["MinMaxPi", "MinMax"],
+    features,
+    scaling_methods,
+    labels,
+    seed,
 ):
     """
     Prepares data loaders for training, validation, and testing datasets
@@ -370,6 +372,7 @@ def get_loaders(
     if batch_size < 1:
         batch_size = len(train_dataset)
     # Loaders
+    torch.manual_seed(seed)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     valid_loader = DataLoader(valid_dataset, batch_size=batch_size)
     test_loader = DataLoader(test_dataset, batch_size=batch_size)

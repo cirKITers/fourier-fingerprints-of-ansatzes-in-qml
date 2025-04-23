@@ -1,12 +1,18 @@
 data:
-  domain: [-3.1415, 3.1415] # domain of x values
-  omegas: 5
-  offset: False
-  coefficients:
-    distribution: uniform # None, uniform, normal
-    mean: 0.25 # if None, can also be an array with len(omegas)
-    variance: 0.25 # if uniform mean+-variance defines limit
-    seed: 1000
+  fourier:
+    domain: [-3.1415, 3.1415] # domain of x values
+    omegas: 5
+    offset: False
+    coefficients:
+      distribution: uniform # None, uniform, normal
+      mean: 0.25 # if None, can also be an array with len(omegas)
+      variance: 0.25 # if uniform mean+-variance defines limit
+      seed: 1000
+  hep:
+    n_events: 5000
+    features: ["E_CM"]
+    scaling_methods: ["MinMaxPi", "MinMax"]
+    labels: ["leading_pt"]
 
 coefficients:
   samples: 300 #samples per parameter
