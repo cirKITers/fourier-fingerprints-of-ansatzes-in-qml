@@ -1,9 +1,16 @@
 from kedro.pipeline import Pipeline, node, pipeline
 
-from .nodes import sample_domain, generate_fourier_series, create_model, print_model
+from .nodes import (
+    sample_domain,
+    generate_fourier_series,
+    create_model,
+    print_model,
+    get_fourier_dataset,
+    get_hep_dataset,
+)
 
 
-def create_pipeline() -> Pipeline:
+def create_model_pipeline() -> Pipeline:
     return pipeline(
         [
             node(
@@ -16,6 +23,7 @@ def create_pipeline() -> Pipeline:
                     "encoding": "params:model.encoding",
                     "initialization": "params:model.initialization",
                     "initialization_domain": "params:model.initialization_domain",
+                    "mp_threshold": "params:model.mp_threshold",
                     "output_qubit": "params:model.output_qubit",
                     "seed": "params:seed",
                     "layer_multiplier": "params:model.layer_multiplier",
@@ -31,6 +39,13 @@ def create_pipeline() -> Pipeline:
                 outputs="model_str",
                 name="print_model",
             ),
+        ]
+    )
+
+
+def create_fourier_pipeline() -> Pipeline:
+    return pipeline(
+        [
             node(
                 func=sample_domain,
                 inputs={
@@ -56,6 +71,42 @@ def create_pipeline() -> Pipeline:
                     "target": "coeffs_target",
                 },
                 name="generate_fourier_series",
+            ),
+            node(
+                func=get_fourier_dataset,
+                inputs={
+                    "batch_size": "params:training.batch_size",
+                    "domain_samples": "domain_samples",
+                    "fourier_series": "fourier_series",
+                    # "coeffs_target": "coeffs_target",
+                },
+                outputs={
+                    "train_loader": "train_loader",
+                    "valid_loader": "valid_loader",
+                },
+                name="get_fourier_dataset",
+            ),
+        ]
+    )
+
+
+def create_hep_pipeline() -> Pipeline:
+    return pipeline(
+        [
+            node(
+                func=get_hep_dataset,
+                inputs={
+                    "batch_size": "params:training.batch_size",
+                    "n_events": "params:data.hep.n_events",
+                    "features": "params:data.hep.features",
+                    "seed": "params:seed",
+                },
+                outputs={
+                    "train_loader": "train_loader",
+                    "valid_loader": "valid_loader",
+                    "scalers": "scalers",
+                },
+                name="get_hep_dataset",
             ),
         ]
     )
