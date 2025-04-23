@@ -66,10 +66,10 @@ fig_coefficients_correlated_weighted:
 #   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
 #   filepath: "coefficients_correlated_control.html"
 
-# fig_model_initial:
-#   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
-#   filepath: "model_initial.html"
+fig_model_initial:
+  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  filepath: "model_initial.html"
 
-# fig_model_trained:
-#   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
-#   filepath: "model_trained.html"
+fig_model_trained:
+  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  filepath: "model_trained.html"
