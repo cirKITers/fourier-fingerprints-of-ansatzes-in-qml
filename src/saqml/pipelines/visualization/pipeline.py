@@ -142,19 +142,19 @@ def create_data_pipeline() -> Pipeline:
                     "scalers": "scalers",
                     "noise_params": "params:model.noise_params",
                 },
-                outputs={"model": "fig_model_trained"},
-                name="visualize_model_trained",
+                outputs={"model": "fig_model_train"},
+                name="visualize_model_train_data",
             ),
             node(
                 func=visualize_data,
                 inputs={
-                    "model": "model",
+                    "model": "trained_model",
                     "data_loader": "valid_loader",
                     "scalers": "scalers",
                     "noise_params": "params:model.noise_params",
                 },
-                outputs={"model": "fig_model_initial"},
-                name="visualize_model_initial",
+                outputs={"model": "fig_model_valid"},
+                name="visualize_model_valid_data",
             ),
         ]
     )

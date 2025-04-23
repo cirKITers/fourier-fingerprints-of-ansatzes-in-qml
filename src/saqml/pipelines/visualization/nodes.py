@@ -310,11 +310,14 @@ def visualize_data(
         force_mean=True,
     )
 
-    fourier_series = scalers[1].inverse_transform(fourier_series.reshape(-1, 1))
-    prediction = scalers[1].inverse_transform(prediction.reshape(-1, 1))
+    # scaler 1 is for jets
+    fourier_series = (
+        scalers[1].inverse_transform(fourier_series.reshape(-1, 1)).flatten()
+    )
+    prediction = scalers[1].inverse_transform(prediction.reshape(-1, 1)).flatten()
 
     fig = ff.create_distplot(
-        [fourier_series.flatten(), prediction.flatten()],
+        [fourier_series, prediction],
         ["Ground Truth", "Prediction"],
         bin_size=2,
         curve_type="kde",
