@@ -1,6 +1,7 @@
 from qml_essentials.entanglement import Entanglement
 from qml_essentials.model import Model
-
+from torch.utils.data import DataLoader
+import torch
 import pennylane as qml
 import pennylane.numpy as np
 import mlflow
@@ -34,13 +35,10 @@ def validate_problem(omegas: List[List[float]], model: Model):
 
 def train_model(
     model: Model,
-    domain_samples: np.ndarray,
-    fourier_series: np.ndarray,
-    coeffs_target: pd.DataFrame,
+    train_loader: DataLoader,
     noise_params: Dict,
     steps: int,
     learning_rate: float,
-    batch_size: int,
     log_entangling: bool,
     log_coefficients: bool,
     convergence_threshold: float,
@@ -67,6 +65,8 @@ def train_model(
     opt = qml.AdamOptimizer(stepsize=learning_rate)
 
     def mse(prediction, target):
+        if isinstance(target, torch.Tensor):
+            target = target.numpy()
         return np.mean((prediction - target) ** 2)
 
     def fcmse(coeffs, target):
@@ -112,16 +112,21 @@ def train_model(
             ]
         )
 
-        # optimization step
-        model.params, cost_val = opt.step_and_cost(
-            cost,
-            model.params,
-            inputs=domain_samples,
-            noise_params=noise_params,
-            cache=False,  # disable caching because currently no gradients are being stored
-            execution_type="expval",
-            force_mean=True,
-        )
+        cost_val = 0
+        for domain_samples, fourier_series in train_loader:
+            # optimization step
+            model.params, step_cost_val = opt.step_and_cost(
+                cost,
+                model.params,
+                inputs=domain_samples.numpy(),
+                noise_params=noise_params,
+                cache=False,  # disable caching because currently no gradients are being stored
+                execution_type="expval",
+                force_mean=True,
+            )
+
+            cost_val += step_cost_val
+        cost_val /= len(train_loader)
 
         if log_coefficients:
             # log coefficients
@@ -139,14 +144,14 @@ def train_model(
                 ]
             )
 
-            try:
-                fcmse_val = fcmse(
-                    np.abs(coeffs[len(coeffs) // 2 :]),
-                    coeffs_target.coefficients.to_numpy(),
-                )
-                mlflow.log_metric("fcmse", fcmse_val, step)
-            except Exception as e:
-                print(e)
+            # try:
+            #     fcmse_val = fcmse(
+            #         np.abs(coeffs[len(coeffs) // 2 :]),
+            #         coeffs_target.coefficients.to_numpy(),
+            #     )
+            #     mlflow.log_metric("fcmse", fcmse_val, step)
+            # except Exception as e:
+            #     print(e)
 
         # log cost
         log.debug(f"Cost in step {step}: {cost_val}")
