@@ -65,15 +65,13 @@ def train_model(
     opt = qml.AdamOptimizer(stepsize=learning_rate)
 
     def mse(prediction, target):
-        if isinstance(target, torch.Tensor):
-            target = target.numpy()
         return np.mean((prediction - target) ** 2)
 
     def fcmse(coeffs, target):
         return mse(coeffs, target)
 
-    def cost(params, **kwargs):
-        return mse(model(params=params, **kwargs), fourier_series)
+    def cost(params, targets, **kwargs):
+        return mse(model(params=params, **kwargs), targets)
 
     log.info(f"Training model for {steps} steps")
 
@@ -114,13 +112,18 @@ def train_model(
 
         cost_val = 0
         for domain_samples, fourier_series in train_loader:
+            if isinstance(domain_samples, torch.Tensor):
+                domain_samples = domain_samples.numpy()
+            if isinstance(fourier_series, torch.Tensor):
+                fourier_series = fourier_series.numpy().flatten()
+
             # optimization step
             model.params, step_cost_val = opt.step_and_cost(
                 cost,
                 model.params,
-                inputs=domain_samples.numpy(),
+                inputs=domain_samples,
+                targets=fourier_series,
                 noise_params=noise_params,
-                cache=False,  # disable caching because currently no gradients are being stored
                 execution_type="expval",
                 force_mean=True,
             )
