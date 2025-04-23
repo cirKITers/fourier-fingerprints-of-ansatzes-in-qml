@@ -49,8 +49,8 @@ def create_fourier_pipeline() -> Pipeline:
             node(
                 func=sample_domain,
                 inputs={
-                    "domain": "params:data.domain",
-                    "omegas": "params:data.omegas",
+                    "domain": "params:data.fourier.domain",
+                    "omegas": "params:data.fourier.omegas",
                 },
                 outputs="domain_samples",
                 name="sample_domain",
@@ -59,12 +59,12 @@ def create_fourier_pipeline() -> Pipeline:
                 func=generate_fourier_series,
                 inputs={
                     "domain_samples": "domain_samples",
-                    "omegas": "params:data.omegas",
-                    "coefficients_mean": "params:data.coefficients.mean",
-                    "coefficients_variance": "params:data.coefficients.variance",
-                    "coefficients_distribution": "params:data.coefficients.distribution",
-                    "offset": "params:data.offset",
-                    "seed": "params:data.coefficients.seed",
+                    "omegas": "params:data.fourier.omegas",
+                    "coefficients_mean": "params:data.fourier.coefficients.mean",
+                    "coefficients_variance": "params:data.fourier.coefficients.variance",
+                    "coefficients_distribution": "params:data.fourier.coefficients.distribution",
+                    "offset": "params:data.fourier.offset",
+                    "seed": "params:data.fourier.coefficients.seed",
                 },
                 outputs={
                     "fourier_series": "fourier_series",
@@ -99,6 +99,8 @@ def create_hep_pipeline() -> Pipeline:
                     "batch_size": "params:training.batch_size",
                     "n_events": "params:data.hep.n_events",
                     "features": "params:data.hep.features",
+                    "scaling_methods": "params:data.hep.scaling_methods",
+                    "labels": "params:data.hep.labels",
                     "seed": "params:seed",
                 },
                 outputs={

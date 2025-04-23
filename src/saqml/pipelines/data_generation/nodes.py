@@ -520,10 +520,22 @@ def get_fourier_dataset(batch_size: int, domain_samples, fourier_series):
     }
 
 
-def get_hep_dataset(batch_size: int, n_events: int, features: List[str], seed: int):
+def get_hep_dataset(
+    batch_size: int,
+    n_events: int,
+    features: List[str],
+    scaling_methods: List[str],
+    labels: List[str],
+    seed: int,
+):
     # train_partons_df, train_jets_df, test_partons_df = get_data()
     train_loader, valid_loader, test_loader, parton_scaler, jet_scaler = get_loaders(
-        batch_size, n_events, features, labels=["leading_pt"]
+        batch_size,
+        n_events,
+        features,
+        scaling_methods=scaling_methods,
+        labels=labels,
+        seed=seed,
     )
 
     return {
