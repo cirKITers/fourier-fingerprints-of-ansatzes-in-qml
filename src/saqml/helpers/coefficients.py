@@ -32,12 +32,12 @@ class Coefficients:
 
         # reorder coefficients such that [..., c_-1, c_0, c_1, ...]
         # coeffs[: model.degree + 1] = [*coeffs[1 : model.degree + 1], coeffs[0]]
-        return coeffs
+        return coeffs, freqs
 
     @staticmethod
     def numerical(
         model: Callable,  # type: ignore
-        samples: int,
+        n_samples: int,
         seed: Optional[int] = None,
         control_value: int = None,
         progress: Optional[Progress] = None,
@@ -72,13 +72,13 @@ class Coefficients:
             It is guaranteed to be between 0.0 and 1.0.
         """
 
-        if samples > 0:
+        if n_samples > 0:
             # TODO: maybe switch to JAX rng
             rng = np.random.default_rng(seed)
             # create empty samples and fill them later
-            param_samples = np.ndarray((samples, *model.params.shape))
+            param_samples = np.ndarray((n_samples, *model.params.shape))
 
-            for s in range(samples):
+            for s in range(n_samples):
                 if force_same:
                     param_samples[s] = rng.random() * np.ones(model.params.shape)
                 else:
@@ -102,9 +102,9 @@ class Coefficients:
         else:
             if seed is not None:
                 log.warning("Seed is ignored when samples is 0")
-            samples = 1
+            n_samples = 1
             # add another dimension to "simulate" param space
-            param_samples = model.params.reshape(samples, *model.params.shape)
+            param_samples = model.params.reshape(n_samples, *model.params.shape)
 
         # Build a pandas dataframe with the parameters and coefficients as columns
         df = pd.DataFrame(
@@ -119,10 +119,13 @@ class Coefficients:
 
         if progress is not None:
             progress.reset(sample_coeff_task)
-        for i, param_set in enumerate(param_samples):
-            model.params = param_set
-            coeffs = Coefficients.calculate_coefficients(model, **kwargs)
 
+        for i, param_set in enumerate(param_samples):
+            # Re-initialize model, because it triggers new sampling
+            model.params = param_set
+            coeffs, freqs = QMLCoefficients.get_spectrum(
+                model, shift=True, trim=True, **kwargs
+            )
             # append the parameters and absolute values of coefficients
             # calculation would raise an error if the imaginary part wouldn't sum up to 0
             df.loc[i] = [*param_set.flatten().tolist(), *np.abs(coeffs).tolist()]
