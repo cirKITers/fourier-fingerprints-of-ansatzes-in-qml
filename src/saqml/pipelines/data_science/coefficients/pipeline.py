@@ -5,7 +5,7 @@ from .nodes import (
     sample_coefficients,
     correlate,
     normalize,
-    sweep_control_values,
+    # sweep_control_values,
     calculate_decay,
     weight_coefficients,
 )
@@ -18,26 +18,25 @@ def create_pipeline() -> Pipeline:
                 func=calculate_coefficients,
                 inputs={
                     "model": "model",
-                    "samples": "params:coefficients.samples",
+                    "n_samples": "params:coefficients.n_samples",
                     "noise_params": "params:model.noise_params",
                     "seed": "params:seed",
-                    "force_same": "params:coefficients.force_same",
                 },
                 outputs="coefficients",
                 name="calculate_coefficients",
             ),
-            node(
-                func=sweep_control_values,
-                inputs={
-                    "model": "model",
-                    "samples": "params:coefficients.samples",
-                    "noise_params": "params:model.noise_params",
-                    "seed": "params:seed",
-                    "n_control_values": "params:n_control_values",
-                },
-                outputs="coefficients_correlated_control",
-                name="sweep_control_values",
-            ),
+            # node(
+            #     func=sweep_control_values,
+            #     inputs={
+            #         "model": "model",
+            #         "n_samples": "params:coefficients.n_samples",
+            #         "noise_params": "params:model.noise_params",
+            #         "seed": "params:seed",
+            #         "n_control_values": "params:n_control_values",
+            #     },
+            #     outputs="coefficients_correlated_control",
+            #     name="sweep_control_values",
+            # ),
             node(
                 func=calculate_decay,
                 inputs={
@@ -84,7 +83,7 @@ def create_randcoeffs_pipeline() -> Pipeline:
                 func=sample_coefficients,
                 inputs={
                     "model": "model",
-                    "samples": "params:coefficients.samples",
+                    "n_samples": "params:coefficients.n_samples",
                     "seed": "params:seed",
                 },
                 outputs="random_coefficients",

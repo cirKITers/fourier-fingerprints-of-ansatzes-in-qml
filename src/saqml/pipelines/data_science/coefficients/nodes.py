@@ -15,7 +15,10 @@ log = logging.getLogger(__name__)
 
 
 def calculate_coefficients(
-    model: Model, samples: int, seed: int, noise_params: Dict, force_same: bool
+    model: Model,
+    n_samples: int,
+    seed: int,
+    noise_params: Dict,
 ):
     """
     Calculate the Fourier coefficients of the given model.
@@ -36,27 +39,43 @@ def calculate_coefficients(
     np.ndarray
         The Fourier coefficients of the model.
     """
-    total_samples = samples * model.params.size
-    log.info(f"Total number of samples: {total_samples}")
+    # Build a pandas dataframe with the parameters and coefficients as columns
+    df = pd.DataFrame(
+        columns=[
+            *[f"p_{i}" for i in range(len(model.params.flatten()))],
+            *[
+                f"c_{i}" if i <= 0 else f"c_+{i}"
+                for i in range(-model.degree, model.degree + 1)
+            ],  # symmetric + zero frequency
+        ]
+    )
 
-    with Progress() as progress:
-        sample_coeff_task = progress.add_task("Sampling...", total=total_samples)
+    if n_samples > 0:
+        total_samples = n_samples * model.params.size
+        log.info(f"Total number of samples: {total_samples}")
+        rng = np.random.default_rng(seed)
+        model.initialize_params(rng=rng, repeat=total_samples)
+    else:
+        total_samples = 1
 
-        coefficients = Coefficients.numerical(
-            model=model,
-            samples=total_samples,
-            seed=seed,
-            progress=progress,
-            sample_coeff_task=sample_coeff_task,
-            force_same=force_same,
-        )
+    coeffs, freqs = Coefficients.calculate_coefficients(
+        model, noise_params=noise_params
+    )
 
-    return coefficients
+    for i in range(total_samples):
+        # append the parameters and absolute values of coefficients
+        # calculation would raise an error if the imaginary part wouldn't sum up to 0
+        df.loc[i] = [
+            *model.params[..., i].flatten().tolist(),
+            *coeffs[..., i].tolist(),
+        ]
+
+    return df
 
 
-def sample_coefficients(model: Model, samples: int, seed: int, mean: float = 0):
+def sample_coefficients(model: Model, n_samples: int, seed: int, mean: float = 0):
     rng = np.random.default_rng(seed)
-    total_samples = samples * model.params.size
+    total_samples = n_samples * model.params.size
     log.info(f"Total number of samples: {total_samples}")
 
     def pascal_triangle(n):
@@ -119,7 +138,7 @@ def calculate_decay(df: pd.DataFrame) -> pd.DataFrame:
         A dictionary containing the decay of the coefficients.
     """
     df_filtered = df.filter(regex="c_\+?\d+", axis=1)
-    coefficients_decay = df_filtered.mean()
+    coefficients_decay = df_filtered.abs().mean()
 
     return coefficients_decay
 
@@ -216,9 +235,9 @@ def correlate(df: pd.DataFrame, method: str) -> pd.DataFrame:
         If the given method is not supported.
     """
     if method == "pearson" or method == "spearman":
-        result = df.corr(method=method)
+        result = df.abs().corr(method=method)
     elif method == "dcor":
-        data = df.to_numpy().transpose()  # -> (n_rvs, n_samples)
+        data = df.abs().to_numpy().transpose()  # -> (n_rvs, n_samples)
 
         raise NotImplementedError()
         # temporarily disabled because of issues with llvm
@@ -261,70 +280,71 @@ def normalize(df: pd.DataFrame) -> pd.DataFrame:
     return df.abs()
 
 
-def sweep_control_values(
-    model: Model, samples: int, seed: int, noise_params: Dict, n_control_values: int
-):
-    """
-    Sweep over control values and calculate the correlated coefficients.
+# def sweep_control_values(
+#     model: Model, n_samples: int, seed: int, noise_params: Dict, n_control_values: int
+# ):
+#     """
+#     Sweep over control values and calculate the correlated coefficients.
 
-    Parameters
-    ----------
-    model : Model
-        Model to calculate the coefficients for.
-    samples : int
-        Number of samples to use for each control value.
-    seed : int
-        Seed for the random number generator.
-    noise_params : Dict
-        Parameters for the noise model.
-    n_control_values : int
-        Number of control values to sweep over.
+#     Parameters
+#     ----------
+#     model : Model
+#         Model to calculate the coefficients for.
+#     samples : int
+#         Number of samples to use for each control value.
+#     seed : int
+#         Seed for the random number generator.
+#     noise_params : Dict
+#         Parameters for the noise model.
+#     n_control_values : int
+#         Number of control values to sweep over.
 
-    Returns
-    -------
-    pd.DataFrame
-        Dataframe with the correlated coefficients for each control value.
+#     Returns
+#     -------
+#     pd.DataFrame
+#         Dataframe with the correlated coefficients for each control value.
 
-    Notes
-    -----
-    If the model does not have control values, an empty dataframe is returned.
-    """
-    coefficients_correlated_control = pd.DataFrame(
-        columns=["coeff_mean", "control_value"]
-    )
+#     Notes
+#     -----
+#     If the model does not have control values, an empty dataframe is returned.
+#     """
+#     coefficients_correlated_control = pd.DataFrame(
+#         columns=["coeff_mean", "control_value"]
+#     )
 
-    if model.pqc.get_control_indices(model.n_qubits) is None:
-        return coefficients_correlated_control
+#     if model.pqc.get_control_indices(model.n_qubits) is None:
+#         return coefficients_correlated_control
 
-    with Progress() as progress:
-        control_value_it_task = progress.add_task(
-            "Iterating control values...", total=n_control_values
-        )
-        sample_coeff_task = progress.add_task("Sampling...", total=samples)
-        # coefficients_correlated_mean = []
-        for i, cv in enumerate(np.linspace(0, np.pi, n_control_values, endpoint=True)):
-            coefficients = Coefficients.numerical(
-                model=model,
-                samples=samples,
-                seed=seed,
-                control_value=cv,
-                progress=progress,
-                sample_coeff_task=sample_coeff_task,
-                noise_params=noise_params,
-            )
-            df_correlated = correlate(coefficients)
-            # df_correlated_normalized = normalize(df_correlated)
-            coefficients_correlated = df_correlated.filter(regex="c_.*", axis=0).filter(
-                regex="c_.*", axis=1
-            )
-            coefficients_correlated_control.loc[i] = {
-                "coeff_mean": coefficients_correlated.mean().mean(),
-                "coeff_max": coefficients_correlated.max().max(),
-                "coeff_min": coefficients_correlated.min().min(),
-                "control_value": cv.item(),
-            }
-            # coefficients_correlated_mean.append(coefficients.mean().mean())
+#     with Progress() as progress:
+#         control_value_it_task = progress.add_task(
+#             "Iterating control values...", total=n_control_values
+#         )
+#         sample_coeff_task = progress.add_task("Sampling...", total=n_samples)
+#         # coefficients_correlated_mean = []
+#         for i, cv in enumerate(np.linspace(0, np.pi, n_control_values, endpoint=True)):
 
-            progress.advance(control_value_it_task, advance=1)
+#             coefficients = Coefficients.numerical(
+#                 model=model,
+#                 n_samples=n_samples,
+#                 seed=seed,
+#                 control_value=cv,
+#                 progress=progress,
+#                 sample_coeff_task=sample_coeff_task,
+#                 noise_params=noise_params,
+#             )
+#             df_correlated = correlate(coefficients)
+#             # df_correlated_normalized = normalize(df_correlated)
+#             coefficients_correlated = df_correlated.filter(regex="c_.*", axis=0).filter(
+#                 regex="c_.*", axis=1
+#             )
+#             coefficients_correlated_control.loc[i] = {
+#                 "coeff_mean": coefficients_correlated.mean().mean(),
+#                 "coeff_max": coefficients_correlated.max().max(),
+#                 "coeff_min": coefficients_correlated.min().min(),
+#                 "control_value": cv.item(),
+#             }
+#             # coefficients_correlated_mean.append(coefficients.mean().mean())
 
-    return coefficients_correlated_control
+#             progress.advance(control_value_it_task, advance=1)
+
+#     return coefficients_correlated_control

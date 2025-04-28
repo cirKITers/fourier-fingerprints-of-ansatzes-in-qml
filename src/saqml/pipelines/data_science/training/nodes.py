@@ -133,7 +133,7 @@ def train_model(
 
         if log_coefficients:
             # log coefficients
-            coeffs = Coefficients.calculate_coefficients(model, cache=False)
+            coeffs, _ = Coefficients.calculate_coefficients(model, cache=False)
             df_coeffs = pd.concat(
                 [
                     df_coeffs,
