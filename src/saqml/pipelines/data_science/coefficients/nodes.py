@@ -39,10 +39,11 @@ def calculate_coefficients(
     np.ndarray
         The Fourier coefficients of the model.
     """
+    n_params = model.params.size
     # Build a pandas dataframe with the parameters and coefficients as columns
     df = pd.DataFrame(
         columns=[
-            *[f"p_{i}" for i in range(len(model.params.flatten()))],
+            *[f"p_{i}" for i in range(n_params)],
             *[
                 f"c_{i}" if i <= 0 else f"c_+{i}"
                 for i in range(-model.degree, model.degree + 1)
@@ -51,7 +52,7 @@ def calculate_coefficients(
     )
 
     if n_samples > 0:
-        total_samples = n_samples * model.params.size
+        total_samples = n_samples * n_params
         log.info(f"Total number of samples: {total_samples}")
         rng = np.random.default_rng(seed)
         model.initialize_params(rng=rng, repeat=total_samples)
@@ -70,6 +71,7 @@ def calculate_coefficients(
             *coeffs[..., i].tolist(),
         ]
 
+    df = df.astype({f"p_{i}": "float64" for i in range(n_params)})
     return df
 
 
