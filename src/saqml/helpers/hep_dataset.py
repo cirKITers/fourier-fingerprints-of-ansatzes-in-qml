@@ -212,9 +212,11 @@ def data_preprocessing(df, collection, encoded=False, scaling_method=None):
         p2 = vector.array({"px": zeros, "py": zeros, "pz": df["pz_2"], "E": df["E_2"]})
 
         total = p1 + p2
+        diff = p1 - p2
 
         # Compute desired features
         df["E_total"] = total.E
+        df["E_diff"] = abs(diff.E)
         df["pz_total"] = total.pz
         df["M2"] = total.mass2  # invariant mass squared
         df["E_CM"] = total.mass  # center of mass energy
