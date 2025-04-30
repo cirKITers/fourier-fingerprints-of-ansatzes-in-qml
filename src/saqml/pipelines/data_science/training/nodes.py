@@ -10,6 +10,7 @@ from rich.progress import track
 import pandas as pd
 import warnings
 from typing import List
+from scipy.stats import wasserstein_distance, anderson_ksamp, energy_distance
 
 import logging
 
@@ -33,9 +34,14 @@ def validate_problem(omegas: List[List[float]], model: Model):
         log.warning("Problem validation not implemented yet.")
 
 
+def mse(target, prediction):
+    return np.mean((prediction - target) ** 2)
+
+
 def train_model(
     model: Model,
     train_loader: DataLoader,
+    valid_loader: DataLoader,
     noise_params: Dict,
     steps: int,
     learning_rate: float,
@@ -64,14 +70,72 @@ def train_model(
 
     opt = qml.AdamOptimizer(stepsize=learning_rate)
 
-    def mse(prediction, target):
-        return np.mean((prediction - target) ** 2)
+    def log_metrics(model, step):
+        domain_samples = train_loader.dataset.tensors[0].numpy()
+        fourier_series = train_loader.dataset.tensors[1].numpy().flatten()
+        prediction = model(
+            params=model.params,
+            inputs=domain_samples,
+            noise_params=noise_params,
+            execution_type="expval",
+            force_mean=True,
+        )
 
-    def fcmse(coeffs, target):
-        return mse(coeffs, target)
+        # scaler 1 is for jets
+        mlflow.log_metric(
+            "wasserstein_train",
+            wasserstein_distance(fourier_series, prediction),
+            step=step,
+        )
+        mlflow.log_metric(
+            "anderson_ksamp_train",
+            anderson_ksamp([fourier_series, prediction]).statistic,
+            step=step,
+        )
+        mlflow.log_metric(
+            "energy_distance_train",
+            energy_distance(fourier_series, prediction),
+            step=step,
+        )
+        mlflow.log_metric(
+            "mse_train",
+            mse(fourier_series, prediction),
+            step=step,
+        )
+
+        domain_samples = valid_loader.dataset.tensors[0].numpy()
+        fourier_series = valid_loader.dataset.tensors[1].numpy().flatten()
+        prediction = model(
+            params=model.params,
+            inputs=domain_samples,
+            noise_params=noise_params,
+            execution_type="expval",
+            force_mean=True,
+        )
+
+        mlflow.log_metric(
+            "wasserstein_valid",
+            wasserstein_distance(fourier_series, prediction),
+            step=step,
+        )
+        mlflow.log_metric(
+            "anderson_ksamp_valid",
+            anderson_ksamp([fourier_series, prediction]).statistic,
+            step=step,
+        )
+        mlflow.log_metric(
+            "energy_distance_valid",
+            energy_distance(fourier_series, prediction),
+            step=step,
+        )
+        mlflow.log_metric(
+            "mse_valid",
+            mse(fourier_series, prediction),
+            step=step,
+        )
 
     def cost(params, targets, **kwargs):
-        return mse(model(params=params, **kwargs), targets)
+        return mse(targets, model(params=params, **kwargs))
 
     log.info(f"Training model for {steps} steps")
 
@@ -158,7 +222,9 @@ def train_model(
 
         # log cost
         log.debug(f"Cost in step {step}: {cost_val}")
-        mlflow.log_metric("mse", cost_val, step)
+        # mlflow.log_metric("mse", cost_val, step)
+        log_metrics(model, step)
+
         costs[step] = cost_val
 
         # early stopping
