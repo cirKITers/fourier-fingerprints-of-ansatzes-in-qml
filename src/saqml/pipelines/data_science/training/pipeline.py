@@ -11,6 +11,7 @@ def create_pipeline() -> Pipeline:
                 inputs={
                     "model": "model",
                     "train_loader": "train_loader",
+                    "valid_loader": "valid_loader",
                     "noise_params": "params:model.noise_params",
                     "steps": "params:training.steps",
                     "learning_rate": "params:training.learning_rate",
