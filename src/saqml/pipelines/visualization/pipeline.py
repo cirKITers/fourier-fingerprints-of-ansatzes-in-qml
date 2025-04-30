@@ -9,7 +9,7 @@ from .nodes import (
     visualize_data,
     visualize_coefficients_decay,
     visualize_spectrum,
-    visualize_coefficients_correlated_weighted,
+    visualize_coefficients_correlated_filtered_weighted,
 )
 
 
@@ -19,7 +19,7 @@ def create_pipeline() -> Pipeline:
             node(
                 func=visualize_coefficients_correlated,
                 inputs={
-                    "df": "coefficients_correlated_normalized",
+                    "df": "coefficients_correlated_filtered",
                     "model": "model",
                     "discard_negative": "params:training.positive_coeffs_only",
                     "triu": "params:coefficients.triu",
@@ -28,15 +28,15 @@ def create_pipeline() -> Pipeline:
                 name="visualize_coefficients_correlated",
             ),
             node(
-                func=visualize_coefficients_correlated_weighted,
+                func=visualize_coefficients_correlated_filtered_weighted,
                 inputs={
-                    "df": "coefficients_correlated_weighted_normalized",
+                    "df": "coefficients_correlated_filtered_weighted",
                     "model": "model",
                     "discard_negative": "params:training.positive_coeffs_only",
                     "triu": "params:coefficients.triu",
                 },
                 outputs="fig_coefficients_correlated_weighted",
-                name="visualize_coefficients_correlated_weighted",
+                name="visualize_coefficients_correlated_filtered_weighted",
             ),
             node(
                 func=visualize_coefficients_decay,
@@ -57,7 +57,7 @@ def create_pipeline() -> Pipeline:
             node(
                 func=visualize_parameters_correlated,
                 inputs={
-                    "df": "coefficients_correlated_normalized",
+                    "df": "coefficients_correlated",
                     "model": "model",
                     "triu": "params:coefficients.triu",
                 },
@@ -67,7 +67,7 @@ def create_pipeline() -> Pipeline:
             node(
                 func=visualize_parameters_coefficients_correlated,
                 inputs={
-                    "df": "coefficients_correlated_normalized",
+                    "df": "coefficients_correlated",
                     "model": "model",
                 },
                 outputs="fig_parameters_coefficients_correlated",
@@ -92,7 +92,7 @@ def create_randcoeffs_pipeline() -> Pipeline:
             node(
                 func=visualize_coefficients_correlated,
                 inputs={
-                    "df": "random_coefficients_correlated_normalized",
+                    "df": "random_coefficients_correlated",
                     "model": "model",
                     "discard_negative": "params:training.positive_coeffs_only",
                     "triu": "params:coefficients.triu",

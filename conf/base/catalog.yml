@@ -32,10 +32,10 @@ trained_coefficients:
 #     type: pandas.CSVDataset
 #     filepath: "grads.csv"
 
-coefficients:
+coefficients_filtered:
   # type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
   type: saqml.helpers.dataset.MlFlowPandasComplexDataset
-  filepath: "coefficients.csv"
+  filepath: "coefficients_filtered.csv"
 
 fig_coefficients_correlated:
   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
@@ -57,9 +57,9 @@ fig_coefficients_correlated_weighted:
 #   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
 #   filepath: "parameters_correlated.html"
 
-# fig_parameters_coefficients_correlated:
-#   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
-#   filepath: "parameters_coefficients_correlated.html"
+fig_parameters_coefficients_correlated:
+  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  filepath: "parameters_coefficients_correlated.html"
 
 # fig_coefficients_correlated_control:
 #   type: saqml.helpers.dataset.MlFlowPlotlyArtifact

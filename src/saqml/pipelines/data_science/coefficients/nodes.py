@@ -3,6 +3,7 @@ from qml_essentials.model import Model
 import pennylane.numpy as np
 import numpy as nnp
 from rich.progress import Progress
+import itertools
 
 # import dcor
 
@@ -40,13 +41,19 @@ def calculate_coefficients(
         The Fourier coefficients of the model.
     """
     n_params = model.params.size
+
+    def str_sign(num: int):
+        return f"{num}" if num < 0 else f"+{num}"
+
     # Build a pandas dataframe with the parameters and coefficients as columns
     df = pd.DataFrame(
         columns=[
             *[f"p_{i}" for i in range(n_params)],
             *[
-                f"c_{i}" if i <= 0 else f"c_+{i}"
-                for i in range(-model.degree, model.degree + 1)
+                f"c_{'_'.join(str_sign(v) for v in tup)}"
+                for tup in itertools.product(
+                    *[range(-model.degree, model.degree + 1)] * model.n_input_feat
+                )
             ],  # symmetric + zero frequency
         ]
     )
@@ -67,12 +74,34 @@ def calculate_coefficients(
         # append the parameters and absolute values of coefficients
         # calculation would raise an error if the imaginary part wouldn't sum up to 0
         df.loc[i] = [
-            *model.params[..., i].flatten().tolist(),
-            *coeffs[..., i].tolist(),
+            *model.params[..., i].flatten(),
+            *coeffs[..., i].flatten(),
         ]
 
-    df = df.astype({f"p_{i}": "float64" for i in range(n_params)})
+    # df = df.astype({f"p_{i}": "float64" for i in range(n_params)})
     return df
+
+
+def filter_coefficients(df: pd.DataFrame, model: Model) -> pd.DataFrame:
+    """
+    Filter the given dataframe to only include positive coefficients and the zero frequency.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Dataframe to filter.
+
+    Returns
+    -------
+    pd.DataFrame
+        Filtered dataframe.
+    """
+    if len(df.index) == len(df.columns) and np.all(df.index == df.columns):
+        return df.filter(regex=f"c(_\+\d+){{{model.n_input_feat}}}", axis=0).filter(
+            regex=f"c(_\+\d+){{{model.n_input_feat}}}", axis=1
+        )
+    else:
+        return df.filter(regex=f"c(_\+\d+){{{model.n_input_feat}}}", axis=1)
 
 
 def sample_coefficients(model: Model, n_samples: int, seed: int, mean: float = 0):
@@ -139,14 +168,14 @@ def calculate_decay(df: pd.DataFrame) -> pd.DataFrame:
     dict
         A dictionary containing the decay of the coefficients.
     """
-    df_filtered = df.filter(regex="c_\+?\d+", axis=1)
-    coefficients_decay = df_filtered.abs().mean()
+
+    coefficients_decay = df.abs().apply(np.mean)
 
     return coefficients_decay
 
 
 def weight_coefficients(
-    coefficients_correlated: pd.DataFrame,
+    df: pd.DataFrame,
     coefficients_decay: pd.DataFrame,
     weighting="coefficients",
 ) -> pd.DataFrame:
@@ -169,11 +198,7 @@ def weight_coefficients(
     pd.DataFrame
         Dataframe containing the weighted correlated coefficients.
     """
-    df_filtered = coefficients_correlated.filter(regex="c_\+?\d+", axis=0).filter(
-        regex="c_\+?\d+", axis=1
-    )
-
-    nc = df_filtered.shape[0]
+    nc = df.shape[0]
     if weighting == "coefficients_add":
         weights = np.ones((nc, nc))
         coefficients_decay = coefficients_decay / coefficients_decay.max()
@@ -207,9 +232,9 @@ def weight_coefficients(
     else:
         raise NotImplementedError(f"Weighting {weighting} not implemented.")
 
-    df_filtered_weighted = df_filtered * weights
+    df_weighted = df * weights
 
-    return df_filtered_weighted
+    return df_weighted
 
 
 def correlate(df: pd.DataFrame, method: str) -> pd.DataFrame:

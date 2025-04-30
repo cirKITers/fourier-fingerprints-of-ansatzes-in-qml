@@ -2,6 +2,7 @@ from kedro.pipeline import Pipeline, node, pipeline
 
 from .nodes import (
     calculate_coefficients,
+    filter_coefficients,
     sample_coefficients,
     correlate,
     normalize,
@@ -25,6 +26,15 @@ def create_pipeline() -> Pipeline:
                 outputs="coefficients",
                 name="calculate_coefficients",
             ),
+            node(
+                func=filter_coefficients,
+                inputs={
+                    "df": "coefficients",
+                    "model": "model",
+                },
+                outputs="coefficients_filtered",
+                name="filter_coefficients",
+            ),
             # node(
             #     func=sweep_control_values,
             #     inputs={
@@ -40,7 +50,7 @@ def create_pipeline() -> Pipeline:
             node(
                 func=calculate_decay,
                 inputs={
-                    "df": "coefficients",
+                    "df": "coefficients_filtered",
                 },
                 outputs="coefficients_decay",
                 name="calculate_decay",
@@ -55,21 +65,22 @@ def create_pipeline() -> Pipeline:
                 name="correlate_coefficients",
             ),
             node(
-                func=normalize,
+                func=filter_coefficients,
                 inputs={
                     "df": "coefficients_correlated",
+                    "model": "model",
                 },
-                outputs="coefficients_correlated_normalized",
-                name="normalize_coefficients",
+                outputs="coefficients_correlated_filtered",
+                name="filter_coefficients_correlated",
             ),
             node(
                 func=weight_coefficients,
                 inputs={
-                    "coefficients_correlated": "coefficients_correlated_normalized",
+                    "df": "coefficients_correlated_filtered",
                     "coefficients_decay": "coefficients_decay",
                     "weighting": "params:coefficients.weighting",
                 },
-                outputs="coefficients_correlated_weighted_normalized",
+                outputs="coefficients_correlated_filtered_weighted",
                 name="weight_coefficients",
             ),
         ]
@@ -97,14 +108,6 @@ def create_randcoeffs_pipeline() -> Pipeline:
                 },
                 outputs="random_coefficients_correlated",
                 name="correlate_random_coefficients",
-            ),
-            node(
-                func=normalize,
-                inputs={
-                    "df": "random_coefficients_correlated",
-                },
-                outputs="random_coefficients_correlated_normalized",
-                name="normalize_random_coefficients",
             ),
         ]
     )
