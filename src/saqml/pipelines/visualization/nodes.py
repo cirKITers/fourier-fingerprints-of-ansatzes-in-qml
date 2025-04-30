@@ -2,6 +2,7 @@ from qml_essentials.model import Model
 from torch.utils.data import DataLoader
 import torch
 import plotly.figure_factory as ff
+from plotly.subplots import make_subplots
 import pennylane.numpy as pnp
 import numpy as np
 import plotly.graph_objects as go
@@ -318,19 +319,60 @@ def visualize_data(
     )
     prediction = scalers[1].inverse_transform(prediction.reshape(-1, 1)).flatten()
 
-    fig = ff.create_distplot(
-        [fourier_series, prediction],
-        ["Ground Truth", "Prediction"],
+    fig = make_subplots(
+        rows=2,
+        cols=1,
+        subplot_titles=("Distributions", "Differences"),
+    )
+    dists_plots = ff.create_distplot(
+        [fourier_series, prediction, prediction - fourier_series],
+        ["Ground Truth", "Prediction", "Differences"],
         bin_size=2,
         curve_type="kde",
-        show_hist=True,
+        show_rug=False,
+    ).data
+
+    fig.add_trace(
+        dists_plots[0],
+        row=1,
+        col=1,
     )
+    fig.add_trace(
+        dists_plots[1],
+        row=1,
+        col=1,
+    )
+    fig.add_trace(
+        dists_plots[3],
+        row=1,
+        col=1,
+    )
+    fig.add_trace(
+        dists_plots[4],
+        row=1,
+        col=1,
+    )
+    fig.add_trace(
+        dists_plots[2],
+        row=2,
+        col=1,
+    )
+    fig.add_trace(
+        dists_plots[5],
+        row=2,
+        col=1,
+    )
+
     fig.update_layout(
-        title_text=f"Ground Truth and Model Prediction",
+        title_text=f"Ground Truth and Model Prediction and Differences",
         plot_bgcolor="rgba(0,0,0,0)",
         template="plotly_white",
         xaxis=dict(
             title="pt",
+            showgrid=False,
+        ),
+        xaxis2=dict(
+            title="pt_diff",
             showgrid=False,
         ),
         yaxis=dict(

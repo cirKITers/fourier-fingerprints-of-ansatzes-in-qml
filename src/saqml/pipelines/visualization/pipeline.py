@@ -51,6 +51,7 @@ def create_pipeline() -> Pipeline:
                 func=visualize_spectrum,
                 inputs={
                     "df": "coefficients_filtered",
+                    "model": "model",
                 },
                 outputs="fig_spectrum",
                 name="visualize_spectrum",
