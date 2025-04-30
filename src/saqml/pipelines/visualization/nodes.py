@@ -17,6 +17,8 @@ log = logging.getLogger(__name__)
 
 def visualize_heatmap_filtered(
     df: pd.DataFrame,
+    zmax=1.0,
+    zmin=0.0,
 ) -> go.Figure:
 
     fig = go.Figure(
@@ -26,8 +28,8 @@ def visualize_heatmap_filtered(
             x=df.columns,
             hoverongaps=False,
             colorscale="Sunset",
-            zmax=1.0,
-            zmin=0.0,
+            zmax=zmax,
+            zmin=zmin,
         )
     )
     fig.update_layout(
@@ -39,34 +41,51 @@ def visualize_heatmap_filtered(
     return fig
 
 
-def visualize_coefficients_decay(df: pd.DataFrame) -> go.Figure:
-    for i, c in enumerate(df):
-        mlflow.log_metric(f"coefficients_decay", c, step=i)
-
-    fig = go.Figure(data=go.Scatter(x=df.index, y=df, mode="markers+lines"))
-    fig.update_layout(
-        template="plotly_white",
-        title="Coefficient Mean",
-        yaxis_type="log",
-    )
+def visualize_coefficients_decay(df: pd.DataFrame, model: Model) -> go.Figure:
+    if model.n_input_feat == 1:
+        fig = go.Figure(data=go.Scatter(x=df.index, y=df, mode="markers+lines"))
+        fig.update_layout(
+            template="plotly_white",
+            title="Coefficient Mean",
+            yaxis_type="log",
+        )
+    elif model.n_input_feat == 2:
+        heatmap = pd.DataFrame(
+            df.to_numpy().reshape(model.degree + 1, model.degree + 1),
+            columns=["c_+" + str(i) for i in range(model.degree + 1)],
+            index=["c_+" + str(i) for i in range(model.degree + 1)],
+        )
+        fig = visualize_heatmap_filtered(df=heatmap, zmax=heatmap.max().max())
+    else:
+        raise NotImplementedError(
+            "Only implemented for n_input_feat=1 and n_input_feat=2"
+        )
 
     return fig
 
 
-def visualize_spectrum(df: pd.DataFrame) -> go.Figure:
+def visualize_spectrum(df: pd.DataFrame, model: Model) -> go.Figure:
     df_filtered = df.filter(regex="c.*", axis=1)
 
-    fig = go.Figure()
-    for c in df_filtered.columns:
-        fig.add_trace(
-            go.Box(
-                y=df_filtered[c],
-                name=c,
-                marker=dict(color=pc.qualitative.Dark2[0]),
-                boxpoints=False,
+    if model.n_input_feat == 1:
+
+        fig = go.Figure()
+        for c in df_filtered.columns:
+            fig.add_trace(
+                go.Box(
+                    y=df_filtered[c],
+                    name=c,
+                    marker=dict(color=pc.qualitative.Dark2[0]),
+                    boxpoints=False,
+                )
             )
+        fig.update_layout(template="plotly_white", title="Spectrum", showlegend=False)
+    elif model.n_input_feat == 2:
+        fig = None
+    else:
+        raise NotImplementedError(
+            "Only implemented for n_input_feat=1 and n_input_feat=2"
         )
-    fig.update_layout(template="plotly_white", title="Spectrum", showlegend=False)
 
     return fig
 

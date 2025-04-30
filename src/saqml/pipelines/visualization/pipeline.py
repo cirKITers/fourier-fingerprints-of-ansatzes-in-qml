@@ -42,6 +42,7 @@ def create_pipeline() -> Pipeline:
                 func=visualize_coefficients_decay,
                 inputs={
                     "df": "coefficients_decay",
+                    "model": "model",
                 },
                 outputs="fig_coefficients_decay",
                 name="visualize_coefficients_decay",
@@ -49,7 +50,7 @@ def create_pipeline() -> Pipeline:
             node(
                 func=visualize_spectrum,
                 inputs={
-                    "df": "coefficients",
+                    "df": "coefficients_filtered",
                 },
                 outputs="fig_spectrum",
                 name="visualize_spectrum",
