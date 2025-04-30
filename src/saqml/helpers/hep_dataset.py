@@ -116,6 +116,7 @@ def data_preprocessing(df, collection, encoded=False, scaling_method=None):
     scaling_methods = [
         "MinMax",
         "MinMaxPi",
+        "MinMaxHalf",
         "Standard",
         "MaxAbs",
         "QuantileTransformer_Uniform",
@@ -124,7 +125,7 @@ def data_preprocessing(df, collection, encoded=False, scaling_method=None):
         None,
     ]
     if scaling_method not in scaling_methods:
-        warnings.warn(
+        raise ValueError(
             f"Scaling method not recognized, received {scaling_method}.\n"
             + f"Available methods are {scaling_methods}\n"
             + "No scaling was performed"
@@ -138,6 +139,13 @@ def data_preprocessing(df, collection, encoded=False, scaling_method=None):
         scaler = FunctionTransformer(
             func=lambda x: mm_scaler.fit_transform(x) * np.pi,
             inverse_func=lambda x: mm_scaler.inverse_transform(x / np.pi),
+            validate=True,
+        )
+    elif scaling_method == "MinMaxHalf":
+        mm_scaler = MinMaxScaler()
+        scaler = FunctionTransformer(
+            func=lambda x: mm_scaler.fit_transform(x) * 0.5,
+            inverse_func=lambda x: mm_scaler.inverse_transform(x * 2.0),
             validate=True,
         )
     elif scaling_method == "Standard":
