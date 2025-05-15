@@ -17,6 +17,10 @@ import vector
 import warnings
 import copy
 
+import logging
+
+log = logging.getLogger(__name__)
+
 
 def h5py_to_DataFrame(data, collection, n_events=None):
     """
@@ -115,8 +119,8 @@ def data_preprocessing(df, collection, encoded=False, scaling_method=None):
     ), f"Unidentified collection of data. Expected 'partons' or 'jets', found '{collection}'"
     scaling_methods = [
         "MinMax",
-        "MinMaxPi",
-        "MinMaxHalf",
+        "MinMaxZPi",
+        "MinMaxZHalf",
         "Standard",
         "MaxAbs",
         "QuantileTransformer_Uniform",
@@ -134,14 +138,16 @@ def data_preprocessing(df, collection, encoded=False, scaling_method=None):
     # Setting the scaler
     if scaling_method == "MinMax":
         scaler = MinMaxScaler()
-    elif scaling_method == "MinMaxPi":
+    elif scaling_method == "MinMaxZPi":
         mm_scaler = MinMaxScaler()
         scaler = FunctionTransformer(
-            func=lambda x: mm_scaler.fit_transform(x) * np.pi,
-            inverse_func=lambda x: mm_scaler.inverse_transform(x / np.pi),
+            func=lambda x: 2 * np.pi * mm_scaler.fit_transform(x) - np.pi,
+            inverse_func=lambda x: mm_scaler.inverse_transform(
+                ((x + np.pi) / (2 * np.pi))
+            ),
             validate=True,
         )
-    elif scaling_method == "MinMaxHalf":
+    elif scaling_method == "MinMaxZHalf":
         mm_scaler = MinMaxScaler()
         scaler = FunctionTransformer(
             func=lambda x: mm_scaler.fit_transform(x) * 0.5,
@@ -163,6 +169,7 @@ def data_preprocessing(df, collection, encoded=False, scaling_method=None):
             validate=True,
         )
     else:
+        log.warning("No scaling was performed")
         scaler = False
 
     if collection == "jets":
