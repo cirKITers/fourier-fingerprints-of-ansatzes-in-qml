@@ -543,3 +543,41 @@ def get_hep_dataset(
         "valid_loader": valid_loader,
         "scalers": [parton_scaler, jet_scaler],
     }
+
+
+def calculate_hep_spectrum(data_loader, scalers):
+    x = data_loader.dataset.tensors[0]
+    y = data_loader.dataset.tensors[1].squeeze()
+
+    discretization_error = 0.0
+
+    def closest_x(x1, x2):
+        # find index of pair (x1, x2) that is closest to a tuple in x
+        idx = np.argmin(np.linalg.norm(x - np.array([x1, x2]), axis=1))
+        eps = np.linalg.norm(x[idx] - np.array([x1, x2]))
+        return idx, eps
+
+    n_samples = x.shape[0]
+    bins = np.linspace(-np.pi, np.pi, num=n_samples)
+
+    y_hat = np.zeros([n_samples, n_samples])
+
+    for i in range(n_samples):
+        for j in range(n_samples):
+            idx, eps = closest_x(bins[i], bins[j])
+            y_hat[i, j] = y[idx]
+            discretization_error += eps / n_samples
+
+    log.info(f"Discretization error: {discretization_error}")
+
+    Y = np.fft.fftn(y_hat)
+    Y = np.fft.fftshift(Y)
+
+    return {
+        "target": pd.DataFrame(
+            {
+                "omegas": list(range(n_samples)),
+                "coefficients": np.abs(Y),
+            }
+        )
+    }

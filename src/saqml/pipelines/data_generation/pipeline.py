@@ -7,6 +7,7 @@ from .nodes import (
     print_model,
     get_fourier_dataset,
     get_hep_dataset,
+    calculate_hep_spectrum,
 )
 
 
@@ -109,6 +110,17 @@ def create_hep_pipeline() -> Pipeline:
                     "scalers": "scalers",
                 },
                 name="get_hep_dataset",
+            ),
+            node(
+                func=calculate_hep_spectrum,
+                inputs={
+                    "data_loader": "train_loader",
+                    "scalers": "scalers",
+                },
+                outputs={
+                    "coefficients": "coefficients_dataset",
+                },
+                name="calculate_hep_spectrum",
             ),
         ]
     )
