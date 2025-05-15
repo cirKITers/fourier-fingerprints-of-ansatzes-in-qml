@@ -9,6 +9,7 @@ import plotly.graph_objects as go
 import plotly.colors as pc
 import pandas as pd
 import mlflow
+import plotly.express as px
 import logging
 
 from typing import Dict, List
@@ -82,7 +83,8 @@ def visualize_spectrum(df: pd.DataFrame, model: Model) -> go.Figure:
             )
         fig.update_layout(template="plotly_white", title="Spectrum", showlegend=False)
     elif model.n_input_feat == 2:
-        fig = None
+        df_mean = df.mean(axis=1)
+        fig = go.Figure()
     else:
         raise NotImplementedError(
             "Only implemented for n_input_feat=1 and n_input_feat=2"
