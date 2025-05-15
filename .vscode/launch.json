@@ -70,14 +70,27 @@
             "justMyCode": false
         },
         {
-            "name": "Training",
+            "name": "Training Fourier",
             "type": "debugpy",
             "request": "launch",
             "module": "kedro",
             "args": [
                 "run",
                 "--pipeline",
-                "training"
+                "training_fourier"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Training HEP",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "kedro",
+            "args": [
+                "run",
+                "--pipeline",
+                "training_hep"
             ],
             "console": "integratedTerminal",
             "justMyCode": false
