@@ -9,10 +9,8 @@ model_str:
     filepath: "model.txt"
 
 coeffs_target:
-  type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
-  dataset:
-    type: pandas.CSVDataset
-    filepath: "coeffs_target.csv"
+  type: saqml.helpers.dataset.MlFlowPandasComplexDataset
+  filepath: "coeffs_target.csv"
 
 trained_coefficients:
   type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
@@ -48,6 +46,14 @@ fig_coefficients_correlated_weighted:
 fig_spectrum:
   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "spectrum.html"
+
+fig_data_spectrum:
+  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  filepath: "data_spectrum.html"
+
+fig_input_data:
+  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  filepath: "fig_input_data.html"
 
 # fig_random_coefficients_correlated:
 #   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
