@@ -12,7 +12,7 @@ do
         kedro run --params=n_qubits=$n_qubits &
     else
         # kedro run --pipeline training --params=omegas=$n_qubits,n_qubits=$n_qubits,circuit_type=$1,seed=$2 &
-        sbatch --job-name "q$n_qubits-c$1-s$2" ./slurm_job.sh "data.omegas=$n_qubits,model.n_qubits=$n_qubits,model.circuit_type=$1,seed=$2" &
-        # sbatch --job-name "q$n_qubits-c$1" ./slurm_job.sh "data.omegas=$n_qubits,model.n_qubits=$n_qubits,model.circuit_type=$1" &
+        # sbatch --job-name "q$n_qubits-c$1-s$2" ./slurm_job.sh "data.omegas=$n_qubits,model.n_qubits=$n_qubits,model.circuit_type=$1,seed=$2" &
+        sbatch --job-name "q$n_qubits-c$1" ./slurm_job.sh "data.omegas=$n_qubits,model.n_qubits=$n_qubits,model.circuit_type=$1" &
     fi
 done

@@ -1,7 +1,7 @@
 #!/bin/bash
 # 
 # name of the job for better recognizing it in the queue overview
-#SBATCH --job-name=saqml
+#SBATCH --job-name=entangling-the-waves
 # 
 # define how many nodes we need
 #SBATCH --nodes=1
@@ -11,10 +11,10 @@
 #
 # expected duration of the job
 #              hh:mm:ss
-#SBATCH --time=05:00:00
+#SBATCH --time=12:00:00
 # 
 # partition the job will run on
-#SBATCH --partition single
+#SBATCH --partition cpu
 # 
 # expected memory requirements
 #SBATCH --mem=16000MB
@@ -27,25 +27,25 @@
 module load compiler/llvm
 module load devel/python/3.11.7
 
-# ~/saqml/.venv/bin/python -m kedro run --pipeline coefficients --params=$1
-# ~/saqml/.venv/bin/python -m kedro run --pipeline expressibility --params=$1
+# ~/entangling-the-waves/.venv/bin/python -m kedro run --pipeline coefficients --params=$1
+# ~/entangling-the-waves/.venv/bin/python -m kedro run --pipeline expressibility --params=$1
 
-# for seed in 1000 1001 1002 1003 1004 1005 1006 1007 1008 1009
-# do
-#     echo "Running with seed $seed"
-#     ~/saqml/.venv/bin/python -m kedro run --pipeline coefficients --params="$1,seed=$seed"
-# done
+for seed in 1000 1001 1002 1003 1004
+do
+    echo "Running with seed $seed"
+    ~/entangling-the-waves/.venv/bin/python -m kedro run --pipeline coefficients --params="$1,seed=$seed"
+done
 
 # for training_seed in 1000 1001 1002 1003 1004 1005 1006 1007 1008 1009
 # do
 #     echo "Running with $training_seed training seed"
-#     ~/saqml/.venv/bin/python -m kedro run --pipeline training --params="$1,data.coefficients.seed=$training_seed"
+#     ~/entangling-the-waves/.venv/bin/python -m kedro run --pipeline training --params="$1,data.coefficients.seed=$training_seed"
 # done
 
 # for encoding in RX RY RZ
 # do
 #     echo "Running with seed $seed"
-#     ~/saqml/.venv/bin/python -m kedro run --pipeline coefficients --params="$1,model.encoding=$encoding"
+#     ~/entangling-the-waves/.venv/bin/python -m kedro run --pipeline coefficients --params="$1,model.encoding=$encoding"
 # done
 
 # Done
