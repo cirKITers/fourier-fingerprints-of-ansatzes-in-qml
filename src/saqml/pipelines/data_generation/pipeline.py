@@ -116,9 +116,12 @@ def create_hep_pipeline() -> Pipeline:
                 inputs={
                     "data_loader": "train_loader",
                     "scalers": "scalers",
+                    "model": "model",
+                    "mts": "params:data.mts",
+                    "mfs": "params:data.mfs",
                 },
                 outputs={
-                    "coefficients": "coefficients_dataset",
+                    "target": "coeffs_target",
                 },
                 name="calculate_hep_spectrum",
             ),

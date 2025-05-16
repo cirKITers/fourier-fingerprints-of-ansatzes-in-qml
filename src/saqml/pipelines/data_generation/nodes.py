@@ -8,6 +8,7 @@ from typing import List, Optional, Union, Callable
 import pennylane as qml
 import pennylane.numpy as np
 import pandas as pd
+import itertools
 
 from saqml.helpers.hep_dataset import get_data, get_loaders
 
@@ -545,7 +546,7 @@ def get_hep_dataset(
     }
 
 
-def calculate_hep_spectrum(data_loader, scalers):
+def calculate_hep_spectrum(data_loader, scalers, model, mts, mfs):
     x = data_loader.dataset.tensors[0]
     y = data_loader.dataset.tensors[1].squeeze()
 
@@ -558,12 +559,17 @@ def calculate_hep_spectrum(data_loader, scalers):
         return idx, eps
 
     n_samples = x.shape[0]
-    bins = np.linspace(-np.pi, np.pi, num=n_samples)
+    n_freqs: int = 2 * mfs * model.degree + 1
+    start, stop, step = 0, 2 * mts * np.pi, 2 * np.pi / n_freqs
+    # Stretch according to the number of frequencies
+    bins: np.ndarray = np.arange(start, stop, step)
+    x = x * mts
 
-    y_hat = np.zeros([n_samples, n_samples])
+    N = len(bins)
+    y_hat = np.zeros([N, N])
 
-    for i in range(n_samples):
-        for j in range(n_samples):
+    for i in range(N):
+        for j in range(N):
             idx, eps = closest_x(bins[i], bins[j])
             y_hat[i, j] = y[idx]
             discretization_error += eps / n_samples
@@ -573,11 +579,20 @@ def calculate_hep_spectrum(data_loader, scalers):
     Y = np.fft.fftn(y_hat)
     Y = np.fft.fftshift(Y)
 
-    return {
-        "target": pd.DataFrame(
-            {
-                "omegas": list(range(n_samples)),
-                "coefficients": np.abs(Y),
-            }
-        )
-    }
+    def str_sign(num: int):
+        return f"{num:.2f}" if num < 0 else f"+{num:.2f}"
+
+    freqs = np.fft.fftshift(np.fft.fftfreq(mts * n_freqs, 1 / n_freqs))
+
+    # Build a pandas dataframe with the parameters and coefficients as columns
+    df = pd.DataFrame(
+        columns=[
+            *[
+                f"c_{'_'.join(str_sign(v) for v in tup)}"
+                for tup in itertools.product(*[freqs] * model.n_input_feat)
+            ],  # symmetric + zero frequency
+        ]
+    )
+    df.loc[0] = Y.flatten()
+
+    return {"target": df}
