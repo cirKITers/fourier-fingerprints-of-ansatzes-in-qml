@@ -119,6 +119,8 @@ def data_preprocessing(df, collection, encoded=False, scaling_method=None):
     ), f"Unidentified collection of data. Expected 'partons' or 'jets', found '{collection}'"
     scaling_methods = [
         "MinMax",
+        "MinMaxPi",
+        "MinMaxPiLog",
         "MinMaxZPi",
         "MinMaxZHalf",
         "Standard",
@@ -138,6 +140,13 @@ def data_preprocessing(df, collection, encoded=False, scaling_method=None):
     # Setting the scaler
     if scaling_method == "MinMax":
         scaler = MinMaxScaler()
+    elif scaling_method == "MinMaxPi":
+        mm_scaler = MinMaxScaler()
+        scaler = FunctionTransformer(
+            func=lambda x: 2 * np.pi * mm_scaler.fit_transform(x),
+            inverse_func=lambda x: mm_scaler.inverse_transform((x / (2 * np.pi))),
+            validate=True,
+        )
     elif scaling_method == "MinMaxZPi":
         mm_scaler = MinMaxScaler()
         scaler = FunctionTransformer(
@@ -147,11 +156,21 @@ def data_preprocessing(df, collection, encoded=False, scaling_method=None):
             ),
             validate=True,
         )
+    elif scaling_method == "MinMaxPiLog":
+        mm_scaler = MinMaxScaler()
+        scaler = FunctionTransformer(
+            func=lambda x: 2 * np.pi * mm_scaler.fit_transform(np.log10(x + 1e-6)),
+            inverse_func=lambda x: np.power(
+                10, mm_scaler.inverse_transform((x / (2 * np.pi)))
+            )
+            - 1e-6,
+            validate=True,
+        )
     elif scaling_method == "MinMaxZHalf":
         mm_scaler = MinMaxScaler()
         scaler = FunctionTransformer(
-            func=lambda x: mm_scaler.fit_transform(x) * 0.5,
-            inverse_func=lambda x: mm_scaler.inverse_transform(x * 2.0),
+            func=lambda x: mm_scaler.fit_transform(x) * 0.5 - 0.5,
+            inverse_func=lambda x: mm_scaler.inverse_transform((x + 0.5) * 2.0),
             validate=True,
         )
     elif scaling_method == "Standard":
@@ -231,11 +250,17 @@ def data_preprocessing(df, collection, encoded=False, scaling_method=None):
 
         # Compute desired features
         df["E_total"] = total.E
-        df["E_diff"] = abs(diff.E)
+        df["delta_E"] = df["E_1"] - df["E_2"]
+        df["E_ratio"] = df["E_1"] / (df["E_2"] + 1e-6)
         df["pz_total"] = total.pz
-        df["M2"] = total.mass2  # invariant mass squared
-        df["E_CM"] = total.mass  # center of mass energy
-        df["rapidity"] = abs(total.rapidity)  # rapidity
+        df["delta_pz"] = df["pz_1"] - df["pz_2"]
+        df["M2"] = total.mass2
+        df["E_CM"] = total.mass
+        df["E^3"] = total.E**3
+        df["E^4"] = total.E**4
+        # df['rapidity'] = total.rapidity
+        df["quark"] = df[["particle_id_1", "particle_id_2"]].min(axis=1)
+        df["charge_total"] = df["charge_1"] + df["charge_2"]
 
         # # Add collision type feature based on which particles are colliding
         # conditions = [
@@ -267,6 +292,7 @@ def data_preprocessing(df, collection, encoded=False, scaling_method=None):
 
         # Scaling Energy and pz
         if scaler:
+            df["delta_E"] = df["delta_E"].abs()
             df["pz_2"] = df["pz_2"].abs()  # abs to avoid log scaling issues
             df["pz_total"] = df[
                 "pz_total"
@@ -276,7 +302,7 @@ def data_preprocessing(df, collection, encoded=False, scaling_method=None):
             cols_to_scale = [
                 col
                 for col in df.columns
-                if col.startswith(("E_", "pz_")) or col in ["M2", "rapidity"]
+                if col.startswith(("E_", "pz_", "delta_")) or col in ["M2", "rapidity"]
             ]
 
             df[cols_to_scale] = scaler.fit_transform(df[cols_to_scale])
