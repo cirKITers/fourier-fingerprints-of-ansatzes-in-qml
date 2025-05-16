@@ -9,7 +9,7 @@ data:
       variance: 0.25 # if uniform mean+-variance defines limit
       seed: 1000
   hep:
-    n_events: 1000
+    n_events: 10000
     features: ["E_CM", "delta_E"]
     scaling_methods: ["MinMaxPiLog", "MinMaxZHalf"]
     labels: ["leading_pt"]
