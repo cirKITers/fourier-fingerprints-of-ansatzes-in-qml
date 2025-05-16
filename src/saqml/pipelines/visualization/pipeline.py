@@ -7,6 +7,7 @@ from .nodes import (
     visualize_coefficients_correlated_control,
     visualize_model,
     visualize_data,
+    visualize_input_data,
     visualize_coefficients_decay,
     visualize_spectrum,
     visualize_coefficients_correlated_filtered_weighted,
@@ -52,6 +53,8 @@ def create_pipeline() -> Pipeline:
                 inputs={
                     "df": "coefficients_filtered",
                     "model": "model",
+                    "mts": "params:data.mts",
+                    "mfs": "params:data.mfs",
                 },
                 outputs="fig_spectrum",
                 name="visualize_spectrum",
@@ -137,26 +140,48 @@ def create_data_pipeline() -> Pipeline:
     return pipeline(
         [
             node(
-                func=visualize_data,
+                func=visualize_spectrum,
+                inputs={
+                    "df": "coeffs_target",
+                    "model": "model",
+                    "mts": "params:data.mts",
+                    "mfs": "params:data.mfs",
+                },
+                outputs="fig_data_spectrum",
+                name="visualize_spectrum",
+            ),
+            node(
+                func=visualize_input_data,
                 inputs={
                     "model": "trained_model",
                     "data_loader": "train_loader",
                     "scalers": "scalers",
                     "noise_params": "params:model.noise_params",
                 },
-                outputs={"model": "fig_model_train"},
+                outputs="fig_input_data",
                 name="visualize_model_train_data",
             ),
-            node(
-                func=visualize_data,
-                inputs={
-                    "model": "trained_model",
-                    "data_loader": "valid_loader",
-                    "scalers": "scalers",
-                    "noise_params": "params:model.noise_params",
-                },
-                outputs={"model": "fig_model_valid"},
-                name="visualize_model_valid_data",
-            ),
+            # node(
+            #     func=visualize_data,
+            #     inputs={
+            #         "model": "trained_model",
+            #         "data_loader": "train_loader",
+            #         "scalers": "scalers",
+            #         "noise_params": "params:model.noise_params",
+            #     },
+            #     outputs={"model": "fig_model_train"},
+            #     name="visualize_model_train_data",
+            # ),
+            # node(
+            #     func=visualize_data,
+            #     inputs={
+            #         "model": "trained_model",
+            #         "data_loader": "valid_loader",
+            #         "scalers": "scalers",
+            #         "noise_params": "params:model.noise_params",
+            #     },
+            #     outputs={"model": "fig_model_valid"},
+            #     name="visualize_model_valid_data",
+            # ),
         ]
     )

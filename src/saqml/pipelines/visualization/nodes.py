@@ -66,7 +66,7 @@ def visualize_coefficients_decay(df: pd.DataFrame, model: Model) -> go.Figure:
     return fig
 
 
-def visualize_spectrum(df: pd.DataFrame, model: Model) -> go.Figure:
+def visualize_spectrum(df: pd.DataFrame, model: Model, mts, mfs) -> go.Figure:
     df_filtered = df.filter(regex="c.*", axis=1)
 
     if model.n_input_feat == 1:
@@ -83,8 +83,47 @@ def visualize_spectrum(df: pd.DataFrame, model: Model) -> go.Figure:
             )
         fig.update_layout(template="plotly_white", title="Spectrum", showlegend=False)
     elif model.n_input_feat == 2:
-        df_mean = df.mean(axis=1)
-        fig = go.Figure()
+        n_coeffs = int(np.sqrt(df.size))
+        n_freqs = n_coeffs // 2
+
+        Y = df.mean(axis=0).to_numpy().reshape((n_coeffs, n_coeffs))
+
+        def psd(coeffs):
+            def abs2(x):
+                return x.real**2 + x.imag**2
+
+            scale = 2.0 / (n_coeffs**2)
+            return scale * abs2(coeffs)
+
+        fig = go.Figure(
+            data=go.Heatmap(
+                z=np.log10(psd(Y)),
+                hoverongaps=False,
+                colorscale="Sunset",
+            )
+        )
+        n_freqs: int = 2 * mfs * model.degree + 1
+        freqs = np.fft.fftshift(np.fft.fftfreq(mts * n_freqs, 1 / n_freqs))
+
+        def str_sign(num: int):
+            return f"{num:.2f}" if num < 0 else f"+{num:.2f}"
+
+        fig.update_xaxes(
+            tickvals=list(range(n_coeffs)),
+            ticktext=[str_sign(f) for f in freqs],
+            title="X2",
+        )
+        fig.update_yaxes(
+            tickvals=list(range(n_coeffs)),
+            ticktext=[str_sign(f) for f in freqs],
+            title="X1",
+        )
+        fig.update_layout(
+            plot_bgcolor="rgba(0,0,0,0)",
+            width=600,
+            height=600,
+            autosize=False,
+        )
     else:
         raise NotImplementedError(
             "Only implemented for n_input_feat=1 and n_input_feat=2"
@@ -296,6 +335,37 @@ def visualize_model(
     )
 
     return {"model": fig}
+
+
+def visualize_input_data(
+    model: Model,
+    data_loader: DataLoader,
+    scalers: List,
+    noise_params: Dict,
+):
+    x = data_loader.dataset.tensors[0]
+
+    # create a 2D scatter plot that shows x1 x2 in x
+    fig = go.Figure(
+        data=go.Scatter(x=x[:, 0], y=x[:, 1], mode="markers", name="Input Data")
+    )
+    fig.update_layout(
+        title_text=f"Input Data",
+        plot_bgcolor="rgba(0,0,0,0)",
+        template="plotly_white",
+        xaxis=dict(
+            title="X2",
+            showgrid=True,
+        ),
+        yaxis=dict(
+            title="X1",
+            showgrid=True,
+        ),
+        width=600,
+        height=600,
+    )
+
+    return fig
 
 
 def visualize_data(
