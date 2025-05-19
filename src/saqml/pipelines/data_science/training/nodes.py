@@ -12,6 +12,9 @@ import warnings
 from typing import List
 from scipy.stats import wasserstein_distance, anderson_ksamp, energy_distance
 
+# from torch.nn.functional import kl_div as kl_divergence
+# from torch.nn.functional import huber_loss as huber_loss
+
 import logging
 
 from saqml.helpers.coefficients import Coefficients
@@ -34,8 +37,31 @@ def validate_problem(omegas: List[List[float]], model: Model):
         log.warning("Problem validation not implemented yet.")
 
 
-def mse(target, prediction):
+def mse(prediction, target):
     return np.mean((prediction - target) ** 2)
+
+
+def null_loss(prediction, target):
+    return 0.0
+
+
+def kl_divergence(prediction, target):
+    pass
+    var_pred = prediction.var()
+    var_target = target.var()
+    mean_pred = prediction.mean()
+    mean_target = target.mean()
+    return 0.5 * np.sum(
+        np.log(var_target / var_pred)
+        + (var_pred + (mean_pred - mean_target) ** 2) / var_target
+        - 1
+    )
+
+
+def huber_loss(prediction, target, delta=1.0):
+    a = prediction - target
+    abs_a = np.abs(a)
+    return np.mean(np.where(abs_a <= delta, 0.5 * a**2, delta * (abs_a - 0.5 * delta)))
 
 
 def train_model(
@@ -70,6 +96,11 @@ def train_model(
 
     opt = qml.AdamOptimizer(stepsize=learning_rate)
 
+    loss_1 = kl_divergence  # mse
+    lambda_1 = 1
+    loss_2 = huber_loss
+    lambda_2 = 0.001
+
     def log_metrics(model, step):
         domain_samples = train_loader.dataset.tensors[0].numpy()
         fourier_series = train_loader.dataset.tensors[1].numpy().flatten()
@@ -84,22 +115,32 @@ def train_model(
         # scaler 1 is for jets
         mlflow.log_metric(
             "wasserstein_train",
-            wasserstein_distance(fourier_series, prediction),
+            wasserstein_distance(prediction, fourier_series),
             step=step,
         )
         mlflow.log_metric(
             "anderson_ksamp_train",
-            anderson_ksamp([fourier_series, prediction]).statistic,
+            anderson_ksamp([prediction, fourier_series]).statistic,
             step=step,
         )
         mlflow.log_metric(
             "energy_distance_train",
-            energy_distance(fourier_series, prediction),
+            energy_distance(prediction, fourier_series),
+            step=step,
+        )
+        mlflow.log_metric(
+            "kl_divergence_train",
+            kl_divergence(prediction, fourier_series),
+            step=step,
+        )
+        mlflow.log_metric(
+            "huber_loss_train",
+            huber_loss(prediction, fourier_series),
             step=step,
         )
         mlflow.log_metric(
             "mse_train",
-            mse(fourier_series, prediction),
+            mse(prediction, fourier_series),
             step=step,
         )
 
@@ -115,27 +156,41 @@ def train_model(
 
         mlflow.log_metric(
             "wasserstein_valid",
-            wasserstein_distance(fourier_series, prediction),
+            wasserstein_distance(prediction, fourier_series),
             step=step,
         )
         mlflow.log_metric(
             "anderson_ksamp_valid",
-            anderson_ksamp([fourier_series, prediction]).statistic,
+            anderson_ksamp([prediction, fourier_series]).statistic,
             step=step,
         )
         mlflow.log_metric(
             "energy_distance_valid",
-            energy_distance(fourier_series, prediction),
+            energy_distance(prediction, fourier_series),
+            step=step,
+        )
+        mlflow.log_metric(
+            "kl_divergence_valid",
+            kl_divergence(prediction, fourier_series),
+            step=step,
+        )
+        mlflow.log_metric(
+            "huber_loss_valid",
+            huber_loss(prediction, fourier_series),
             step=step,
         )
         mlflow.log_metric(
             "mse_valid",
-            mse(fourier_series, prediction),
+            mse(prediction, fourier_series),
             step=step,
         )
 
     def cost(params, targets, **kwargs):
-        return mse(targets, model(params=params, **kwargs))
+        prediction = model(params=params, **kwargs)
+
+        return lambda_1 * loss_1(targets, prediction) + lambda_2 * loss_2(
+            targets, prediction
+        )
 
     log.info(f"Training model for {steps} steps")
 
