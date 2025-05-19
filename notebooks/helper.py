@@ -77,15 +77,16 @@ def rgb_to_rgba(rgb_value: str, alpha: float):
     return f"rgba{rgb_value[3:-1]}, {alpha})"
 
 
-def get_training_df(run_ids, cutoff_mse=-1, cutoff_steps=-1):
+def get_training_df(run_ids, cutoff_mse=-1, cutoff_steps=-1, metric="mse"):
     df = pd.DataFrame(
         columns=[
             "run_id",
             "ansatz",
             "qubits",
             "seed",
-            "mse",
-            "mse_min",
+            f"{metric}",
+            f"{metric}_min",
+            f"{metric}_max",
             "steps",
         ]
     )
@@ -104,7 +105,7 @@ def get_training_df(run_ids, cutoff_mse=-1, cutoff_steps=-1):
         df.loc[it, "seed"] = int(client.get_run(run_id).data.params["seed"])
         steps = int(client.get_run(run_id).data.params["training.steps"])
 
-        mse_hist = client.get_metric_history(run_id, "mse")
+        mse_hist = client.get_metric_history(run_id, f"{metric}")
         mse_values = np.empty((steps))
         mse_values[:] = np.nan
 
@@ -112,8 +113,9 @@ def get_training_df(run_ids, cutoff_mse=-1, cutoff_steps=-1):
             entity.value if entity.value > cutoff_mse else np.nan for entity in mse_hist
         ]
 
-        df.loc[it, "mse"] = mse_values
-        df.loc[it, "mse_min"] = np.min(mse_values[: len(mse_hist)])
+        df.loc[it, f"{metric}"] = mse_values
+        df.loc[it, f"{metric}_min"] = np.min(mse_values[: len(mse_hist)])
+        df.loc[it, f"{metric}_max"] = np.max(mse_values[: len(mse_hist)])
         df.loc[it, "steps"] = mse_values[: len(mse_hist)][
             mse_values > cutoff_steps
         ].size
