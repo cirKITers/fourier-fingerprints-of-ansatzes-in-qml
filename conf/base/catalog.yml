@@ -67,22 +67,18 @@ fig_parameters_coefficients_correlated:
   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "parameters_coefficients_correlated.html"
 
-# fig_coefficients_correlated_control:
+# fig_model_initial:
 #   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
-#   filepath: "coefficients_correlated_control.html"
+#   filepath: "model_initial.html"
 
-fig_model_initial:
-  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
-  filepath: "model_initial.html"
+# fig_model_trained:
+#   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+#   filepath: "model_trained.html"
 
-fig_model_trained:
-  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
-  filepath: "model_trained.html"
+# fig_model_train:
+#   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+#   filepath: "fig_model_train.html"
 
-fig_model_train:
-  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
-  filepath: "fig_model_train.html"
-
-fig_model_valid:
-  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
-  filepath: "fig_model_valid.html"
+# fig_model_valid:
+#   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+#   filepath: "fig_model_valid.html"
