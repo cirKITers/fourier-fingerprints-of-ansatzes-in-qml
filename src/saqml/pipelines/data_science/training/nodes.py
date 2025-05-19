@@ -68,6 +68,8 @@ def train_model(
     model: Model,
     train_loader: DataLoader,
     valid_loader: DataLoader,
+    loss_function: List,
+    loss_scaler: List,
     noise_params: Dict,
     steps: int,
     learning_rate: float,
@@ -96,10 +98,8 @@ def train_model(
 
     opt = qml.AdamOptimizer(stepsize=learning_rate)
 
-    loss_1 = kl_divergence  # mse
-    lambda_1 = 1
-    loss_2 = huber_loss
-    lambda_2 = 0.001
+    loss_1, loss_2 = loss_function  # mse
+    lambda_1, lambda_2 = loss_scaler
 
     def log_metrics(model, step):
         domain_samples = train_loader.dataset.tensors[0].numpy()
