@@ -159,29 +159,29 @@ def create_data_pipeline() -> Pipeline:
                     "noise_params": "params:model.noise_params",
                 },
                 outputs="fig_input_data",
+                name="visualize_input_data",
+            ),
+            node(
+                func=visualize_data,
+                inputs={
+                    "model": "trained_model",
+                    "data_loader": "train_loader",
+                    "scalers": "scalers",
+                    "noise_params": "params:model.noise_params",
+                },
+                outputs={"model": "fig_model_train"},
                 name="visualize_model_train_data",
             ),
-            # node(
-            #     func=visualize_data,
-            #     inputs={
-            #         "model": "trained_model",
-            #         "data_loader": "train_loader",
-            #         "scalers": "scalers",
-            #         "noise_params": "params:model.noise_params",
-            #     },
-            #     outputs={"model": "fig_model_train"},
-            #     name="visualize_model_train_data",
-            # ),
-            # node(
-            #     func=visualize_data,
-            #     inputs={
-            #         "model": "trained_model",
-            #         "data_loader": "valid_loader",
-            #         "scalers": "scalers",
-            #         "noise_params": "params:model.noise_params",
-            #     },
-            #     outputs={"model": "fig_model_valid"},
-            #     name="visualize_model_valid_data",
-            # ),
+            node(
+                func=visualize_data,
+                inputs={
+                    "model": "trained_model",
+                    "data_loader": "valid_loader",
+                    "scalers": "scalers",
+                    "noise_params": "params:model.noise_params",
+                },
+                outputs={"model": "fig_model_valid"},
+                name="visualize_model_valid_data",
+            ),
         ]
     )

@@ -12,6 +12,8 @@ def create_pipeline() -> Pipeline:
                     "model": "model",
                     "train_loader": "train_loader",
                     "valid_loader": "valid_loader",
+                    "loss_function": "params:training.loss_function",
+                    "loss_scaler": "params:training.loss_scaler",
                     "noise_params": "params:model.noise_params",
                     "steps": "params:training.steps",
                     "learning_rate": "params:training.learning_rate",

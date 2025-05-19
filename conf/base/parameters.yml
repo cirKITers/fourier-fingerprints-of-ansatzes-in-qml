@@ -37,6 +37,8 @@ model:
   initialization: "random" # random, zero-controlled, pi-controlled
   initialization_domain: [0, 6.283185307179586]
   layer_multiplier: 1 # repeat the variational layer without data reuploading
+  loss_function: ["kl_divergence", "huber_loss"]
+  loss_scaler: [1.0, 0.001]
   noise_params:
     BitFlip: 0.0
     PhaseFlip: 0.0
@@ -56,6 +58,8 @@ training:
   log_entangling: False
   log_coefficients: False # track coefficients during training?
   positive_coeffs_only: True
+  loss_function: ["kl_divergence", "huber_loss"]
+  loss_scaler: [1.0, 0.001]
   convergence:
     threshold: -1 # threshold for the cost, -1 to disable
     gradient: -1 # threshold for the cost gradient, -1 to disable
