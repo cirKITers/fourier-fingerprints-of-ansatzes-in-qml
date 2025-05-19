@@ -37,31 +37,47 @@ def validate_problem(omegas: List[List[float]], model: Model):
         log.warning("Problem validation not implemented yet.")
 
 
-def mse(prediction, target):
-    return np.mean((prediction - target) ** 2)
+class Losses:
+    @staticmethod
+    def mse(prediction, target):
+        return np.mean((prediction - target) ** 2)
 
+    @staticmethod
+    def null_loss(prediction, target):
+        return 0.0
 
-def null_loss(prediction, target):
-    return 0.0
+    @staticmethod
+    def kl_divergence(prediction, target):
+        pass
+        var_pred = prediction.var()
+        var_target = target.var()
+        mean_pred = prediction.mean()
+        mean_target = target.mean()
+        return 0.5 * np.sum(
+            np.log(var_target / var_pred)
+            + (var_pred + (mean_pred - mean_target) ** 2) / var_target
+            - 1
+        )
 
+    @staticmethod
+    def huber_loss(prediction, target, delta=1.0):
+        a = prediction - target
+        abs_a = np.abs(a)
+        return np.mean(
+            np.where(abs_a <= delta, 0.5 * a**2, delta * (abs_a - 0.5 * delta))
+        )
 
-def kl_divergence(prediction, target):
-    pass
-    var_pred = prediction.var()
-    var_target = target.var()
-    mean_pred = prediction.mean()
-    mean_target = target.mean()
-    return 0.5 * np.sum(
-        np.log(var_target / var_pred)
-        + (var_pred + (mean_pred - mean_target) ** 2) / var_target
-        - 1
-    )
+    @staticmethod
+    def wasserstein_distance(prediction, target):
+        return wasserstein_distance(prediction, target)
 
+    @staticmethod
+    def anderson_ksamp(prediction, target):
+        return anderson_ksamp([prediction, target]).statistic
 
-def huber_loss(prediction, target, delta=1.0):
-    a = prediction - target
-    abs_a = np.abs(a)
-    return np.mean(np.where(abs_a <= delta, 0.5 * a**2, delta * (abs_a - 0.5 * delta)))
+    @staticmethod
+    def energy_distance(prediction, target):
+        return energy_distance(prediction, target)
 
 
 def train_model(
@@ -98,8 +114,10 @@ def train_model(
 
     opt = qml.AdamOptimizer(stepsize=learning_rate)
 
-    loss_1, loss_2 = loss_function  # mse
-    lambda_1, lambda_2 = loss_scaler
+    loss_1 = getattr(Losses, loss_function[0])
+    loss_2 = getattr(Losses, loss_function[1])
+    lambda_1 = loss_scaler[0]
+    lambda_2 = loss_scaler[1]
 
     def log_metrics(model, step):
         domain_samples = train_loader.dataset.tensors[0].numpy()
@@ -115,32 +133,32 @@ def train_model(
         # scaler 1 is for jets
         mlflow.log_metric(
             "wasserstein_train",
-            wasserstein_distance(prediction, fourier_series),
+            Losses.wasserstein_distance(prediction, fourier_series),
             step=step,
         )
         mlflow.log_metric(
             "anderson_ksamp_train",
-            anderson_ksamp([prediction, fourier_series]).statistic,
+            Losses.anderson_ksamp(prediction, fourier_series),
             step=step,
         )
         mlflow.log_metric(
             "energy_distance_train",
-            energy_distance(prediction, fourier_series),
+            Losses.energy_distance(prediction, fourier_series),
             step=step,
         )
         mlflow.log_metric(
             "kl_divergence_train",
-            kl_divergence(prediction, fourier_series),
+            Losses.kl_divergence(prediction, fourier_series),
             step=step,
         )
         mlflow.log_metric(
             "huber_loss_train",
-            huber_loss(prediction, fourier_series),
+            Losses.huber_loss(prediction, fourier_series),
             step=step,
         )
         mlflow.log_metric(
             "mse_train",
-            mse(prediction, fourier_series),
+            Losses.mse(prediction, fourier_series),
             step=step,
         )
 
@@ -156,32 +174,32 @@ def train_model(
 
         mlflow.log_metric(
             "wasserstein_valid",
-            wasserstein_distance(prediction, fourier_series),
+            Losses.wasserstein_distance(prediction, fourier_series),
             step=step,
         )
         mlflow.log_metric(
             "anderson_ksamp_valid",
-            anderson_ksamp([prediction, fourier_series]).statistic,
+            Losses.anderson_ksamp(prediction, fourier_series),
             step=step,
         )
         mlflow.log_metric(
             "energy_distance_valid",
-            energy_distance(prediction, fourier_series),
+            Losses.energy_distance(prediction, fourier_series),
             step=step,
         )
         mlflow.log_metric(
             "kl_divergence_valid",
-            kl_divergence(prediction, fourier_series),
+            Losses.kl_divergence(prediction, fourier_series),
             step=step,
         )
         mlflow.log_metric(
             "huber_loss_valid",
-            huber_loss(prediction, fourier_series),
+            Losses.huber_loss(prediction, fourier_series),
             step=step,
         )
         mlflow.log_metric(
             "mse_valid",
-            mse(prediction, fourier_series),
+            Losses.mse(prediction, fourier_series),
             step=step,
         )
 

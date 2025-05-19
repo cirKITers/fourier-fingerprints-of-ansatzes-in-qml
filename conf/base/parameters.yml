@@ -58,6 +58,8 @@ training:
   log_entangling: False
   log_coefficients: False # track coefficients during training?
   positive_coeffs_only: True
+  loss_function: ["kl_divergence", "huber_loss"]
+  loss_scaler: [1.0, 0.001]
   convergence:
     threshold: -1 # threshold for the cost, -1 to disable
     gradient: -1 # threshold for the cost gradient, -1 to disable
