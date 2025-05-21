@@ -51,6 +51,10 @@ fig_data_spectrum:
   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "data_spectrum.html"
 
+fig_model_spectrum_trained:
+  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  filepath: "fig_model_spectrum_trained.html"
+
 fig_input_data:
   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "fig_input_data.html"
