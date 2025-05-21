@@ -123,6 +123,7 @@ def data_preprocessing(df, collection, encoded=False, scaling_method=None):
         "MinMaxPiLog",
         "MinMaxZPi",
         "MinMaxZHalf",
+        "MinMaxZ",
         "Standard",
         "MaxAbs",
         "QuantileTransformer_Uniform",
@@ -166,11 +167,18 @@ def data_preprocessing(df, collection, encoded=False, scaling_method=None):
             - 1e-6,
             validate=True,
         )
+    elif scaling_method == "MinMaxZ":
+        mm_scaler = MinMaxScaler()
+        scaler = FunctionTransformer(
+            func=lambda x: mm_scaler.fit_transform(x) - 0.5,
+            inverse_func=lambda x: mm_scaler.inverse_transform((x + 0.5)),
+            validate=True,
+        )
     elif scaling_method == "MinMaxZHalf":
         mm_scaler = MinMaxScaler()
         scaler = FunctionTransformer(
-            func=lambda x: mm_scaler.fit_transform(x) * 0.5 - 0.5,
-            inverse_func=lambda x: mm_scaler.inverse_transform((x + 0.5) * 2.0),
+            func=lambda x: mm_scaler.fit_transform(x) - 0.5,
+            inverse_func=lambda x: mm_scaler.inverse_transform((x + 0.5)),
             validate=True,
         )
     elif scaling_method == "Standard":
