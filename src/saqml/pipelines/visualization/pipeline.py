@@ -50,17 +50,6 @@ def create_pipeline() -> Pipeline:
                 name="visualize_coefficients_decay",
             ),
             node(
-                func=visualize_data_spectrum,
-                inputs={
-                    "df": "coefficients_filtered",
-                    "model": "model",
-                    "mts": "params:data.mts",
-                    "mfs": "params:data.mfs",
-                },
-                outputs="fig_spectrum",
-                name="visualize_spectrum",
-            ),
-            node(
                 func=visualize_parameters_correlated,
                 inputs={
                     "df": "coefficients_correlated",
