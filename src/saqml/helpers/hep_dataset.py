@@ -10,6 +10,7 @@ from sklearn.preprocessing import (
     MaxAbsScaler,
     QuantileTransformer,
     FunctionTransformer,
+    Normalizer,
 )
 from sklearn.model_selection import train_test_split
 import vector
@@ -424,6 +425,8 @@ def get_loaders(
         batch_size = len(train_dataset)
     # Loaders
     torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.use_deterministic_algorithms(True)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     valid_loader = DataLoader(valid_dataset, batch_size=batch_size)
     test_loader = DataLoader(test_dataset, batch_size=batch_size)
