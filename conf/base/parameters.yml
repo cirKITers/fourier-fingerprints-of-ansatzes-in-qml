@@ -22,7 +22,6 @@ coefficients:
   triu: True # only use  the upper triangular part of the correlation matrix?
   weighting: "linear" # linear, coefficients_prod, coefficients_add, frequencies
   force_same: False
-  scale: True
 
 expressibility:
   n_samples: 300 #samples per parameter scaling exp. with n qubits
