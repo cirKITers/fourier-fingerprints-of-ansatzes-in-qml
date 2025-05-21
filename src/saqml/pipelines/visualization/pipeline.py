@@ -6,7 +6,7 @@ from .nodes import (
     visualize_parameters_coefficients_correlated,
     visualize_coefficients_correlated_control,
     visualize_model,
-    visualize_data,
+    visualize_distribution,
     visualize_input_data,
     visualize_coefficients_decay,
     visualize_spectrum,
@@ -162,7 +162,7 @@ def create_data_pipeline() -> Pipeline:
                 name="visualize_input_data",
             ),
             node(
-                func=visualize_data,
+                func=visualize_distribution,
                 inputs={
                     "model": "trained_model",
                     "data_loader": "train_loader",
@@ -173,7 +173,7 @@ def create_data_pipeline() -> Pipeline:
                 name="visualize_model_train_data",
             ),
             node(
-                func=visualize_data,
+                func=visualize_distribution,
                 inputs={
                     "model": "trained_model",
                     "data_loader": "valid_loader",

@@ -343,11 +343,17 @@ def visualize_input_data(
     scalers: List,
     noise_params: Dict,
 ):
-    x = data_loader.dataset.tensors[0]
+    domain_samples = data_loader.dataset.tensors[0].numpy()
+    fourier_series = data_loader.dataset.tensors[1].numpy().flatten()
 
     # create a 2D scatter plot that shows x1 x2 in x
-    fig = go.Figure(
-        data=go.Scatter(x=x[:, 0], y=x[:, 1], mode="markers", name="Input Data")
+    fig = px.scatter(
+        x=domain_samples[:, 0],
+        y=domain_samples[:, 1],
+        color=fourier_series,
+        marginal_x="box",
+        marginal_y="box",
+        title="Input & Target Data",
     )
     fig.update_layout(
         title_text=f"Input Data",
@@ -368,7 +374,7 @@ def visualize_input_data(
     return fig
 
 
-def visualize_data(
+def visualize_distribution(
     model: Model,
     data_loader: DataLoader,
     scalers: List,
@@ -390,6 +396,10 @@ def visualize_data(
         scalers[1].inverse_transform(fourier_series.reshape(-1, 1)).flatten()
     )
     prediction = scalers[1].inverse_transform(prediction.reshape(-1, 1)).flatten()
+    differences = prediction - fourier_series
+
+    mlflow.log_metric("Differences Mean", differences.mean())
+    mlflow.log_metric("Differences Std", differences.std())
 
     fig = make_subplots(
         rows=2,
@@ -397,7 +407,7 @@ def visualize_data(
         subplot_titles=("Distributions", "Differences"),
     )
     dists_plots = ff.create_distplot(
-        [fourier_series, prediction, prediction - fourier_series],
+        [fourier_series, prediction, differences],
         ["Ground Truth", "Prediction", "Differences"],
         bin_size=2,
         curve_type="kde",
