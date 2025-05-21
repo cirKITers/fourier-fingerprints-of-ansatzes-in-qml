@@ -65,7 +65,7 @@ def create_fourier_pipeline() -> Pipeline:
                     "coefficients_variance": "params:data.fourier.coefficients.variance",
                     "coefficients_distribution": "params:data.fourier.coefficients.distribution",
                     "offset": "params:data.fourier.offset",
-                    "seed": "params:data.fourier.coefficients.seed",
+                    "seed": "params:data.seed",
                 },
                 outputs={
                     "fourier_series": "fourier_series",
@@ -102,7 +102,7 @@ def create_hep_pipeline() -> Pipeline:
                     "features": "params:data.hep.features",
                     "scaling_methods": "params:data.hep.scaling_methods",
                     "labels": "params:data.hep.labels",
-                    "seed": "params:seed",
+                    "seed": "params:data.seed",
                 },
                 outputs={
                     "train_loader": "train_loader",

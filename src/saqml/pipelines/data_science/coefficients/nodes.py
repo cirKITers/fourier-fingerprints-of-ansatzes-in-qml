@@ -106,7 +106,7 @@ def filter_coefficients(df: pd.DataFrame, model: Model) -> pd.DataFrame:
 
 def sample_coefficients(model: Model, n_samples: int, seed: int, mean: float = 0):
     rng = np.random.default_rng(seed)
-    total_samples = n_samples * model.params.size
+    total_samples = n_samples * model.params.size * (2**model.n_input_feat)
     log.info(f"Total number of samples: {total_samples}")
 
     def pascal_triangle(n):
