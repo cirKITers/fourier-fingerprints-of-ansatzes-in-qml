@@ -9,7 +9,8 @@ from .nodes import (
     visualize_distribution,
     visualize_input_data,
     visualize_coefficients_decay,
-    visualize_spectrum,
+    visualize_data_spectrum,
+    visualize_model_spectrum,
     visualize_coefficients_correlated_filtered_weighted,
 )
 
@@ -49,7 +50,7 @@ def create_pipeline() -> Pipeline:
                 name="visualize_coefficients_decay",
             ),
             node(
-                func=visualize_spectrum,
+                func=visualize_data_spectrum,
                 inputs={
                     "df": "coefficients_filtered",
                     "model": "model",
@@ -132,6 +133,16 @@ def create_model_pipeline() -> Pipeline:
                 outputs={"model": "fig_model_initial"},
                 name="visualize_model_initial",
             ),
+            node(
+                func=visualize_model_spectrum,
+                inputs={
+                    "model": "trained_model",
+                    "mts": "params:data.mts",
+                    "mfs": "params:data.mfs",
+                },
+                outputs={"model": "fig_model_spectrum_trained"},
+                name="visualize_model_spectrum",
+            ),
         ]
     )
 
@@ -140,7 +151,7 @@ def create_data_pipeline() -> Pipeline:
     return pipeline(
         [
             node(
-                func=visualize_spectrum,
+                func=visualize_data_spectrum,
                 inputs={
                     "df": "coeffs_target",
                     "model": "model",

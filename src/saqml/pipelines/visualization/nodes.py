@@ -11,6 +11,8 @@ import pandas as pd
 import mlflow
 import plotly.express as px
 import logging
+from qml_essentials import coefficients as QMLCoefficients
+
 
 from typing import Dict, List
 
@@ -36,8 +38,8 @@ def visualize_heatmap_filtered(
     )
     fig.update_layout(
         plot_bgcolor="rgba(0,0,0,0)",
-        width=600,
-        height=600,
+        width=800,
+        height=800,
         autosize=False,
     )
     return fig
@@ -66,7 +68,7 @@ def visualize_coefficients_decay(df: pd.DataFrame, model: Model) -> go.Figure:
     return fig
 
 
-def visualize_spectrum(df: pd.DataFrame, model: Model, mts, mfs) -> go.Figure:
+def visualize_data_spectrum(df: pd.DataFrame, model: Model, mts, mfs) -> go.Figure:
     df_filtered = df.filter(regex="c.*", axis=1)
 
     if model.n_input_feat == 1:
@@ -86,7 +88,7 @@ def visualize_spectrum(df: pd.DataFrame, model: Model, mts, mfs) -> go.Figure:
         n_coeffs = int(np.sqrt(df.size))
         n_freqs = n_coeffs // 2
 
-        Y = df.mean(axis=0).to_numpy().reshape((n_coeffs, n_coeffs))
+        coeffs = df.mean(axis=0).to_numpy().reshape((n_coeffs, n_coeffs))
 
         def psd(coeffs):
             def abs2(x):
@@ -97,7 +99,7 @@ def visualize_spectrum(df: pd.DataFrame, model: Model, mts, mfs) -> go.Figure:
 
         fig = go.Figure(
             data=go.Heatmap(
-                z=np.log10(psd(Y)),
+                z=np.log(np.abs(coeffs)),
                 hoverongaps=False,
                 colorscale="Sunset",
             )
@@ -120,8 +122,8 @@ def visualize_spectrum(df: pd.DataFrame, model: Model, mts, mfs) -> go.Figure:
         )
         fig.update_layout(
             plot_bgcolor="rgba(0,0,0,0)",
-            width=600,
-            height=600,
+            width=800,
+            height=800,
             autosize=False,
         )
     else:
@@ -130,6 +132,61 @@ def visualize_spectrum(df: pd.DataFrame, model: Model, mts, mfs) -> go.Figure:
         )
 
     return fig
+
+
+def visualize_model_spectrum(model: Model, mts, mfs) -> go.Figure:
+    coeffs, freqs = QMLCoefficients.Coefficients.get_spectrum(
+        model, shift=True, trim=True
+    )
+    coeffs = QMLCoefficients.Coefficients.get_psd(coeffs)
+
+    if model.n_input_feat == 1:
+
+        fig = go.Figure(
+            data=go.Box(
+                y=coeffs,
+                marker=dict(color=pc.qualitative.Dark2[0]),
+                boxpoints=False,
+            )
+        )
+        fig.update_layout(template="plotly_white", title="Spectrum", showlegend=False)
+    elif model.n_input_feat == 2:
+
+        fig = go.Figure(
+            data=go.Heatmap(
+                z=np.log(np.abs(coeffs)),
+                hoverongaps=False,
+                colorscale="Sunset",
+            )
+        )
+        n_freqs: int = 2 * mfs * model.degree + 1
+        freqs = np.fft.fftshift(np.fft.fftfreq(mts * n_freqs, 1 / n_freqs))
+
+        def str_sign(num: int):
+            return f"{num:.2f}" if num < 0 else f"+{num:.2f}"
+
+        fig.update_xaxes(
+            tickvals=list(range(coeffs.shape[1])),
+            ticktext=[str_sign(f) for f in freqs],
+            title="X2",
+        )
+        fig.update_yaxes(
+            tickvals=list(range(coeffs.shape[0])),
+            ticktext=[str_sign(f) for f in freqs],
+            title="X1",
+        )
+        fig.update_layout(
+            plot_bgcolor="rgba(0,0,0,0)",
+            width=800,
+            height=800,
+            autosize=False,
+        )
+    else:
+        raise NotImplementedError(
+            "Only implemented for n_input_feat=1 and n_input_feat=2"
+        )
+
+    return {"model": fig}
 
 
 def visualize_coefficients_correlated(
@@ -302,6 +359,8 @@ def visualize_model(
     domain_samples = data_loader.dataset.tensors[0]
     fourier_series = data_loader.dataset.tensors[1]
 
+    if model.n_input_feat == 2:
+        return {"model": go.Figure()}
     fig = go.Figure(
         data=[
             go.Scatter(
@@ -354,6 +413,7 @@ def visualize_input_data(
         marginal_x="box",
         marginal_y="box",
         title="Input & Target Data",
+        opacity=0.3,
     )
     fig.update_layout(
         title_text=f"Input Data",
@@ -367,8 +427,8 @@ def visualize_input_data(
             title="X1",
             showgrid=True,
         ),
-        width=600,
-        height=600,
+        width=800,
+        height=800,
     )
 
     return fig
