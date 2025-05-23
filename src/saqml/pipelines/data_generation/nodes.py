@@ -1,5 +1,6 @@
 from qml_essentials.model import Model
 from qml_essentials.ansaetze import Ansaetze, Circuit
+from qml_essentials.coefficients import Coefficients
 
 import torch
 from torch.utils.data import TensorDataset, DataLoader
@@ -409,18 +410,19 @@ def sample_domain(domain: List[float], omegas: List[List[float]]) -> np.ndarray:
     np.Tensor
         Grid tensor of shape (sidelen^dim, dim)
     """
-    dimensions = 1  # len(omega)
+    n_freqs: int = 2 * max(omegas) + 1
+    n_input_feat = len(omegas)
 
-    if isinstance(omegas, int):
-        omegas = [o for o in range(omegas + 1)]  # as zero frequency doesn't count
-    # using the max of all dimensions because we want uniform sampling
-    n_d = int(np.ceil(2 * np.max(np.abs(domain)) * np.max(omegas)))
+    start, stop, step = domain[0], domain[1], 2 * np.pi / n_freqs
+    # Stretch according to the number of frequencies
+    inputs: np.ndarray = np.arange(start, stop, step)
 
-    log.info(f"Using {n_d} data points on {len(omegas)} dimensions")
+    # permute with input dimensionality
+    nd_inputs = np.array(np.meshgrid(*[inputs] * n_input_feat)).T.reshape(
+        -1, n_input_feat
+    )
 
-    tensors = tuple(dimensions * [np.linspace(domain[0], domain[1], num=n_d)])
-
-    return np.meshgrid(*tensors)[0].reshape(-1)  # .reshape(-1, dimensions)
+    return nd_inputs
 
 
 def generate_fourier_series(
@@ -447,9 +449,16 @@ def generate_fourier_series(
     np.ndarray
         Fourier series representation of the function.
     """
+    mts = 1
+    mfs = 1
     rng = np.random.default_rng(seed)
-    if not isinstance(omegas, list):
-        omegas = [o for o in range(omegas + 1)]  # zero frequency
+    omegas = np.array(omegas)
+    dims = len(omegas)
+    frequencies = np.stack(
+        np.meshgrid(*[np.linspace(-omega, omega, 2 * omega + 1) for omega in omegas])
+    ).T.reshape(-1, dims)
+
+    n_freqs: int = int(2 * mfs * max(omegas) + 1)
 
     if coefficients_distribution is None:
         if isinstance(coefficients_mean, float):
@@ -461,22 +470,38 @@ def generate_fourier_series(
                 "coefficients_distribution must be specified if coefficients_mean is not a list or float"
             )
     elif coefficients_distribution == "uniform":
-        coefficients = rng.uniform(
+        coefficients = 1.0 * rng.uniform(
             coefficients_mean - coefficients_variance,
             coefficients_mean + coefficients_variance,
-            len(omegas),
+            int(np.ceil(frequencies.shape[0] / 2)),
+        ) + 1.0j * rng.uniform(
+            coefficients_mean - coefficients_variance,
+            coefficients_mean + coefficients_variance,
+            int(np.ceil(frequencies.shape[0] / 2)),
         )
     elif coefficients_distribution == "normal":
-        coefficients = rng.normal(coefficients_mean, coefficients_variance, len(omegas))
+        coefficients = 1.0 * rng.normal(
+            coefficients_mean,
+            coefficients_variance,
+            int(np.ceil(frequencies.shape[0] / 2)),
+        ) + 1.0j * rng.normal(
+            coefficients_mean,
+            coefficients_variance,
+            int(np.ceil(frequencies.shape[0] / 2)),
+        )
 
-    if offset:
+    coefficients = coefficients.flatten()
+    if not offset:
         coefficients[0] = 0.0
+    else:
+        coefficients[0] = coefficients[0].real
+    coefficients = np.concat(
+        [np.flip(coefficients[1:]).conjugate(), coefficients],
+    )
 
-    assert len(omegas) == len(
-        coefficients
-    ), "Number of frequencies and coefficients must match"
-
-    omegas = np.array(omegas)
+    # assert (
+    #     omegas == coefficients.shape
+    # ), "Number of frequencies and coefficients must match"
 
     def y(x: np.ndarray) -> float:
         """
@@ -490,26 +515,101 @@ def generate_fourier_series(
         Returns
         -------
         float
+
             Value of the Fourier series representation at the given point.
         """
         return (
-            1 / np.linalg.norm(omegas) * np.sum(coefficients * np.cos(omegas.T * x))
-        )  # transpose!
+            np.real_if_close(np.sum(coefficients * np.exp(1j * frequencies.dot(x))))
+            / coefficients.size
+        )
 
     values = np.stack([y(x) for x in domain_samples])
+    coefficients_hat = np.fft.fftshift(
+        np.fft.fftn(values.reshape([n_freqs] * dims), axes=list(range(dims)))
+    )
+    freqs = np.fft.fftshift(np.fft.fftfreq(mts * n_freqs, 1 / n_freqs))
 
-    return {
-        "fourier_series": values,
-        "target": pd.DataFrame({"omegas": omegas, "coefficients": coefficients}),
-    }
+    assert np.allclose(
+        coefficients, coefficients_hat.flatten(), atol=1e-6
+    ), "Frequencies don't match"
+
+    def str_sign(num: int):
+        return f"{num:.2f}" if num < 0 else f"+{num:.2f}"
+
+    # Build a pandas dataframe with the parameters and coefficients as columns
+    df = pd.DataFrame(
+        columns=[
+            *[
+                f"c_{'_'.join(str_sign(v) for v in tup)}"
+                for tup in itertools.product(*[freqs] * dims)
+            ],  # symmetric + zero frequency
+        ]
+    )
+    df.loc[0] = coefficients.flatten()
+
+    return {"fourier_series": values.flatten(), "target": df}
+
+
+def sample_fourier_series(
+    domain_samples: np.ndarray,
+    omegas: List[List[float]],
+    sample_mean: float = 0.5,
+    sample_variance: float = 0.0,
+    sample_distribution: Optional[str] = None,
+    seed: Optional[int] = 1000,
+):
+    rng = np.random.default_rng(seed)
+
+    dims = len(omegas)
+
+    mfs = 1
+    mts = 1
+
+    n_freqs: int = 2 * mfs * max(omegas) + 1
+
+    if sample_distribution == "uniform":
+        values = rng.uniform(
+            sample_mean - sample_variance,
+            sample_mean + sample_variance,
+            (n_freqs,) * dims,
+        )
+    elif sample_distribution == "normal":
+        values = rng.normal(
+            sample_mean,
+            sample_variance,
+            (n_freqs,) * dims,
+        )
+    else:
+        raise ValueError(
+            "sample_distribution must be specified if sample_mean is not a list or float"
+        )
+    Y = np.fft.fftshift(np.fft.fftn(values, axes=list(range(dims))))
+    freqs = np.fft.fftshift(np.fft.fftfreq(mts * n_freqs, 1 / n_freqs))
+
+    def str_sign(num: int):
+        return f"{num:.2f}" if num < 0 else f"+{num:.2f}"
+
+    # Build a pandas dataframe with the parameters and coefficients as columns
+    df = pd.DataFrame(
+        columns=[
+            *[
+                f"c_{'_'.join(str_sign(v) for v in tup)}"
+                for tup in itertools.product(*[freqs] * dims)
+            ],  # symmetric + zero frequency
+        ]
+    )
+    df.loc[0] = Y.flatten()
+
+    return {"fourier_series": values.flatten(), "target": df}
 
 
 def get_fourier_dataset(batch_size: int, domain_samples, fourier_series):
     if batch_size < 1:
-        batch_size = len(domain_samples)
+        batch_size = domain_samples.shape[0]
     train_loader = DataLoader(
         TensorDataset(
-            torch.from_numpy(domain_samples), torch.from_numpy(fourier_series)
+            torch.from_numpy(domain_samples),
+            torch.from_numpy(fourier_series),
         ),
         batch_size=batch_size,
         shuffle=False,

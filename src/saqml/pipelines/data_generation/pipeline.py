@@ -3,6 +3,7 @@ from kedro.pipeline import Pipeline, node, pipeline
 from .nodes import (
     sample_domain,
     generate_fourier_series,
+    sample_fourier_series,
     create_model,
     print_model,
     get_fourier_dataset,
@@ -73,13 +74,28 @@ def create_fourier_pipeline() -> Pipeline:
                 },
                 name="generate_fourier_series",
             ),
+            # node(
+            #     func=sample_fourier_series,
+            #     inputs={
+            #         "domain_samples": "domain_samples",
+            #         "omegas": "params:data.fourier.omegas",
+            #         "sample_mean": "params:data.fourier.samples.mean",
+            #         "sample_variance": "params:data.fourier.samples.variance",
+            #         "sample_distribution": "params:data.fourier.samples.distribution",
+            #         "seed": "params:data.seed",
+            #     },
+            #     outputs={
+            #         "fourier_series": "fourier_series",
+            #         "target": "coeffs_target",
+            #     },
+            #     name="sample_fourier_series",
+            # ),
             node(
                 func=get_fourier_dataset,
                 inputs={
                     "batch_size": "params:training.batch_size",
                     "domain_samples": "domain_samples",
                     "fourier_series": "fourier_series",
-                    # "coeffs_target": "coeffs_target",
                 },
                 outputs={
                     "train_loader": "train_loader",
