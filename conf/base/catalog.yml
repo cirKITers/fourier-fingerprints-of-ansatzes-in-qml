@@ -51,9 +51,9 @@ fig_data_spectrum:
   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "data_spectrum.html"
 
-fig_model_spectrum_trained:
+fig_spectrum_trained:
   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
-  filepath: "fig_model_spectrum_trained.html"
+  filepath: "fig_spectrum_trained.html"
 
 fig_input_data:
   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
@@ -75,14 +75,14 @@ fig_parameters_coefficients_correlated:
 #   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
 #   filepath: "model_initial.html"
 
-# fig_model_trained:
-#   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
-#   filepath: "model_trained.html"
+fig_domain_trained:
+  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  filepath: "fig_domain_trained.html"
 
-# fig_model_train:
-#   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
-#   filepath: "fig_model_train.html"
+fig_distribution_train:
+  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  filepath: "fig_distribution_train.html"
 
-# fig_model_valid:
-#   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
-#   filepath: "fig_model_valid.html"
+fig_distribution_valid:
+  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  filepath: "fig_distribution_valid.html"
