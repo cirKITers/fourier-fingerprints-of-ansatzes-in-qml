@@ -394,7 +394,9 @@ def print_model(model: Model):
     return str(model)
 
 
-def sample_domain(domain: List[float], omegas: List[List[float]]) -> np.ndarray:
+def sample_domain(
+    model: Model, domain: List[float], omegas: List[List[float]]
+) -> np.ndarray:
     """
     Generates a flattened grid of (x,y,...) coordinates in a range of -1 to 1.
 
@@ -410,22 +412,22 @@ def sample_domain(domain: List[float], omegas: List[List[float]]) -> np.ndarray:
     np.Tensor
         Grid tensor of shape (sidelen^dim, dim)
     """
-    n_freqs: int = 2 * max(omegas) + 1
-    n_input_feat = len(omegas)
+    n_freqs: int = 2 * omegas + 1
 
     start, stop, step = domain[0], domain[1], 2 * np.pi / n_freqs
     # Stretch according to the number of frequencies
     inputs: np.ndarray = np.arange(start, stop, step)
 
     # permute with input dimensionality
-    nd_inputs = np.array(np.meshgrid(*[inputs] * n_input_feat)).T.reshape(
-        -1, n_input_feat
+    nd_inputs = np.array(np.meshgrid(*[inputs] * model.n_input_feat)).T.reshape(
+        -1, model.n_input_feat
     )
 
     return nd_inputs
 
 
 def generate_fourier_series(
+    model: Model,
     domain_samples: np.ndarray,
     omegas: List[List[float]],
     coefficients_mean: float = 0.5,
@@ -452,17 +454,20 @@ def generate_fourier_series(
     mts = 1
     mfs = 1
     rng = np.random.default_rng(seed)
-    omegas = np.array(omegas)
-    dims = len(omegas)
     frequencies = np.stack(
-        np.meshgrid(*[np.linspace(-omega, omega, 2 * omega + 1) for omega in omegas])
-    ).T.reshape(-1, dims)
+        np.meshgrid(
+            *[
+                np.linspace(-omegas, omegas, 2 * omegas + 1)
+                for _ in range(model.n_input_feat)
+            ]
+        )
+    ).T.reshape(-1, model.n_input_feat)
 
-    n_freqs: int = int(2 * mfs * max(omegas) + 1)
+    n_freqs: int = int(2 * mfs * omegas + 1)
 
     if coefficients_distribution is None:
         if isinstance(coefficients_mean, float):
-            coefficients = np.array([coefficients for _ in omegas])
+            coefficients = np.array([coefficients for _ in range(model.n_input_feat)])
         elif isinstance(coefficients_mean, list):
             coefficients = np.array(coefficients_mean)
         else:
@@ -525,7 +530,10 @@ def generate_fourier_series(
 
     values = np.stack([y(x) for x in domain_samples])
     coefficients_hat = np.fft.fftshift(
-        np.fft.fftn(values.reshape([n_freqs] * dims), axes=list(range(dims)))
+        np.fft.fftn(
+            values.reshape([n_freqs] * model.n_input_feat),
+            axes=list(range(model.n_input_feat)),
+        )
     )
     freqs = np.fft.fftshift(np.fft.fftfreq(mts * n_freqs, 1 / n_freqs))
 
@@ -541,7 +549,7 @@ def generate_fourier_series(
         columns=[
             *[
                 f"c_{'_'.join(str_sign(v) for v in tup)}"
-                for tup in itertools.product(*[freqs] * dims)
+                for tup in itertools.product(*[freqs] * model.n_input_feat)
             ],  # symmetric + zero frequency
         ]
     )
@@ -551,6 +559,7 @@ def generate_fourier_series(
 
 
 def sample_fourier_series(
+    model: Model,
     domain_samples: np.ndarray,
     omegas: List[List[float]],
     sample_mean: float = 0.5,
@@ -560,12 +569,12 @@ def sample_fourier_series(
 ):
     rng = np.random.default_rng(seed)
 
-    dims = len(omegas)
+    dims = model.n_input_feat
 
     mfs = 1
     mts = 1
 
-    n_freqs: int = 2 * mfs * max(omegas) + 1
+    n_freqs: int = 2 * mfs * omegas + 1
 
     if sample_distribution == "uniform":
         values = rng.uniform(

@@ -51,6 +51,7 @@ def create_fourier_pipeline() -> Pipeline:
             node(
                 func=sample_domain,
                 inputs={
+                    "model": "model",
                     "domain": "params:data.fourier.domain",
                     "omegas": "params:data.fourier.omegas",
                 },
@@ -60,6 +61,7 @@ def create_fourier_pipeline() -> Pipeline:
             node(
                 func=generate_fourier_series,
                 inputs={
+                    "model": "model",
                     "domain_samples": "domain_samples",
                     "omegas": "params:data.fourier.omegas",
                     "coefficients_mean": "params:data.fourier.coefficients.mean",
