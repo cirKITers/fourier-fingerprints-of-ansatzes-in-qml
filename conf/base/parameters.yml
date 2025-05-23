@@ -54,7 +54,7 @@ seed: 1000
 n_control_values: 0 # for sweeping control values
 
 training:
-  steps: 2000 # hep 500, fs1d 1000 fs2d 2000
+  steps: 2000 # hep 2000, fs1d 2000 fs2d 4000
   learning_rate: 0.01
   batch_size: -1
   log_entangling: False
