@@ -109,27 +109,28 @@ def create_model_pipeline() -> Pipeline:
                     "data_loader": "train_loader",
                     "noise_params": "params:model.noise_params",
                 },
-                outputs={"model": "fig_model_trained"},
+                outputs={"model": "fig_domain_trained"},
                 name="visualize_model_trained",
             ),
-            node(
-                func=visualize_model,
-                inputs={
-                    "model": "model",
-                    "data_loader": "valid_loader",
-                    "noise_params": "params:model.noise_params",
-                },
-                outputs={"model": "fig_model_initial"},
-                name="visualize_model_initial",
-            ),
+            # node(
+            #     func=visualize_model,
+            #     inputs={
+            #         "model": "model",
+            #         "data_loader": "train_loader",
+            #         "noise_params": "params:model.noise_params",
+            #     },
+            #     outputs={"model": "fig_model_initial"},
+            #     name="visualize_model_initial",
+            # ),
             node(
                 func=visualize_model_spectrum,
                 inputs={
                     "model": "trained_model",
+                    "df": "coeffs_target",
                     "mts": "params:data.mts",
                     "mfs": "params:data.mfs",
                 },
-                outputs={"model": "fig_model_spectrum_trained"},
+                outputs={"model": "fig_spectrum_trained"},
                 name="visualize_model_spectrum",
             ),
         ]
@@ -169,7 +170,7 @@ def create_hep_pipeline() -> Pipeline:
                     "scalers": "scalers",
                     "noise_params": "params:model.noise_params",
                 },
-                outputs={"model": "fig_model_train"},
+                outputs={"model": "fig_distribution_train"},
                 name="visualize_model_train_data",
             ),
             node(
@@ -180,7 +181,7 @@ def create_hep_pipeline() -> Pipeline:
                     "scalers": "scalers",
                     "noise_params": "params:model.noise_params",
                 },
-                outputs={"model": "fig_model_valid"},
+                outputs={"model": "fig_distribution_valid"},
                 name="visualize_model_valid_data",
             ),
         ]

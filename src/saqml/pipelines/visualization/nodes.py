@@ -83,19 +83,22 @@ def visualize_data_spectrum(df: pd.DataFrame, model: Model, mts, mfs) -> go.Figu
                     boxpoints=False,
                 )
             )
-        fig.update_layout(template="plotly_white", title="Spectrum", showlegend=False)
+        fig.update_layout(
+            template="plotly_white",
+            showlegend=False,
+            xaxis=dict(
+                title="X1",
+                showgrid=False,
+            ),
+            yaxis=dict(
+                showgrid=False,
+            ),
+        )
     elif model.n_input_feat == 2:
         n_coeffs = int(np.sqrt(df.size))
         n_freqs = n_coeffs // 2
 
         coeffs = df.mean(axis=0).to_numpy().reshape((n_coeffs, n_coeffs))
-
-        def psd(coeffs):
-            def abs2(x):
-                return x.real**2 + x.imag**2
-
-            scale = 2.0 / (n_coeffs**2)
-            return scale * abs2(coeffs)
 
         fig = go.Figure(
             data=go.Heatmap(
@@ -134,7 +137,7 @@ def visualize_data_spectrum(df: pd.DataFrame, model: Model, mts, mfs) -> go.Figu
     return fig
 
 
-def visualize_model_spectrum(model: Model, mts, mfs) -> go.Figure:
+def visualize_model_spectrum(df: pd.DataFrame, model: Model, mts, mfs) -> go.Figure:
     coeffs, freqs = QMLCoefficients.Coefficients.get_spectrum(
         model, shift=True, trim=True
     )
@@ -142,40 +145,81 @@ def visualize_model_spectrum(model: Model, mts, mfs) -> go.Figure:
     if model.n_input_feat == 1:
 
         fig = go.Figure(
-            data=go.Bar(
-                x=freqs.flatten(),
-                y=np.abs(coeffs).flatten(),
-                marker=dict(color=pc.qualitative.Dark2[0]),
-            )
+            data=[
+                go.Bar(
+                    x=freqs.flatten(),
+                    y=np.abs(coeffs).flatten(),
+                    marker=dict(color=pc.qualitative.Dark2[0]),
+                    name="Prediction",
+                ),
+                go.Bar(
+                    x=freqs.flatten(),
+                    y=-np.abs(df.to_numpy()).flatten(),
+                    marker=dict(color=pc.qualitative.Dark2[1]),
+                    name="Ground Truth",
+                ),
+            ]
         )
-        fig.update_layout(template="plotly_white", title="Spectrum", showlegend=False)
+        fig.update_layout(
+            template="plotly_white",
+            title="Spectrum",
+            showlegend=True,
+            xaxis=dict(
+                title="X1",
+                showgrid=False,
+            ),
+            yaxis=dict(
+                showgrid=False,
+            ),
+        )
     elif model.n_input_feat == 2:
         fig = go.Figure(
             data=go.Heatmap(
-                z=np.abs(coeffs),
-                hoverongaps=False,
                 colorscale="Sunset",
+                name="Prediction",
             )
         )
-        n_freqs: int = 2 * mfs * model.degree + 1
-        freqs = np.fft.fftshift(np.fft.fftfreq(mts * n_freqs, 1 / n_freqs))
+        fig = make_subplots(rows=1, cols=2)
+        fig.add_trace(
+            go.Heatmap(
+                z=np.abs(df.to_numpy().reshape(coeffs.shape)),
+                colorscale="Sunset",
+                name="Ground Truth",
+            ),
+            row=1,
+            col=1,
+        )
+        fig.add_trace(
+            go.Heatmap(
+                z=np.abs(coeffs),
+                colorscale="Sunset",
+                name="Prediction",
+            ),
+            row=1,
+            col=2,
+        )
 
         def str_sign(num: int):
             return f"{num:.2f}" if num < 0 else f"+{num:.2f}"
 
-        fig.update_xaxes(
-            tickvals=list(range(coeffs.shape[1])),
-            ticktext=[str_sign(f) for f in freqs],
-            title="X2",
-        )
-        fig.update_yaxes(
-            tickvals=list(range(coeffs.shape[0])),
-            ticktext=[str_sign(f) for f in freqs],
-            title="X1",
-        )
+        for col in [1, 2]:
+            fig.update_xaxes(
+                tickvals=list(range(coeffs.shape[1])),
+                ticktext=[str_sign(f) for f in freqs],
+                title="X2",
+                row=1,
+                col=col,
+            )
+            fig.update_yaxes(
+                tickvals=list(range(coeffs.shape[0])),
+                ticktext=[str_sign(f) for f in freqs],
+                title="X1",
+                row=1,
+                col=col,
+            )
         fig.update_layout(
             plot_bgcolor="rgba(0,0,0,0)",
-            width=800,
+            width=1600,
             height=800,
             autosize=False,
         )
@@ -384,11 +428,10 @@ def visualize_model(
             plot_bgcolor="rgba(0,0,0,0)",
             template="plotly_white",
             xaxis=dict(
-                title="Input Value",
+                title="x1",
                 showgrid=False,
             ),
             yaxis=dict(
-                # title="Correlation Mean",
                 showgrid=False,
             ),
         )
@@ -421,6 +464,22 @@ def visualize_model(
             row=1,
             col=2,
         )
+        for col in [1, 2]:
+            fig.update_xaxes(
+                tickvals=list(range(domain_samples.shape[1])),
+                ticktext=domain_samples[:, 1],
+                title="x2",
+                row=1,
+                col=col,
+            )
+            fig.update_yaxes(
+                tickvals=list(range(domain_samples.shape[0])),
+                ticktext=domain_samples[:, 0],
+                title="x1",
+                row=1,
+                col=col,
+            )
+
         fig.update_layout(
             plot_bgcolor="rgba(0,0,0,0)",
             width=1600,
