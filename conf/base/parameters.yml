@@ -1,12 +1,16 @@
 data:
   fourier:
-    domain: [-3.1415, 3.1415] # domain of x values
-    omegas: 5
+    domain: [0, 6.283185307] # domain of x values
+    omegas: [5, 5]
     offset: False
     coefficients:
       distribution: uniform # None, uniform, normal
-      mean: 0.25 # if None, can also be an array with len(omegas)
-      variance: 0.25 # if uniform mean+-variance defines limit
+      mean: 0.0 # if None, can also be an array with len(omegas)
+      variance: 1.0 # if uniform mean+-variance defines limit
+    samples:
+      distribution: uniform # None, uniform, normal
+      mean: 0.0
+      variance: 0.5
   hep:
     n_events: 40000
     features: ["E_CM", "delta_E"]
@@ -50,7 +54,7 @@ seed: 1000
 n_control_values: 0 # for sweeping control values
 
 training:
-  steps: 500
+  steps: 1000
   learning_rate: 0.01
   batch_size: -1
   log_entangling: False
