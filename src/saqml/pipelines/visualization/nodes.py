@@ -138,23 +138,21 @@ def visualize_model_spectrum(model: Model, mts, mfs) -> go.Figure:
     coeffs, freqs = QMLCoefficients.Coefficients.get_spectrum(
         model, shift=True, trim=True
     )
-    coeffs = QMLCoefficients.Coefficients.get_psd(coeffs)
 
     if model.n_input_feat == 1:
 
         fig = go.Figure(
-            data=go.Box(
-                y=coeffs,
+            data=go.Bar(
+                x=freqs.flatten(),
+                y=np.abs(coeffs).flatten(),
                 marker=dict(color=pc.qualitative.Dark2[0]),
-                boxpoints=False,
             )
         )
         fig.update_layout(template="plotly_white", title="Spectrum", showlegend=False)
     elif model.n_input_feat == 2:
-
         fig = go.Figure(
             data=go.Heatmap(
-                z=np.log(np.abs(coeffs)),
+                z=np.abs(coeffs),
                 hoverongaps=False,
                 colorscale="Sunset",
             )
@@ -359,39 +357,78 @@ def visualize_model(
     domain_samples = data_loader.dataset.tensors[0]
     fourier_series = data_loader.dataset.tensors[1]
 
-    if model.n_input_feat == 2:
-        return {"model": go.Figure()}
-    fig = go.Figure(
-        data=[
-            go.Scatter(
-                x=domain_samples, y=fourier_series, mode="lines", name="Ground Truth"
+    if model.n_input_feat == 1:
+        fig = go.Figure(
+            data=[
+                go.Scatter(
+                    x=domain_samples.flatten(),
+                    y=fourier_series,
+                    mode="lines",
+                    name="Ground Truth",
+                ),
+                go.Scatter(
+                    x=domain_samples.flatten(),
+                    y=model(
+                        params=model.params,
+                        inputs=domain_samples,
+                        noise_params=noise_params,
+                        force_mean=True,
+                    ),
+                    mode="lines",
+                    name="Prediction",
+                ),
+            ]
+        )
+        fig.update_layout(
+            title_text=f"Ground Truth and Model Prediction",
+            plot_bgcolor="rgba(0,0,0,0)",
+            template="plotly_white",
+            xaxis=dict(
+                title="Input Value",
+                showgrid=False,
             ),
-            go.Scatter(
-                x=domain_samples,
-                y=model(
+            yaxis=dict(
+                # title="Correlation Mean",
+                showgrid=False,
+            ),
+        )
+    elif model.n_input_feat == 2:
+        fig = make_subplots(rows=1, cols=2)
+        fig.add_trace(
+            go.Heatmap(
+                x=domain_samples[:, 0],
+                y=domain_samples[:, 1],
+                z=fourier_series,
+                colorscale="Sunset",
+                name="Ground Truth",
+            ),
+            row=1,
+            col=1,
+        )
+        fig.add_trace(
+            go.Heatmap(
+                x=domain_samples[:, 0],
+                y=domain_samples[:, 1],
+                z=model(
                     params=model.params,
                     inputs=domain_samples,
                     noise_params=noise_params,
                     force_mean=True,
                 ),
-                mode="lines",
+                colorscale="Sunset",
                 name="Prediction",
             ),
-        ]
-    )
-    fig.update_layout(
-        title_text=f"Ground Truth and Model Prediction",
-        plot_bgcolor="rgba(0,0,0,0)",
-        template="plotly_white",
-        xaxis=dict(
-            title="Input Value",
-            showgrid=False,
-        ),
-        yaxis=dict(
-            # title="Correlation Mean",
-            showgrid=False,
-        ),
-    )
+            row=1,
+            col=2,
+        )
+        fig.update_layout(
+            plot_bgcolor="rgba(0,0,0,0)",
+            width=1600,
+            height=800,
+            autosize=False,
+        )
+    else:
+        raise ValueError(f"Unsupported number of input features: {model.n_input_feat}")
 
     return {"model": fig}
 

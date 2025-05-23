@@ -136,7 +136,7 @@ def create_model_pipeline() -> Pipeline:
     )
 
 
-def create_data_pipeline() -> Pipeline:
+def create_hep_pipeline() -> Pipeline:
     return pipeline(
         [
             node(
