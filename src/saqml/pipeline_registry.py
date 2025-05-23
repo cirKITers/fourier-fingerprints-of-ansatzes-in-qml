@@ -31,7 +31,7 @@ from saqml.pipelines.visualization.pipeline import (
     create_model_pipeline as create_model_visualization_pipeline,
 )
 from saqml.pipelines.visualization.pipeline import (
-    create_data_pipeline as create_data_visualization_pipeline,
+    create_hep_pipeline as create_hep_visualization_pipeline,
 )
 
 from saqml.pipelines.visualization.pipeline import (
@@ -61,7 +61,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + create_hep_pipeline()
         + create_training_pipeline()
         + create_model_visualization_pipeline()
-        + create_data_visualization_pipeline(),
+        + create_hep_visualization_pipeline(),
         "coefficients": create_model_pipeline()
         + create_coefficients_pipeline()
         + create_visualization_pipeline(),
