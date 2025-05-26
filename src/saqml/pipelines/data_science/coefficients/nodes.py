@@ -71,7 +71,7 @@ def calculate_coefficients(
     coeffs, freqs = Coefficients.calculate_coefficients(
         model, noise_params=noise_params
     )
-
+    log.info(f"Aggregating results..")
     for i in range(total_samples):
         # append the parameters and absolute values of coefficients
         # calculation would raise an error if the imaginary part wouldn't sum up to 0
