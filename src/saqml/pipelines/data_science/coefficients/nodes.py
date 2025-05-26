@@ -59,7 +59,9 @@ def calculate_coefficients(
     )
 
     if n_samples > 0:
-        total_samples = n_samples * n_params
+        total_samples = int(
+            np.power(2, model.n_qubits) * n_samples * model.n_input_feat
+        )
         log.info(f"Total number of samples: {total_samples}")
         rng = np.random.default_rng(seed)
         model.initialize_params(rng=rng, repeat=total_samples)
@@ -106,7 +108,7 @@ def filter_coefficients(df: pd.DataFrame, model: Model) -> pd.DataFrame:
 
 def sample_coefficients(model: Model, n_samples: int, seed: int, mean: float = 0):
     rng = np.random.default_rng(seed)
-    total_samples = n_samples * model.params.size * (2**model.n_input_feat)
+    total_samples = int(np.power(2, model.n_qubits) * n_samples)
     log.info(f"Total number of samples: {total_samples}")
 
     def pascal_triangle(n):
