@@ -2,6 +2,7 @@ from kedro.pipeline import Pipeline, node, pipeline
 
 from .nodes import (
     visualize_coefficients_correlated,
+    visualize_coefficients_correlated_3d,
     visualize_parameters_correlated,
     visualize_parameters_coefficients_correlated,
     visualize_coefficients_correlated_control,
@@ -28,6 +29,17 @@ def create_pipeline() -> Pipeline:
                 },
                 outputs="fig_coefficients_correlated",
                 name="visualize_coefficients_correlated",
+            ),
+            node(
+                func=visualize_coefficients_correlated_3d,
+                inputs={
+                    "df": "coefficients_correlated_filtered",
+                    "model": "model",
+                    "discard_negative": "params:training.positive_coeffs_only",
+                    "triu": "params:coefficients.triu",
+                },
+                outputs="fig_coefficients_correlated_3d",
+                name="visualize_coefficients_correlated_3d",
             ),
             node(
                 func=visualize_coefficients_correlated_filtered_weighted,

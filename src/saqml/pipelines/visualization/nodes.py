@@ -251,17 +251,112 @@ def visualize_coefficients_correlated(
     mlflow.log_metric("coefficients_correlation_max", df.max().max())
     mlflow.log_metric("coefficients_correlation_min", df.min().min())
 
-    fig = visualize_heatmap_filtered(
-        df=df,
-    )
+    if model.n_input_feat == 1:
+        fig = visualize_heatmap_filtered(
+            df=df,
+        )
 
-    fig.update_layout(
-        title_text=f"Correlated Coefficients for {model.pqc.__class__.__name__}",
-        xaxis=dict(
-            title="Coefficients",
-        ),
-        yaxis=dict(title="Coefficients", autorange="reversed", scaleanchor="x"),
-    )
+        fig.update_layout(
+            title_text=f"Correlated Coefficients for {model.pqc.__class__.__name__}",
+            xaxis=dict(
+                title="Coefficients",
+            ),
+            yaxis=dict(title="Coefficients", autorange="reversed", scaleanchor="x"),
+        )
+    elif model.n_input_feat == 2:
+        fig = visualize_heatmap_filtered(
+            df=df,
+        )
+
+        fig.update_layout(
+            title_text=f"Correlated Coefficients for {model.pqc.__class__.__name__}",
+            xaxis=dict(
+                title="Coefficients",
+            ),
+            yaxis=dict(title="Coefficients", autorange="reversed", scaleanchor="x"),
+        )
+    else:
+        raise NotImplementedError(
+            "Only implemented for n_input_feat=1 and n_input_feat=2"
+        )
+
+    return fig
+
+
+def visualize_coefficients_correlated_3d(
+    df: pd.DataFrame, model: Model, discard_negative=True, triu=False
+) -> go.Figure:
+
+    # if triu:
+    #     for i in range(df.shape[0]):
+    #         for j in range(df.shape[1]):
+    #             if i <= j:
+    #                 df.iloc[i, j] = pnp.nan
+    #                 # df_weighted.iloc[i, j] = pnp.nan
+    #     df = df.dropna(how="all", axis=0).dropna(how="all", axis=1)
+    # df_weighted = df_weighted.dropna(how="all", axis=0).dropna(
+    #     how="all", axis=1
+    # )
+
+    mlflow.log_metric("coefficients_correlation_variance", df.var().var())
+    mlflow.log_metric("coefficients_correlation_mean", df.mean().mean())
+    mlflow.log_metric("coefficients_correlation_max", df.max().max())
+    mlflow.log_metric("coefficients_correlation_min", df.min().min())
+
+    if model.n_input_feat == 1:
+        fig = visualize_heatmap_filtered(
+            df=df,
+        )
+
+        fig.update_layout(
+            title_text=f"Correlated Coefficients for {model.pqc.__class__.__name__}",
+            xaxis=dict(
+                title="Coefficients",
+            ),
+            yaxis=dict(title="Coefficients", autorange="reversed", scaleanchor="x"),
+        )
+    elif model.n_input_feat == 2:
+        Y = []
+        layer_idx = 0
+        for X1 in range(model.degree + 1):
+            Y_temp = (
+                df.filter(regex=f"c(_\+{X1}_\+)", axis=0)
+                .filter(regex=f"c(_\+{X1}_\+)", axis=1)
+                .to_numpy()
+            )
+            Y_temp -= np.eye(model.degree + 1) - layer_idx
+            layer_idx += 1
+            Y.append(Y_temp)
+        for X2 in range(model.degree + 1):
+            Y_temp = (
+                df.filter(regex=f"c(_\+{X1}_\+)", axis=0)
+                .filter(regex=f"c(_\+{X1}_\+)", axis=1)
+                .to_numpy()
+            )
+            Y_temp -= np.eye(model.degree + 1) - layer_idx
+            layer_idx += 1
+            Y.append(Y_temp)
+        fig = go.Figure(
+            data=[
+                go.Surface(z=Y[i])
+                for i in range(model.n_input_feat * (model.degree + 1))
+            ]
+        )
+
+        fig.update_layout(
+            title_text=f"{model.pqc.__class__.__name__}",
+            xaxis=dict(title="X1"),
+            yaxis=dict(title="X2"),
+            # zaxis=dict(title="Correlation"),
+            plot_bgcolor="rgba(0,0,0,0)",
+            width=800,
+            height=800,
+            autosize=False,
+        )
+    else:
+        raise NotImplementedError(
+            "Only implemented for n_input_feat=1 and n_input_feat=2"
+        )
 
     return fig
 
