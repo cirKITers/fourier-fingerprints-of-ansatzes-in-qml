@@ -21,7 +21,7 @@ data:
   mfs: 1
 
 coefficients:
-  n_samples: 500 #samples per parameter
+  n_samples: 250 #samples per parameter
   correlation_method: "pearson" #dcor, pearson, spearman
   triu: True # only use  the upper triangular part of the correlation matrix?
   weighting: "linear" # linear, coefficients_prod, coefficients_add, frequencies
@@ -47,7 +47,7 @@ model:
     AmplitudeDamping: 0.0
     PhaseDamping: 0.0
     Depolarizing: 0.0
-  mp_threshold: -1
+  mp_threshold: 1000 # for expressibility experiments -1 otherwise
 
 seed: 1000
 
