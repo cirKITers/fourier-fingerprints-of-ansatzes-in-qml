@@ -12,7 +12,7 @@ def create_pipeline() -> Pipeline:
                 func=expressibility,
                 inputs={
                     "model": "model",
-                    "samples": "params:expressibility.samples",
+                    "samples": "params:expressibility.n_samples",
                     "seed": "params:seed",
                     "n_bins": "params:expressibility.n_bins",
                     "input_domain": "params:data.fourier.domain",
