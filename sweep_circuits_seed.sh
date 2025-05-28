@@ -4,7 +4,7 @@
 
 # run experiments with all different circuits
 # for circuit in Hardware_Efficient Circuit_YZY_Entangling Circuit_YZY Circuit_19 Circuit_15 Circuit_17
-for circuit in Hardware_Efficient Circuit_YZY_Entangling Circuit_19 Circuit_15 Circuit_17 Circuit_16 Circuit_18
+for circuit in Hardware_Efficient Circuit_YZY Circuit_YZY_Entangling Circuit_19 Circuit_15 Circuit_17 Circuit_16 Circuit_18
 do
     echo "Running with Ansatz $circuit"
 
