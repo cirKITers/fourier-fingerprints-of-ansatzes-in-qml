@@ -9,6 +9,9 @@ import numpy as np
 import os
 from rich.progress import track
 
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
 
 def save_fig(fig, name, run_ids, experiment_id, font_size=16, scale=1):
     hs = generate_hash(run_ids)
@@ -17,6 +20,38 @@ def save_fig(fig, name, run_ids, experiment_id, font_size=16, scale=1):
     print(f"Saving figure to {path}{name}.pdf")
     fig.update_layout(font=dict(size=font_size))
     fig.write_image(f"{path}{name}.pdf", scale=scale)
+
+
+def get_run_ids(experiment_id):
+    print(f"Searching experiment with id {experiment_id}")
+    df = mlflow.search_runs([experiment_id])
+    print(f"Found {len(df)} runs")
+    if len(df[(df.status != "FINISHED")]) > 0:
+        print(f"{df[(df.status != 'FINISHED')]} runs not finished")
+    else:
+        print("All runs finished")
+    return df.run_id.to_list()
+
+
+def cache_df(run_ids, df=None):
+    # calculate hash
+    hs = generate_hash(run_ids)
+
+    # save df to cache
+    path = f".cache/{hs}/"
+    os.makedirs(path, exist_ok=True)
+
+    if os.path.exists(f"{path}df.csv"):
+        print(f"DF already exists: {hs}")
+        df = pd.read_csv(f"{path}df.csv")
+    else:
+        if df is None:
+            return None
+        df.to_csv(f"{path}df.csv")
+        print(f"Created DF cache: {hs}")
+        df = pd.read_csv(f"{path}df.csv")
+
+    return df
 
 
 def get_color_iterator():
@@ -247,3 +282,129 @@ def assign_ansatz_id(df):
     # add a column with name "ansatz_id" where each ansatz has a unique id
     df["ansatz_id"] = df["ansatz"].factorize()[0]
     return df
+
+
+def visualize_boxplot(
+    df,
+    metric,
+):
+    qubit = df["qubits"].unique()[0]
+
+    fig = make_subplots()
+    main_colors_it, _ = get_color_iterator()
+    fig.add_trace(
+        go.Box(
+            x=df.ansatz,
+            y=df[metric],
+            name=f"Metric: {metric.replace('_', ' ')}",
+            marker=dict(color=rgb_to_rgba(next(main_colors_it), 0.5)),
+            yaxis="y3",
+            offsetgroup="Metric",
+        ),
+    )
+    fig.add_trace(
+        go.Box(
+            x=df.ansatz,
+            y=df.kl_divergence,
+            name=f"KL Divergence",
+            marker=dict(color=rgb_to_rgba(next(main_colors_it), 0.5)),
+            yaxis="y2",
+            offsetgroup="KL Divergence",
+        ),
+    )
+
+    fig.add_trace(
+        go.Box(
+            x=df.ansatz,
+            y=df.corr_mean,
+            name=f"FCC",
+            marker=dict(color=rgb_to_rgba(next(main_colors_it), 0.5)),
+            yaxis="y",
+            offsetgroup="FCC",
+        ),
+    )
+
+    fig.add_trace(
+        go.Box(
+            x=df.ansatz,
+            y=df.corr_w_mean,
+            name=f"FCC Weighted",
+            marker=dict(color=rgb_to_rgba(next(main_colors_it), 0.5)),
+            yaxis="y",
+            offsetgroup="FCC Weighted",
+        ),
+    )
+
+    fig.update_yaxes(title_text=f"Correlation", secondary_y=False)
+    fig.update_yaxes(title_text="KL Divergence", secondary_y=True)
+    fig.update_layout(
+        title=f"FCC and Expressibility ({qubit} Qubits, Metric: {metric})",
+        template="plotly_white",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        yaxis=dict(title="FCC"),  # yaxis = "y", attached to x-axis
+        yaxis2=dict(
+            position=0,
+            title="KL Divergence",  # yaxis = "y2", pos 0, free from x-axis
+            side="left",
+            anchor="free",
+            overlaying="y",
+        ),
+        yaxis3=dict(
+            title="Metric",
+            side="right",
+            anchor="x",  # yaxis = "y3", attached to x-axis
+            overlaying="y",
+        ),
+        xaxis=dict(domain=[0.15, 0.9], tickangle=20),
+        boxmode="group",
+        margin=dict(l=50, r=0, b=30, t=100),
+    )
+
+    return fig
+
+
+def visualize_scatter(df, ansatz_ids, metric, weighted=True):
+    corr_mean = "corr_mean" if not weighted else "corr_w_mean"
+
+    fig = go.Figure()
+    symbols = get_symbol_iterator()
+    main_colors_it, _ = get_color_iterator()
+    symbol = next(symbols)
+    for ansatz_id in ansatz_ids:
+        _df = df[(df.ansatz_id == ansatz_id)]
+        if len(_df) == 0:
+            print(f"No data for ansatz_id={ansatz_id}")
+            continue
+        ansatz = _df["ansatz"].unique()[0]
+        fig.add_scatter(
+            x=[_df[corr_mean].mean()],
+            y=[_df[metric].mean()],
+            error_x=dict(
+                type="data",
+                array=[_df[corr_mean].std()],
+                visible=True,
+            ),
+            error_y=dict(
+                type="data",
+                array=[_df[metric].std()],
+                visible=True,
+            ),
+            mode="markers",
+            name=f"{ansatz}",
+            marker=dict(color=next(main_colors_it), symbol=symbol),
+        )
+
+    fig.update_layout(
+        title_text="Direct Correlation ({qubit} Qubits, Metric: {metric})",
+        template="plotly_white",
+        xaxis=dict(
+            title=("Correlation Mean" if not weighted else "Weighted Correlation Mean"),
+        ),
+        yaxis=dict(
+            title=metric.title(),
+            showgrid=False,
+        ),
+        showlegend=True,
+    )
+
+    return fig
