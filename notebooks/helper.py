@@ -54,9 +54,16 @@ def cache_df(run_ids, df=None):
     return df
 
 
-def get_color_iterator():
-    main_colors_it = iter(plotly.colors.qualitative.Dark2)
-    sec_colors_it = iter(plotly.colors.qualitative.Pastel2)
+def get_color_iterator(option=0):
+    if option == 0:
+        main_colors_it = iter(plotly.colors.qualitative.Dark2)
+        sec_colors_it = iter(plotly.colors.qualitative.Pastel2)
+    elif option == 1:
+        main_colors_it = iter(plotly.colors.qualitative.Dark2)
+        sec_colors_it = iter(plotly.colors.qualitative.Pastel1)
+    elif option == 2:
+        main_colors_it = iter(plotly.colors.qualitative.Set1)
+        sec_colors_it = iter(plotly.colors.qualitative.Pastel1)
 
     return main_colors_it, sec_colors_it
 
@@ -115,7 +122,7 @@ def rgb_to_rgba(rgb_value: str, alpha: float):
 def get_training_df(run_ids, cutoff_mse=-1, cutoff_steps=-1, metric="mse"):
     df = pd.DataFrame(
         columns=[
-            "run_id",
+            "training_run_id",
             "ansatz",
             "qubits",
             "seed",
@@ -134,7 +141,7 @@ def get_training_df(run_ids, cutoff_mse=-1, cutoff_steps=-1, metric="mse"):
             print(f"Run {run_id} not finished")
             continue
 
-        df.loc[it, "run_id"] = run_id
+        df.loc[it, "training_run_id"] = run_id
         df.loc[it, "ansatz"] = client.get_run(run_id).data.params["model.circuit_type"]
         df.loc[it, "qubits"] = int(client.get_run(run_id).data.params["model.n_qubits"])
         df.loc[it, "seed"] = int(client.get_run(run_id).data.params["seed"])
@@ -162,7 +169,7 @@ def get_coefficient_df(run_ids, expr=False):
     if expr:
         df = pd.DataFrame(
             columns=[
-                "run_id",
+                "coeff_run_id",
                 "ansatz",
                 "qubits",
                 "layer_multiplier",
@@ -177,7 +184,7 @@ def get_coefficient_df(run_ids, expr=False):
     else:
         df = pd.DataFrame(
             columns=[
-                "run_id",
+                "coeff_run_id",
                 "ansatz",
                 "qubits",
                 "layer_multiplier",
@@ -200,7 +207,7 @@ def get_coefficient_df(run_ids, expr=False):
             print(f"Run {run_id} not finished")
             continue
 
-        df.loc[it, "run_id"] = run_id
+        df.loc[it, "coeff_run_id"] = run_id
         df.loc[it, "ansatz"] = client.get_run(run_id).data.params["model.circuit_type"]
         df.loc[it, "qubits"] = int(client.get_run(run_id).data.params["model.n_qubits"])
 
@@ -247,7 +254,7 @@ def get_coefficient_df(run_ids, expr=False):
 def get_expressibility_df(run_ids):
     df = pd.DataFrame(
         columns=[
-            "run_id",
+            "expr_run_id",
             "ansatz",
             "qubits",
             "seed",
@@ -265,7 +272,7 @@ def get_expressibility_df(run_ids):
             print(f"Run {run_id} not finished")
             continue
 
-        df.loc[it, "run_id"] = run_id
+        df.loc[it, "expr_run_id"] = run_id
         df.loc[it, "ansatz"] = client.get_run(run_id).data.params["model.circuit_type"]
         df.loc[it, "qubits"] = int(client.get_run(run_id).data.params["model.n_qubits"])
 
@@ -408,3 +415,112 @@ def visualize_scatter(df, ansatz_ids, metric, weighted=True):
     )
 
     return fig
+
+
+def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False):
+    corr_mean = "corr_mean" if not weighted else "corr_w_mean"
+
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    main_colors_it, sec_colors_it = get_color_iterator(option=2)
+    for ansatz_id in ansatz_ids:
+        _df = df[(df.ansatz_id == ansatz_id)]
+        if len(_df) == 0:
+            print(f"No data for ansatz_id={ansatz_id}")
+            continue
+        ansatz = _df["ansatz"].unique()[0]
+        fig.add_scatter(
+            x=[_df[corr_mean].mean()],
+            y=[_df[metric].mean()],
+            error_x=dict(
+                type="data",
+                array=[_df[metric].std()],
+                visible=True,
+            ),
+            error_y=dict(
+                type="data",
+                array=[_df[corr_mean].std()],
+                visible=True,
+            ),
+            mode="markers",
+            name=f"{ansatz}",
+            marker=dict(color=next(main_colors_it), symbol="circle", size=15),
+            secondary_y=False,
+            showlegend=True,
+        )
+
+        fig.add_scatter(
+            x=[_df["kl_divergence"].mean()],
+            y=[_df[metric].mean()],
+            error_x=dict(
+                type="data",
+                array=[_df[metric].std()],
+                visible=True,
+            ),
+            error_y=dict(
+                type="data",
+                array=[_df["kl_divergence"].std()],
+                visible=True,
+            ),
+            mode="markers",
+            name=f"{ansatz} (EXPR)",
+            marker=dict(color=next(sec_colors_it), symbol="diamond", size=10),
+            secondary_y=True,
+            showlegend=False,
+        )
+
+    fig.update_layout(
+        title_text="Direct Correlation ({qubit} Qubits, Metric: {metric})",
+        template="plotly_white",
+        xaxis=dict(
+            title=metric.title(),
+            showgrid=False,
+        ),
+        yaxis=dict(
+            title=("Correlation Mean" if not weighted else "Weighted Correlation Mean"),
+        ),
+        yaxis2=dict(
+            title=("Expressibility"),
+            side="right",
+        ),
+    )
+
+    return fig
+
+
+def visualize_heatmap(df, selected_seed, weighted):
+    ansaetze = df.ansatz.unique()
+    qubit = df["qubits"].unique()[0]
+
+    fig = make_subplots(rows=1, cols=len(ansaetze), subplot_titles=ansaetze)
+
+    for it, ansatz in enumerate(ansaetze):
+        _df = df[(df.ansatz == ansatz) & (df.seed == selected_seed)]
+        if len(_df) == 0:
+            print(f"No data for q={qubit}, ansatz={ansatz}, seed={selected_seed}")
+            continue
+        sub_fig_trace = get_plotly_artifact(
+            _df.coeff_run_id.item(),
+            f"coefficients_correlated_{'w' if weighted else 'uw'}",
+        )
+
+        fig.add_trace(sub_fig_trace, row=1, col=it + 1)
+        fig.update_xaxes(dict(title="Coefficients"), row=1, col=it + 1)
+        fig.update_yaxes(
+            dict(
+                title="Coefficients" if it == 0 else "",
+                autorange="reversed",
+                scaleanchor="x",
+            ),
+            row=1,
+            col=it + 1,
+        )
+
+    fig.update_layout(
+        title_text=(
+            f"{'Weighted ' if weighted else ''}Correlation of Coefficients for Different Ansaetze ({qubit} Qubits)"
+        ),
+        template="plotly_white",
+        height=400,
+        width=300 * it,
+        coloraxis={"colorscale": "Sunset"},
+    )
