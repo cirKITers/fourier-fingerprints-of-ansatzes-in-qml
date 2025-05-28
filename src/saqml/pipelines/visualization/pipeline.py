@@ -30,17 +30,17 @@ def create_pipeline() -> Pipeline:
                 outputs="fig_coefficients_correlated",
                 name="visualize_coefficients_correlated",
             ),
-            node(
-                func=visualize_coefficients_correlated_3d,
-                inputs={
-                    "df": "coefficients_correlated_filtered",
-                    "model": "model",
-                    "discard_negative": "params:training.positive_coeffs_only",
-                    "triu": "params:coefficients.triu",
-                },
-                outputs="fig_coefficients_correlated_3d",
-                name="visualize_coefficients_correlated_3d",
-            ),
+            # node(
+            #     func=visualize_coefficients_correlated_3d,
+            #     inputs={
+            #         "df": "coefficients_correlated_filtered",
+            #         "model": "model",
+            #         "discard_negative": "params:training.positive_coeffs_only",
+            #         "triu": "params:coefficients.triu",
+            #     },
+            #     outputs="fig_coefficients_correlated_3d",
+            #     name="visualize_coefficients_correlated_3d",
+            # ),
             node(
                 func=visualize_coefficients_correlated_filtered_weighted,
                 inputs={

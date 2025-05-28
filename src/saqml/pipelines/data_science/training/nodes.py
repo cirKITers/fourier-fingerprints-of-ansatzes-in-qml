@@ -48,7 +48,6 @@ class Losses:
 
     @staticmethod
     def kl_divergence(prediction, target):
-        pass
         var_pred = prediction.var()
         var_target = target.var()
         mean_pred = prediction.mean()
