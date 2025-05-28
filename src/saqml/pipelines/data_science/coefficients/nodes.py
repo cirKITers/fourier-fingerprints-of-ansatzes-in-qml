@@ -72,15 +72,22 @@ def calculate_coefficients(
         model, noise_params=noise_params
     )
     log.info(f"Aggregating results..")
-    for i in range(total_samples):
-        # append the parameters and absolute values of coefficients
-        # calculation would raise an error if the imaginary part wouldn't sum up to 0
-        df.loc[i] = [
-            *model.params[..., i].flatten(),
-            *coeffs[..., i].flatten(),
-        ]
+    concatenated = np.concatenate(
+        [model.params.reshape(-1, total_samples), coeffs], axis=0
+    )
+    for i, c in enumerate(df.columns):
+        df[c] = concatenated[i]
 
-    # df = df.astype({f"p_{i}": "float64" for i in range(n_params)})
+    # for i in range(total_samples):
+    #     # append the parameters and absolute values of coefficients
+    #     # calculation would raise an error if the imaginary part wouldn't sum up to 0
+    #     df.loc[i] = [
+    #         *model.params[..., i].flatten(),
+    #         *coeffs[..., i].flatten(),
+    #     ]
+
+    df = df.astype({f"p_{i}": "float64" for i in range(n_params)})
+
     return df
 
 
