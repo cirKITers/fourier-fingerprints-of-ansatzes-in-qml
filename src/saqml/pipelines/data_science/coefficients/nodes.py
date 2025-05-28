@@ -271,9 +271,9 @@ def correlate(df: pd.DataFrame, method: str) -> pd.DataFrame:
         If the given method is not supported.
     """
     if method == "pearson" or method == "spearman":
-        result = df.abs().corr(method=method)
+        result = df.corr(method=method)
     elif method == "dcor":
-        data = df.abs().to_numpy().transpose()  # -> (n_rvs, n_samples)
+        data = df.to_numpy().transpose()  # -> (n_rvs, n_samples)
 
         raise NotImplementedError()
         # temporarily disabled because of issues with llvm
