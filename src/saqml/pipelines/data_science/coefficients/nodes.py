@@ -73,7 +73,8 @@ def calculate_coefficients(
     )
     log.info(f"Aggregating results..")
     concatenated = np.concatenate(
-        [model.params.reshape(-1, total_samples), coeffs], axis=0
+        [model.params.reshape(-1, total_samples), coeffs.reshape(-1, total_samples)],
+        axis=0,
     )
     for i, c in enumerate(df.columns):
         df[c] = concatenated[i]
