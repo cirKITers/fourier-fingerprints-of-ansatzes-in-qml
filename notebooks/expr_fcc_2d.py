@@ -10,9 +10,11 @@ from helper import (
     assign_ansatz_id,
     visualize_boxplot,
     visualize_scatter,
+    visualize_heatmap,
 )
 
-cache = True
+cache = False
+weighted = True
 unique_id = "expr_fcc"
 
 scenarios = {
