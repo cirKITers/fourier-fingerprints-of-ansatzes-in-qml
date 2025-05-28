@@ -59,7 +59,7 @@ def visualize_coefficients_decay(df: pd.DataFrame, model: Model) -> go.Figure:
             columns=["c_+" + str(i) for i in range(model.degree + 1)],
             index=["c_+" + str(i) for i in range(model.degree + 1)],
         )
-        fig = visualize_heatmap_filtered(df=heatmap, zmax=heatmap.max().max())
+        fig = visualize_heatmap_filtered(df=heatmap, zmax=heatmap.max(axis=None))
     else:
         raise NotImplementedError(
             "Only implemented for n_input_feat=1 and n_input_feat=2"
@@ -246,10 +246,10 @@ def visualize_coefficients_correlated(
         #     how="all", axis=1
         # )
 
-    mlflow.log_metric("coefficients_correlation_variance", df.var().var())
-    mlflow.log_metric("coefficients_correlation_mean", df.mean().mean())
-    mlflow.log_metric("coefficients_correlation_max", df.max().max())
-    mlflow.log_metric("coefficients_correlation_min", df.min().min())
+    mlflow.log_metric("coefficients_correlation_variance", df.abs().var().var())
+    mlflow.log_metric("coefficients_correlation_mean", df.abs().mean(axis=None))
+    mlflow.log_metric("coefficients_correlation_max", df.abs().max(axis=None))
+    mlflow.log_metric("coefficients_correlation_min", df.abs().min(axis=None))
 
     if model.n_input_feat == 1:
         fig = visualize_heatmap_filtered(
@@ -298,10 +298,10 @@ def visualize_coefficients_correlated_3d(
     #     how="all", axis=1
     # )
 
-    mlflow.log_metric("coefficients_correlation_variance", df.var().var())
-    mlflow.log_metric("coefficients_correlation_mean", df.mean().mean())
-    mlflow.log_metric("coefficients_correlation_max", df.max().max())
-    mlflow.log_metric("coefficients_correlation_min", df.min().min())
+    mlflow.log_metric("coefficients_correlation_variance", df.abs().var().var())
+    mlflow.log_metric("coefficients_correlation_mean", df.abs().mean(axis=None))
+    mlflow.log_metric("coefficients_correlation_max", df.abs().max(axis=None))
+    mlflow.log_metric("coefficients_correlation_min", df.abs().min(axis=None))
 
     if model.n_input_feat == 1:
         fig = visualize_heatmap_filtered(
@@ -376,10 +376,14 @@ def visualize_coefficients_correlated_filtered_weighted(
         #     how="all", axis=1
         # )
 
-    mlflow.log_metric("coefficients_correlation_weighted_variance", df.var().var())
-    mlflow.log_metric("coefficients_correlation_weighted_mean", df.mean().mean())
-    mlflow.log_metric("coefficients_correlation_weighted_max", df.max().max())
-    mlflow.log_metric("coefficients_correlation_weighted_min", df.min().min())
+    mlflow.log_metric(
+        "coefficients_correlation_weighted_variance", df.abs().var().var()
+    )
+    mlflow.log_metric(
+        "coefficients_correlation_weighted_mean", df.abs().mean(axis=None)
+    )
+    mlflow.log_metric("coefficients_correlation_weighted_max", df.abs().max(axis=None))
+    mlflow.log_metric("coefficients_correlation_weighted_min", df.abs().min(axis=None))
 
     fig = visualize_heatmap_filtered(
         df=df,
@@ -409,9 +413,9 @@ def visualize_parameters_correlated(
         df = df.dropna(how="all", axis=0).dropna(how="all", axis=1)
 
     mlflow.log_metric("parameters_correlation_variance", df.var().var())
-    mlflow.log_metric("parameters_correlation_mean", df.mean().mean())
-    mlflow.log_metric("parameters_correlation_max", df.max().max())
-    mlflow.log_metric("parameters_correlation_min", df.min().min())
+    mlflow.log_metric("parameters_correlation_mean", df.mean(axis=None))
+    mlflow.log_metric("parameters_correlation_max", df.max(axis=None))
+    mlflow.log_metric("parameters_correlation_min", df.min(axis=None))
 
     fig = visualize_heatmap_filtered(
         df=df,
@@ -438,13 +442,13 @@ def visualize_parameters_coefficients_correlated(
         "parameters_coefficients_correlation_variance", df_filtered.var().var()
     )
     mlflow.log_metric(
-        "parameters_coefficients_correlation_mean", df_filtered.mean().mean()
+        "parameters_coefficients_correlation_mean", df_filtered.mean(axis=None)
     )
     mlflow.log_metric(
-        "parameters_coefficients_correlation_max", df_filtered.max().max()
+        "parameters_coefficients_correlation_max", df_filtered.max(axis=None)
     )
     mlflow.log_metric(
-        "parameters_coefficients_correlation_min", df_filtered.min().min()
+        "parameters_coefficients_correlation_min", df_filtered.min(axis=None)
     )
 
     fig = visualize_heatmap_filtered(
