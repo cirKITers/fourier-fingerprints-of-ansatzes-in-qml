@@ -390,6 +390,31 @@ def create_model(
     return model
 
 
+def tikz_model(
+    n_qubits: int,
+    n_layers: int,
+    circuit_type: str,
+    output_qubit: int,
+) -> Model:
+    pqc = getattr(OurAnsaetze, circuit_type or "no_ansatz")
+
+    log.info(
+        f"Creating model with {n_qubits} qubits, {n_layers} layers, and {circuit_type} circuit."
+    )
+
+    model = Model(
+        n_qubits=n_qubits,
+        n_layers=n_layers,
+        circuit_type=pqc,
+        data_reupload=False,
+        output_qubit=output_qubit,
+    )
+
+    fig = model.draw(figure="tikz")
+    fig.export(f"{circuit_type}.tex", full_document=False)
+    return str(fig)
+
+
 def print_model(model: Model):
     return str(model)
 

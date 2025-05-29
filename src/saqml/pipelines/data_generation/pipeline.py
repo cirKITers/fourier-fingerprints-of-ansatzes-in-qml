@@ -5,11 +5,30 @@ from .nodes import (
     generate_fourier_series,
     sample_fourier_series,
     create_model,
+    tikz_model,
     print_model,
     get_fourier_dataset,
     get_hep_dataset,
     calculate_hep_spectrum,
 )
+
+
+def draw_model_pipeline() -> Pipeline:
+    return pipeline(
+        [
+            node(
+                func=tikz_model,
+                inputs={
+                    "n_qubits": "params:model.n_qubits",
+                    "n_layers": "params:model.n_layers",
+                    "circuit_type": "params:model.circuit_type",
+                    "output_qubit": "params:model.output_qubit",
+                },
+                outputs="model_str",
+                name="tikz_model",
+            ),
+        ]
+    )
 
 
 def create_model_pipeline() -> Pipeline:
