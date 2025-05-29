@@ -6,6 +6,7 @@ from kedro.framework.project import find_pipelines
 from kedro.pipeline import Pipeline
 
 from saqml.pipelines.data_generation.pipeline import (
+    draw_model_pipeline,
     create_model_pipeline,
     create_fourier_pipeline,
     create_hep_pipeline,
@@ -52,7 +53,7 @@ def register_pipelines() -> Dict[str, Pipeline]:
         + create_training_pipeline()
         + create_visualization_pipeline()
         + create_model_visualization_pipeline(),
-        "visualize": create_model_pipeline(),
+        "visualize": draw_model_pipeline(),
         "training_fourier": create_model_pipeline()
         + create_fourier_pipeline()
         + create_training_pipeline()
