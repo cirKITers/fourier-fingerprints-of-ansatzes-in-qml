@@ -8,17 +8,24 @@ import mlflow
 import numpy as np
 import os
 from rich.progress import track
+import plotly.io as pio
 
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+pio.kaleido.scope.mathjax = None
 
-def save_fig(fig, name, run_ids, experiment_id, font_size=16, scale=1):
+
+def save_fig(fig, name, run_ids, experiment_id, font_size=16, scale=1, showlegend=True):
     hs = generate_hash(run_ids)
     path = f"results/{experiment_id}/{hs}/"
     os.makedirs(path, exist_ok=True)
     print(f"Saving figure to {path}{name}.pdf")
-    fig.update_layout(font=dict(size=font_size))
+    fig.update_layout(
+        font=dict(size=font_size),
+        margin=dict(l=0, r=0, t=0, b=0),
+        showlegend=showlegend,
+    )
     fig.write_image(f"{path}{name}.pdf", scale=scale)
 
 
@@ -296,6 +303,7 @@ def visualize_boxplot(
     metric,
 ):
     qubit = df["qubits"].unique()[0]
+    df = df.sort_values(by=metric, ascending=False)
 
     fig = make_subplots()
     main_colors_it, _ = get_color_iterator()
@@ -371,6 +379,8 @@ def visualize_boxplot(
 
 
 def visualize_scatter(df, ansatz_ids, metric, weighted=True):
+    df = df.sort_values(by="ansatz", ascending=False)
+
     corr_mean = "corr_mean" if not weighted else "corr_w_mean"
 
     fig = go.Figure()
@@ -417,77 +427,154 @@ def visualize_scatter(df, ansatz_ids, metric, weighted=True):
     return fig
 
 
-def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False):
+def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=False):
+    df = df.sort_values(by="ansatz", ascending=False)
+
     corr_mean = "corr_mean" if not weighted else "corr_w_mean"
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
-    main_colors_it, sec_colors_it = get_color_iterator(option=2)
+    main_colors_it, sec_colors_it = get_color_iterator(option=0)
+    error_y = False
+    error_x = False
     for ansatz_id in ansatz_ids:
-        _df = df[(df.ansatz_id == ansatz_id)]
+        color = next(main_colors_it)
+        _df = df[(df.ansatz_id == ansatz_id)].sort_values(by="ansatz", ascending=False)
         if len(_df) == 0:
             print(f"No data for ansatz_id={ansatz_id}")
             continue
         ansatz = _df["ansatz"].unique()[0]
+        if not legendonly:
+            fig.add_scatter(
+                x=[_df[metric].mean()],
+                y=[_df[corr_mean].mean()],
+                error_x=dict(
+                    type="data",
+                    array=[_df[metric].std()],
+                    visible=error_x,
+                ),
+                error_y=dict(
+                    type="data",
+                    array=[_df[corr_mean].std()],
+                    visible=error_y,
+                ),
+                mode="markers",
+                name=f"{ansatz} (FCC)",
+                marker=dict(color=color, symbol="circle", size=14),
+                secondary_y=False,
+                showlegend=False,
+            )
+
+            fig.add_scatter(
+                x=[_df[metric].mean()],
+                y=[_df["kl_divergence"].mean()],
+                error_x=dict(
+                    type="data",
+                    array=[_df[metric].std()],
+                    visible=error_x,
+                ),
+                error_y=dict(
+                    type="data",
+                    array=[_df["kl_divergence"].std()],
+                    visible=error_y,
+                ),
+                mode="markers",
+                name=f"{ansatz} (EXPR)",
+                marker=dict(color=color, symbol="circle-open", size=14),
+                secondary_y=True,
+                showlegend=False,
+            )
+
         fig.add_scatter(
-            x=[_df[corr_mean].mean()],
-            y=[_df[metric].mean()],
-            error_x=dict(
-                type="data",
-                array=[_df[metric].std()],
-                visible=True,
-            ),
-            error_y=dict(
-                type="data",
-                array=[_df[corr_mean].std()],
-                visible=True,
-            ),
+            x=[None],
+            y=[None],
             mode="markers",
             name=f"{ansatz}",
-            marker=dict(color=next(main_colors_it), symbol="circle", size=15),
-            secondary_y=False,
+            marker=dict(color=color, symbol="triangle-right", size=14),
             showlegend=True,
         )
 
-        fig.add_scatter(
-            x=[_df["kl_divergence"].mean()],
-            y=[_df[metric].mean()],
-            error_x=dict(
-                type="data",
-                array=[_df[metric].std()],
-                visible=True,
+    fig.add_scatter(
+        x=[None],
+        y=[None],
+        mode="markers",
+        name=f"FCC",
+        marker=dict(color="black", symbol="circle", size=14),
+        showlegend=True,
+    )
+    fig.add_scatter(
+        x=[None],
+        y=[None],
+        mode="markers",
+        name=f"Expressibility",
+        marker=dict(color="black", symbol="circle-open", size=14),
+        showlegend=True,
+    )
+
+    if not legendonly:
+        fig.update_layout(
+            title_text="Direct Correlation ({qubit} Qubits, Metric: {metric})",
+            template="plotly_white",
+            xaxis=dict(
+                title="Mean Squared Error",
+                showgrid=True,
             ),
-            error_y=dict(
-                type="data",
-                array=[_df["kl_divergence"].std()],
-                visible=True,
+            yaxis=dict(
+                title=(
+                    "Correlation Mean" if not weighted else "Weighted Correlation Mean"
+                ),
+                anchor="x",
+                showgrid=False,
             ),
-            mode="markers",
-            name=f"{ansatz} (EXPR)",
-            marker=dict(color=next(sec_colors_it), symbol="diamond", size=10),
-            secondary_y=True,
-            showlegend=False,
+            yaxis2=dict(
+                title=("Expressibility"),
+                side="right",
+                anchor="x",
+                showgrid=False,
+            ),
+            legend=dict(
+                x=1.15,  # Adjust legend position as needed
+                y=0.5,  # Adjust legend position as needed
+            ),
         )
 
-    fig.update_layout(
-        title_text="Direct Correlation ({qubit} Qubits, Metric: {metric})",
-        template="plotly_white",
-        xaxis=dict(
-            title=metric.title(),
-            showgrid=False,
-        ),
-        yaxis=dict(
-            title=("Correlation Mean" if not weighted else "Weighted Correlation Mean"),
-        ),
-        yaxis2=dict(
-            title=("Expressibility"),
-            side="right",
-        ),
-    )
+    else:
+        fig.update_layout(
+            xaxis=dict(
+                title="",
+                showline=False,
+                showgrid=False,
+                showticklabels=False,
+                zeroline=False,
+            ),
+            yaxis=dict(
+                title="",
+                showline=False,
+                showgrid=False,
+                showticklabels=False,
+                zeroline=False,
+            ),
+            yaxis2=dict(
+                title="",
+                showline=False,
+                showgrid=False,
+                showticklabels=False,
+                zeroline=False,
+            ),
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            showlegend=True,
+            legend=dict(
+                x=0,  # Adjust legend position as needed
+                y=1,  # Adjust legend position as needed
+            ),
+        )
 
     return fig
 
 
 def visualize_heatmap(df, selected_seed, weighted):
+    df = df.sort_values(by="ansatz", ascending=False)
+
     ansaetze = df.ansatz.unique()
     qubit = df["qubits"].unique()[0]
 
