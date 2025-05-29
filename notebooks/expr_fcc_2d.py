@@ -11,35 +11,40 @@ from helper import (
     visualize_boxplot,
     visualize_scatter,
     visualize_heatmap,
+    visualize_single_heatmap,
+    visualize_expr_scatter,
 )
+import json
 
-cache = False
-weighted = True
+cache = True
+weighted = False
 unique_id = "expr_fcc"
 
 scenarios = {
     "1DFS": {
         "training_experiment_id": "499640227395518059",
-        "coefficient_id": "348625906624370813",
-        "expr_id": "198634010954150003",
+        "coefficient_id": "294759570659091329",
+        "expr_id": "182562157534908977",
         "metric": "mse_valid",
         "cutoff_steps": 1e-2,
     },
     "2DFS": {
         "training_experiment_id": "964165187008575029",
-        "coefficient_id": "219295129676641074",
-        "expr_id": "198634010954150003",
+        "coefficient_id": "452677263305714256",
+        "expr_id": "182562157534908977",
         "metric": "mse_valid",
         "cutoff_steps": 1e-2,
     },
     "2DHEP": {
         "training_experiment_id": "240205035422235647",
-        "coefficient_id": "219295129676641074",
-        "expr_id": "198634010954150003",
+        "coefficient_id": "452677263305714256",
+        "expr_id": "182562157534908977",
         "metric": "mse_valid",
         "cutoff_steps": 1e-2,
     },
 }
+missing_items = {"1DFS": [], "2DFS": [], "2DHEP": []}
+
 for scenario, setting in scenarios.items():
     print(f"{'-' * 100}")
     print(f"\nScenario: {scenario}\n")
@@ -74,6 +79,7 @@ for scenario, setting in scenarios.items():
             on=["ansatz", "qubits", "seed"],
         )
         # add ids to ansatz
+        combined_df = combined_df.sort_values(by="ansatz", ascending=False)
         combined_df = assign_ansatz_id(combined_df)
 
         # get unique values
@@ -97,6 +103,7 @@ for scenario, setting in scenarios.items():
                 "steps_var",
                 "mse_min",
                 "mse_min_var",
+                "seed",
                 "coeff_run_id",
                 "training_run_id",
                 "expr_run_id",
@@ -124,8 +131,19 @@ for scenario, setting in scenarios.items():
                                     ]
                                 )
                             )
-                        print(
-                            f"Occurences:\nTraining ({setting['training_experiment_id']}) {_occurences[0]}\nCoefficients ({setting['coefficient_id']}) {_occurences[1]}\nExpressibility ({setting['expr_id']}) {_occurences[2]}\n"
+                        missing_items[scenario].append(
+                            {
+                                "configuration": {
+                                    "qubits": q,
+                                    "ansatz": ansatz,
+                                    "seed": seed,
+                                },
+                                "occurences": {
+                                    "training": _occurences[0],
+                                    "coefficients": _occurences[1],
+                                    "expressibility": _occurences[2],
+                                },
+                            }
                         )
                         continue
 
@@ -158,13 +176,14 @@ for scenario, setting in scenarios.items():
                     ].var()
                     df.loc[idx, "kl_divergence"] = current_dataset.kl_divergence.mean()
 
-                    df.loc[idx, "coeff_run_id"] = (
-                        current_dataset.coefficient_run_id.item()
-                    )
+                    df.loc[idx, "seed"] = seed
+                    df.loc[idx, "coeff_run_id"] = current_dataset.coeff_run_id.unique()[
+                        0
+                    ]
                     # df.loc[idx, "training_run_id"] = (
                     #     current_dataset.training_run_id.item()
                     # )
-                    df.loc[idx, "expr_run_id"] = current_dataset.expr_run_id.item()
+                    df.loc[idx, "expr_run_id"] = current_dataset.expr_run_id.unique()[0]
 
                     idx += 1
 
@@ -178,35 +197,90 @@ for scenario, setting in scenarios.items():
         ansatz_ids = df.ansatz_id.unique()
 
     for metric in [f"{metric}_min"]:
-        sorted_df = df.sort_values(by=metric, ascending=False)
         for q in qubits:
-            fig = visualize_boxplot(sorted_df[sorted_df.qubits == q], metric)
-            fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric}")
-            save_fig(
-                fig,
-                f"{scenario}_{unique_id}_bp_{metric}_c{cutoff_steps}_q{q}",
-                expr_run_ids + coefficient_run_ids + training_run_ids,
-                unique_id,
-            )
+            # fig = visualize_boxplot(df[df.qubits == q], metric)
+            # fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric}")
+            # save_fig(
+            #     fig,
+            #     f"{scenario}_{unique_id}_bp_{metric}_c{cutoff_steps}_q{q}",
+            #     expr_run_ids + coefficient_run_ids + training_run_ids,
+            #     unique_id,
+            # )
 
-            fig = visualize_scatter(
-                sorted_df[sorted_df.qubits == q],
+            # fig = visualize_scatter(
+            #     df[df.qubits == q],
+            #     ansatz_ids,
+            #     metric,
+            #     weighted=weighted,
+            # )
+            # fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric})")
+            # save_fig(
+            #     fig,
+            #     f"{scenario}_{unique_id}_sc_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
+            #     expr_run_ids + coefficient_run_ids + training_run_ids,
+            #     unique_id,
+            # )
+
+            fig = visualize_expr_scatter(
+                df[df.qubits == q],
                 ansatz_ids,
                 metric,
                 weighted=weighted,
+                legendonly=False,
             )
             fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric})")
+            fig.update_layout(title=f"")
             save_fig(
                 fig,
-                f"{scenario}_{unique_id}_sc_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
+                f"{scenario}_{unique_id}_sce_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
                 expr_run_ids + coefficient_run_ids + training_run_ids,
                 unique_id,
+                showlegend=False,
+                font_size=18,
+                scale=3.0,
             )
 
-            fig = visualize_heatmap(sorted_df[sorted_df.qubits == q], 1000, weighted)
+            fig = visualize_expr_scatter(
+                df[df.qubits == q],
+                ansatz_ids,
+                metric,
+                weighted=weighted,
+                legendonly=True,
+            )
+            fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric})")
+            fig.update_layout(title=f"")
             save_fig(
                 fig,
-                f"{scenario}_{unique_id}_hm_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
+                f"{scenario}_{unique_id}_sce_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}_legend",
                 expr_run_ids + coefficient_run_ids + training_run_ids,
                 unique_id,
+                showlegend=True,
+                tight=True,
             )
+
+            if scenario == "1DFS":
+                fig = visualize_heatmap(df[df.qubits == q], 1000, weighted)
+                fig.update_layout(title=f"")
+                save_fig(
+                    fig,
+                    f"{scenario}_{unique_id}_hm_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
+                    expr_run_ids + coefficient_run_ids + training_run_ids,
+                    unique_id,
+                    scale=2.0,
+                )
+
+            if scenario == "2DFS":
+                fig = visualize_single_heatmap(
+                    df[df.qubits == q], 1000, "Hardware_Efficient", weighted
+                )
+                fig.update_layout(title=f"")
+                save_fig(
+                    fig,
+                    f"{scenario}_{unique_id}_hms_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
+                    expr_run_ids + coefficient_run_ids + training_run_ids,
+                    unique_id,
+                    scale=2.0,
+                )
+
+with open("missing_items.json", "w") as f:
+    json.dump(missing_items, f)
