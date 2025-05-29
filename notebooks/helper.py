@@ -13,19 +13,31 @@ import plotly.io as pio
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-pio.kaleido.scope.mathjax = None
+# pio.kaleido.scope.mathjax = None
 
 
-def save_fig(fig, name, run_ids, experiment_id, font_size=16, scale=1, showlegend=True):
+def save_fig(
+    fig,
+    name,
+    run_ids,
+    experiment_id,
+    font_size=16,
+    scale=1,
+    showlegend=True,
+    tight=False,
+):
     hs = generate_hash(run_ids)
     path = f"results/{experiment_id}/{hs}/"
     os.makedirs(path, exist_ok=True)
     print(f"Saving figure to {path}{name}.pdf")
     fig.update_layout(
         font=dict(size=font_size),
-        margin=dict(l=0, r=0, t=0, b=0),
         showlegend=showlegend,
     )
+    if tight:
+        fig.update_layout(
+            margin=dict(l=0, r=0, t=0, b=0),
+        )
     fig.write_image(f"{path}{name}.pdf", scale=scale)
 
 
@@ -38,6 +50,15 @@ def get_run_ids(experiment_id):
     else:
         print("All runs finished")
     return df.run_id.to_list()
+
+
+def tickval_to_latex(tickvals):
+    ticktext = []
+    for tick in tickvals:
+        t = tick.replace("+", "")
+        ticktext.append(r"${}$".format(t))
+
+    return ticktext
 
 
 def cache_df(run_ids, df=None):
@@ -520,7 +541,9 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
             ),
             yaxis=dict(
                 title=(
-                    "Correlation Mean" if not weighted else "Weighted Correlation Mean"
+                    "Fourier Coefficient Correlation"
+                    if not weighted
+                    else "Weighted Fourier Coefficient Correlation"
                 ),
                 anchor="x",
                 showgrid=False,
@@ -573,12 +596,19 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
 
 
 def visualize_heatmap(df, selected_seed, weighted):
-    df = df.sort_values(by="ansatz", ascending=False)
-
     ansaetze = df.ansatz.unique()
     qubit = df["qubits"].unique()[0]
 
-    fig = make_subplots(rows=1, cols=len(ansaetze), subplot_titles=ansaetze)
+    rows = 2
+    cols = len(ansaetze) // rows
+
+    fig = make_subplots(
+        rows=rows,
+        cols=cols,
+        subplot_titles=ansaetze,
+        horizontal_spacing=0.05,
+        vertical_spacing=0.05,
+    )
 
     for it, ansatz in enumerate(ansaetze):
         _df = df[(df.ansatz == ansatz) & (df.seed == selected_seed)]
@@ -587,19 +617,37 @@ def visualize_heatmap(df, selected_seed, weighted):
             continue
         sub_fig_trace = get_plotly_artifact(
             _df.coeff_run_id.item(),
-            f"coefficients_correlated_{'w' if weighted else 'uw'}",
+            f"coefficients_correlated{'_weighted' if weighted else ''}",
         )
+        sub_fig_trace.update(dict(name=ansatz.replace("_", " ")))
+        row_idx = 1 if it < cols else rows
+        col_idx = (it % cols) + 1
 
-        fig.add_trace(sub_fig_trace, row=1, col=it + 1)
-        fig.update_xaxes(dict(title="Coefficients"), row=1, col=it + 1)
+        fig.add_trace(sub_fig_trace, row=row_idx, col=col_idx)
+
+        fig.update_xaxes(
+            dict(
+                title="Coefficients" if row_idx == rows else "",
+                showticklabels=True if row_idx == rows else False,
+                tickvals=sub_fig_trace.x,
+                ticktext=tickval_to_latex(sub_fig_trace.x),
+            ),
+            showgrid=False,
+            row=row_idx,
+            col=col_idx,
+        )
         fig.update_yaxes(
             dict(
-                title="Coefficients" if it == 0 else "",
+                title="Coefficients" if it % cols == 0 else "",
+                showticklabels=True if col_idx == 1 else False,
                 autorange="reversed",
+                tickvals=sub_fig_trace.y,
+                ticktext=tickval_to_latex(sub_fig_trace.y),
                 scaleanchor="x",
             ),
-            row=1,
-            col=it + 1,
+            showgrid=False,
+            row=row_idx,
+            col=col_idx,
         )
 
     fig.update_layout(
@@ -607,7 +655,60 @@ def visualize_heatmap(df, selected_seed, weighted):
             f"{'Weighted ' if weighted else ''}Correlation of Coefficients for Different Ansaetze ({qubit} Qubits)"
         ),
         template="plotly_white",
-        height=400,
-        width=300 * it,
-        coloraxis={"colorscale": "Sunset"},
+        height=400 * rows,
+        width=300 * cols,
+        coloraxis={"colorscale": "deep"},
     )
+
+    return fig
+
+
+def visualize_single_heatmap(df, selected_seed, selected_ansatz, weighted):
+    ansaetze = df.ansatz.unique()
+    qubit = df["qubits"].unique()[0]
+
+    fig = go.Figure()
+
+    _df = df[(df.ansatz == selected_ansatz) & (df.seed == selected_seed)]
+    if len(_df) == 0:
+        print(f"No data for q={qubit}, ansatz={selected_ansatz}, seed={selected_seed}")
+        return fig
+    sub_fig_trace = get_plotly_artifact(
+        _df.coeff_run_id.item(),
+        f"coefficients_correlated{'_weighted' if weighted else ''}",
+    )
+    sub_fig_trace.update(dict(name=selected_ansatz.replace("_", " ")))
+
+    fig.add_trace(sub_fig_trace)
+    fig.update_xaxes(
+        dict(
+            title="Coefficients",
+            showticklabels=True,
+            tickvals=sub_fig_trace.x,
+            ticktext=tickval_to_latex(sub_fig_trace.x),
+        ),
+        showgrid=False,
+    )
+    fig.update_yaxes(
+        dict(
+            title="Coefficients",
+            showticklabels=True,
+            autorange="reversed",
+            tickvals=sub_fig_trace.y,
+            ticktext=tickval_to_latex(sub_fig_trace.y),
+            scaleanchor="x",
+        ),
+        showgrid=False,
+    )
+
+    fig.update_layout(
+        title_text=(
+            f"{'Weighted ' if weighted else ''}Correlation of Coefficients for Different Ansaetze ({qubit} Qubits)"
+        ),
+        template="plotly_white",
+        height=400,
+        width=300,
+        coloraxis={"colorscale": "deep"},
+    )
+
+    return fig
