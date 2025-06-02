@@ -22,8 +22,8 @@ unique_id = "expr_fcc"
 
 scenarios = {
     "1DFS": {
-        "training_experiment_id": "499640227395518059",
-        "coefficient_id": "294759570659091329",
+        "training_experiment_id": "264811618779563708",  # RX-enc: 499640227395518059, RY-enc: 264811618779563708
+        "coefficient_id": "286271885992155758",  # RX-enc: 294759570659091329, RY-enc: 286271885992155758
         "expr_id": "182562157534908977",
         "metric": "mse_valid",
         "cutoff_steps": 1e-2,
@@ -36,7 +36,7 @@ scenarios = {
         "cutoff_steps": 1e-2,
     },
     "2DHEP": {
-        "training_experiment_id": "240205035422235647",
+        "training_experiment_id": "547640067507594003",  # 3000 steps: 240205035422235647, 1000 steps: 547640067507594003
         "coefficient_id": "452677263305714256",
         "expr_id": "182562157534908977",
         "metric": "mse_valid",
@@ -221,6 +221,7 @@ for scenario, setting in scenarios.items():
             #     unique_id,
             # )
 
+            # scatter plot
             fig = visualize_expr_scatter(
                 df[df.qubits == q],
                 ansatz_ids,
@@ -236,10 +237,10 @@ for scenario, setting in scenarios.items():
                 expr_run_ids + coefficient_run_ids + training_run_ids,
                 unique_id,
                 showlegend=False,
-                font_size=18,
-                scale=3.0,
+                font_size=20,
             )
 
+            # legendonly
             fig = visualize_expr_scatter(
                 df[df.qubits == q],
                 ansatz_ids,
@@ -255,7 +256,6 @@ for scenario, setting in scenarios.items():
                 expr_run_ids + coefficient_run_ids + training_run_ids,
                 unique_id,
                 showlegend=True,
-                tight=True,
             )
 
             if scenario == "1DFS":
@@ -266,7 +266,7 @@ for scenario, setting in scenarios.items():
                     f"{scenario}_{unique_id}_hm_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
                     expr_run_ids + coefficient_run_ids + training_run_ids,
                     unique_id,
-                    scale=2.0,
+                    font_size=20,
                 )
 
             if scenario == "2DFS":
@@ -279,7 +279,7 @@ for scenario, setting in scenarios.items():
                     f"{scenario}_{unique_id}_hms_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
                     expr_run_ids + coefficient_run_ids + training_run_ids,
                     unique_id,
-                    scale=2.0,
+                    font_size=20,
                 )
 
 with open("missing_items.json", "w") as f:
