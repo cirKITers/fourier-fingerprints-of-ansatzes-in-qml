@@ -1,6 +1,6 @@
 from plotly.subplots import make_subplots
 import plotly.io as pio
-from runs.coefficient_runs_td import run_ids, experiment_id
+from runs.coefficient_runs import run_ids, experiment_id
 from helper import (
     get_coefficient_df,
     assign_ansatz_id,
@@ -21,7 +21,7 @@ ansaetze = coefficient_df.ansatz.unique()
 
 # ----------------------------------
 
-weighted = False
+weighted = True
 
 for q in qubits:
     fig = make_subplots(rows=1, cols=len(ansaetze), subplot_titles=ansaetze)
