@@ -253,7 +253,7 @@ def visualize_coefficients_correlated(
 
     if model.n_input_feat == 1:
         fig = visualize_heatmap_filtered(
-            df=np.log(df.abs()),
+            df=df.abs(),
         )
 
         fig.update_layout(
