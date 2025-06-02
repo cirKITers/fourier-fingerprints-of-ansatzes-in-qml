@@ -10,6 +10,7 @@ from runs.coefficient_runs import run_ids as coefficient_run_ids
 from runs.expr_runs import run_ids as expr_run_ids
 from helper import (
     save_fig,
+    get_run_ids,
     get_training_df,
     get_coefficient_df,
     get_expressibility_df,
@@ -19,7 +20,13 @@ from helper import (
     get_color_iterator,
 )
 
-pio.kaleido.scope.mathjax = None
+training_experiment_id = "964165187008575029"  # 1d fs
+coefficient_id = "258301106012425434"  # 2d fcc
+expressibility_id = "855134941797278912"  # 1d fcc
+
+training_run_ids = get_run_ids(training_experiment_id)
+coefficient_run_ids = get_run_ids(coefficient_id)
+expr_run_ids = get_run_ids(expressibility_id)
 
 cutoff_steps = 1e-3
 weighted = True
@@ -111,10 +118,8 @@ for q in qubits:
 
 for metric in ["steps", "mse_min"]:
     sorted_pca_dataset = pca_dataset.sort_values(by=metric, ascending=False)
-    fig = make_subplots()
-    symbols = get_symbol_iterator()
     for q in qubits:
-        symbol = next(symbols)
+        fig = make_subplots()
         main_colors_it, _ = get_color_iterator()
         fig.add_trace(
             go.Box(
