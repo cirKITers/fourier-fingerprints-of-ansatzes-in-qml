@@ -16,6 +16,16 @@ from plotly.subplots import make_subplots
 # pio.kaleido.scope.mathjax = None
 
 
+class design:
+    marker_size = 15
+    marker_line_width = 4
+    marker_a_opacity = 0.9
+    marker_b_opacity = 0.4
+    marker_a_style = "cross"
+    marker_b_style = "x"
+    legend_color = "DarkSlateGrey"
+
+
 def save_fig(
     fig,
     name,
@@ -457,6 +467,7 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
     main_colors_it, sec_colors_it = get_color_iterator(option=0)
     error_y = False
     error_x = False
+
     for ansatz_id in ansatz_ids:
         color = next(main_colors_it)
         _df = df[(df.ansatz_id == ansatz_id)].sort_values(by="ansatz", ascending=False)
@@ -480,7 +491,13 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
                 ),
                 mode="markers",
                 name=f"{ansatz} (FCC)",
-                marker=dict(color=color, symbol="circle", size=14),
+                marker=dict(
+                    color=color,
+                    symbol=design.marker_a_style,
+                    size=design.marker_size,
+                    line=dict(width=design.marker_line_width, color=color),
+                ),
+                opacity=design.marker_a_opacity,
                 secondary_y=False,
                 showlegend=False,
             )
@@ -500,7 +517,13 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
                 ),
                 mode="markers",
                 name=f"{ansatz} (EXPR)",
-                marker=dict(color=color, symbol="circle-open", size=14),
+                marker=dict(
+                    color=color,
+                    symbol=design.marker_b_style,
+                    size=design.marker_size,
+                    line=dict(width=design.marker_line_width, color=color),
+                ),
+                opacity=design.marker_b_opacity,
                 secondary_y=True,
                 showlegend=False,
             )
@@ -510,7 +533,12 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
             y=[None],
             mode="markers",
             name=f"{ansatz}",
-            marker=dict(color=color, symbol="triangle-right", size=14),
+            marker=dict(
+                color=color,
+                symbol="triangle-right",
+                size=design.marker_size,
+                line=dict(width=design.marker_line_width, color=color),
+            ),
             showlegend=True,
         )
 
@@ -519,7 +547,12 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
         y=[None],
         mode="markers",
         name=f"FCC",
-        marker=dict(color="black", symbol="circle", size=14),
+        marker=dict(
+            color=design.legend_color,
+            symbol=design.marker_a_style,
+            size=design.marker_size,
+            line=dict(width=design.marker_line_width, color=design.legend_color),
+        ),
         showlegend=True,
     )
     fig.add_scatter(
@@ -527,7 +560,12 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
         y=[None],
         mode="markers",
         name=f"Expressibility",
-        marker=dict(color="black", symbol="circle-open", size=14),
+        marker=dict(
+            color=design.legend_color,
+            symbol=design.marker_b_style,
+            size=design.marker_size,
+            line=dict(width=design.marker_line_width, color=design.legend_color),
+        ),
         showlegend=True,
     )
 
@@ -557,6 +595,8 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
             legend=dict(
                 x=1.15,  # Adjust legend position as needed
                 y=0.5,  # Adjust legend position as needed
+                tracegroupgap=20,
+                # indention=20,
             ),
         )
 
@@ -589,6 +629,8 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
             legend=dict(
                 x=0,  # Adjust legend position as needed
                 y=1,  # Adjust legend position as needed
+                tracegroupgap=20,
+                # indention=20,
             ),
         )
 
