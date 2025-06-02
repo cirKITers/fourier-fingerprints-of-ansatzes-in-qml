@@ -24,6 +24,10 @@ class design:
     marker_a_style = "cross"
     marker_b_style = "x"
     legend_color = "DarkSlateGrey"
+    colorscale = "Darkmint"
+    annotation_font_offset = 1
+    tick_font_offset = 1
+    tickangle = 20
 
 
 def save_fig(
@@ -43,7 +47,10 @@ def save_fig(
     fig.update_layout(
         font=dict(size=font_size),
         showlegend=showlegend,
+        yaxis=dict(tickfont=dict(size=font_size - design.tick_font_offset)),
+        xaxis=dict(tickfont=dict(size=font_size - design.tick_font_offset)),
     )
+    fig.update_annotations(font_size=font_size - design.annotation_font_offset)
     if tight:
         fig.update_layout(
             margin=dict(l=0, r=0, t=0, b=0),
@@ -62,11 +69,22 @@ def get_run_ids(experiment_id):
     return df.run_id.to_list()
 
 
-def tickval_to_latex(tickvals):
+def tickval_to_latex(tickvals, optimize=True):
     ticktext = []
+    ct = -1
     for tick in tickvals:
-        t = tick.replace("+", "")
-        ticktext.append(r"${}$".format(t))
+        t = tick.replace("+", "").split("_")
+        if len(t) == 2:
+            ticktext.append(f"${t[0]}_{{{t[1]}}}$")
+        elif len(t) == 3:
+            if optimize:
+                if int(t[1]) > ct:
+                    ticktext.append(f"${t[0]}_{{{t[1]},*}}$")
+                    ct = int(t[1])
+                else:
+                    ticktext.append("")
+            else:
+                ticktext.append(f"${t[0]}_{{{t[1]},{t[2]}}}$")
 
     return ticktext
 
@@ -127,19 +145,33 @@ def read_from_html(path):
     call_args = json.loads(f"[{call_arg_str}]")
     plotly_json = {"data": call_args[1], "layout": call_args[2]}
 
-    return plotly.io.from_json(json.dumps(plotly_json))
+    return plotly.io.from_json(json.dumps(plotly_json), skip_invalid=True)
 
 
-def get_plotly_artifact(run_id, identifier="coefficients_correlated"):
+def get_plotly_artifact(
+    run_id, identifier="coefficients_correlated", zmax=1.0, zmin=0.0
+):
     client = mlflow.tracking.MlflowClient()
 
     fig_path = client.download_artifacts(run_id, f"{identifier}.html", "./")
     fig = read_from_html(fig_path)
-    fig_trace = fig.data[0]
-    fig_trace.update(
-        # coloraxis=f"coloraxis",
-        zmax=1.0,
-        zmin=0.0,
+    # fig_trace = fig.data[0]
+    # fig_trace.update(
+    #     # coloraxis=f"coloraxis",
+    #     zmax=1.0,
+    #     zmin=0.0,
+    # )
+
+    fig_trace = go.Heatmap(
+        z=fig.data[0].z,
+        y=fig.data[0].y,
+        x=fig.data[0].x,
+        hoverongaps=False,
+        colorscale=design.colorscale,
+        zmax=zmax,
+        zmin=zmin,
+        coloraxis=f"coloraxis",
+
     )
 
     os.remove(fig_path)
@@ -643,13 +675,15 @@ def visualize_heatmap(df, selected_seed, weighted):
 
     rows = 2
     cols = len(ansaetze) // rows
+    max_corr = df.corr_mean.max()
+    min_corr = 0.0  # df.corr_mean.min()
 
     fig = make_subplots(
         rows=rows,
         cols=cols,
-        subplot_titles=ansaetze,
-        horizontal_spacing=0.05,
-        vertical_spacing=0.05,
+        subplot_titles=[ansatz.replace("_", " ") for ansatz in ansaetze],
+        horizontal_spacing=0.01,
+        vertical_spacing=0.03,
     )
 
     for it, ansatz in enumerate(ansaetze):
@@ -660,8 +694,9 @@ def visualize_heatmap(df, selected_seed, weighted):
         sub_fig_trace = get_plotly_artifact(
             _df.coeff_run_id.item(),
             f"coefficients_correlated{'_weighted' if weighted else ''}",
+            zmax=max_corr,
+            zmin=min_corr,
         )
-        sub_fig_trace.update(dict(name=ansatz.replace("_", " ")))
         row_idx = 1 if it < cols else rows
         col_idx = (it % cols) + 1
 
@@ -673,6 +708,8 @@ def visualize_heatmap(df, selected_seed, weighted):
                 showticklabels=True if row_idx == rows else False,
                 tickvals=sub_fig_trace.x,
                 ticktext=tickval_to_latex(sub_fig_trace.x),
+                tickangle=design.tickangle,
+                # automargin=True,
             ),
             showgrid=False,
             row=row_idx,
@@ -686,20 +723,28 @@ def visualize_heatmap(df, selected_seed, weighted):
                 tickvals=sub_fig_trace.y,
                 ticktext=tickval_to_latex(sub_fig_trace.y),
                 scaleanchor="x",
+                tickangle=design.tickangle,
             ),
             showgrid=False,
             row=row_idx,
             col=col_idx,
+            # automargin=True,
         )
-
+    fig.update_annotations(yshift=-10)
     fig.update_layout(
         title_text=(
             f"{'Weighted ' if weighted else ''}Correlation of Coefficients for Different Ansaetze ({qubit} Qubits)"
         ),
         template="plotly_white",
-        height=400 * rows,
-        width=300 * cols,
-        coloraxis={"colorscale": "deep"},
+        height=300 * rows,
+        width=250 * cols,
+        margin_pad=6,
+        coloraxis=dict(
+            colorscale=design.colorscale, 
+            colorbar=dict(
+                tickangle=design.tickangle
+            )
+        )
     )
 
     return fig
@@ -715,30 +760,36 @@ def visualize_single_heatmap(df, selected_seed, selected_ansatz, weighted):
     if len(_df) == 0:
         print(f"No data for q={qubit}, ansatz={selected_ansatz}, seed={selected_seed}")
         return fig
+
+    max_corr = df.corr_mean.max()
+    min_corr = 0.0  # df.corr_mean.min()
     sub_fig_trace = get_plotly_artifact(
         _df.coeff_run_id.item(),
         f"coefficients_correlated{'_weighted' if weighted else ''}",
+        zmax=max_corr,
+        zmin=min_corr,
     )
-    sub_fig_trace.update(dict(name=selected_ansatz.replace("_", " ")))
 
     fig.add_trace(sub_fig_trace)
     fig.update_xaxes(
         dict(
             title="Coefficients",
-            showticklabels=True,
             tickvals=sub_fig_trace.x,
             ticktext=tickval_to_latex(sub_fig_trace.x),
+            tickangle=design.tickangle,
+            # automargin=True,
         ),
         showgrid=False,
     )
     fig.update_yaxes(
         dict(
             title="Coefficients",
-            showticklabels=True,
             autorange="reversed",
             tickvals=sub_fig_trace.y,
             ticktext=tickval_to_latex(sub_fig_trace.y),
             scaleanchor="x",
+            tickangle=design.tickangle,
+            # automargin=True,
         ),
         showgrid=False,
     )
@@ -748,9 +799,15 @@ def visualize_single_heatmap(df, selected_seed, selected_ansatz, weighted):
             f"{'Weighted ' if weighted else ''}Correlation of Coefficients for Different Ansaetze ({qubit} Qubits)"
         ),
         template="plotly_white",
-        height=400,
-        width=300,
-        coloraxis={"colorscale": "deep"},
+        height=100 * qubit,
+        width=110 * qubit,
+        margin_pad=4,
+        coloraxis=dict(
+            colorscale=design.colorscale,
+            colorbar=dict(
+                tickangle=design.tickangle
+            )
+        )
     )
 
     return fig
