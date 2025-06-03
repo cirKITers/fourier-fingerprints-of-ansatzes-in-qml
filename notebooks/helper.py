@@ -171,7 +171,6 @@ def get_plotly_artifact(
         zmax=zmax,
         zmin=zmin,
         coloraxis=f"coloraxis",
-
     )
 
     os.remove(fig_path)
@@ -740,11 +739,8 @@ def visualize_heatmap(df, selected_seed, weighted):
         width=250 * cols,
         margin_pad=6,
         coloraxis=dict(
-            colorscale=design.colorscale, 
-            colorbar=dict(
-                tickangle=design.tickangle
-            )
-        )
+            colorscale=design.colorscale, colorbar=dict(tickangle=design.tickangle)
+        ),
     )
 
     return fig
@@ -803,11 +799,8 @@ def visualize_single_heatmap(df, selected_seed, selected_ansatz, weighted):
         width=110 * qubit,
         margin_pad=4,
         coloraxis=dict(
-            colorscale=design.colorscale,
-            colorbar=dict(
-                tickangle=design.tickangle
-            )
-        )
+            colorscale=design.colorscale, colorbar=dict(tickangle=design.tickangle)
+        ),
     )
 
     return fig
