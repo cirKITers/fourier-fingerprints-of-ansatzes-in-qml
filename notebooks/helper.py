@@ -8,7 +8,7 @@ import mlflow
 import numpy as np
 import os
 from rich.progress import track
-import plotly.io as pio
+import math
 
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -19,15 +19,18 @@ from plotly.subplots import make_subplots
 class design:
     marker_size = 15
     marker_line_width = 4
-    marker_a_opacity = 0.9
-    marker_b_opacity = 0.4
+    marker_a_opacity = 0.7
+    marker_b_opacity = 0.5
     marker_a_style = "cross"
+    marker_a_color = "orange"
     marker_b_style = "x"
+    marker_b_color = "purple"
     legend_color = "DarkSlateGrey"
-    colorscale = "Darkmint"
+    colorscale = "Sunset"
     annotation_font_offset = 1
     tick_font_offset = 1
-    tickangle = 20
+    large_tick_font_offset = 0
+    hm_tickangle = 0
 
 
 def save_fig(
@@ -39,6 +42,7 @@ def save_fig(
     scale=1,
     showlegend=True,
     tight=False,
+    large_ticks=False,
 ):
     hs = generate_hash(run_ids)
     path = f"results/{experiment_id}/{hs}/"
@@ -47,8 +51,24 @@ def save_fig(
     fig.update_layout(
         font=dict(size=font_size),
         showlegend=showlegend,
-        yaxis=dict(tickfont=dict(size=font_size - design.tick_font_offset)),
-        xaxis=dict(tickfont=dict(size=font_size - design.tick_font_offset)),
+        yaxis=dict(
+            tickfont=dict(
+                size=(
+                    font_size - design.tick_font_offset
+                    if not large_ticks
+                    else font_size - design.large_tick_font_offset
+                )
+            )
+        ),
+        xaxis=dict(
+            tickfont=dict(
+                size=(
+                    font_size - design.tick_font_offset
+                    if not large_ticks
+                    else font_size - design.large_tick_font_offset
+                )
+            )
+        ),
     )
     fig.update_annotations(font_size=font_size - design.annotation_font_offset)
     if tight:
@@ -69,17 +89,23 @@ def get_run_ids(experiment_id):
     return df.run_id.to_list()
 
 
-def tickval_to_latex(tickvals, optimize=True):
+def tickval_to_tex(tickvals, use_latex=False, optimize=True):
     ticktext = []
     ct = -1
     for tick in tickvals:
         t = tick.replace("+", "").split("_")
         if len(t) == 2:
-            ticktext.append(f"${t[0]}_{{{t[1]}}}$")
+            if use_latex:
+                ticktext.append(f"${t[0]}_{{{t[1]}}}$")
+            else:
+                ticktext.append(f"{t[1]}")
         elif len(t) == 3:
             if optimize:
                 if int(t[1]) > ct:
-                    ticktext.append(f"${t[0]}_{{{t[1]},*}}$")
+                    if use_latex:
+                        ticktext.append(f"${t[0]}_{{{t[1]},*}}$")
+                    else:
+                        ticktext.append(f"{t[1]},*")
                     ct = int(t[1])
                 else:
                     ticktext.append("")
@@ -124,10 +150,10 @@ def get_color_iterator(option=0):
     return main_colors_it, sec_colors_it
 
 
-def get_symbol_iterator():
+def get_symbol_iterator(start=0):
     raw_symbols = SymbolValidator().values
     symbols = []
-    for i in range(0, len(raw_symbols), 12):
+    for i in range(start * 12, len(raw_symbols) - (start * 12), 12):
         symbols.append(raw_symbols[i])
 
     return iter(symbols)
@@ -148,22 +174,27 @@ def read_from_html(path):
     return plotly.io.from_json(json.dumps(plotly_json), skip_invalid=True)
 
 
-def get_plotly_artifact(
-    run_id, identifier="coefficients_correlated", zmax=1.0, zmin=0.0
-):
+def get_plotly_artifact(run_id, identifier="coefficients_correlated", automax=True):
     client = mlflow.tracking.MlflowClient()
 
     fig_path = client.download_artifacts(run_id, f"{identifier}.html", "./")
     fig = read_from_html(fig_path)
-    # fig_trace = fig.data[0]
-    # fig_trace.update(
-    #     # coloraxis=f"coloraxis",
-    #     zmax=1.0,
-    #     zmin=0.0,
-    # )
+    data_z = np.abs(np.array(fig.data[0].z, dtype=np.float64))
+
+    if automax:
+        zmax = np.nanmax(data_z)
+        if zmax > 0.1:
+            zmax = math.ceil(zmax * 10) / 10
+        elif zmax > 0.01:
+            zmax = math.ceil(zmax * 100) / 100
+        elif zmax > 0.001:
+            zmax = math.ceil(zmax * 1000) / 1000
+    else:
+        zmax = 1.0
+    zmin = 0.0
 
     fig_trace = go.Heatmap(
-        z=fig.data[0].z,
+        z=data_z,
         y=fig.data[0].y,
         x=fig.data[0].x,
         hoverongaps=False,
@@ -496,11 +527,13 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     main_colors_it, sec_colors_it = get_color_iterator(option=0)
+    symbols_iterator = get_symbol_iterator(start=5)
     error_y = False
     error_x = False
 
     for ansatz_id in ansatz_ids:
         color = next(main_colors_it)
+        symbol = next(symbols_iterator)
         _df = df[(df.ansatz_id == ansatz_id)].sort_values(by="ansatz", ascending=False)
         if len(_df) == 0:
             print(f"No data for ansatz_id={ansatz_id}")
@@ -523,10 +556,15 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
                 mode="markers",
                 name=f"{ansatz} (FCC)",
                 marker=dict(
-                    color=color,
-                    symbol=design.marker_a_style,
+                    # color=color,
+                    color=design.marker_a_color,
+                    # symbol=design.marker_a_style,
+                    symbol=symbol,
                     size=design.marker_size,
-                    line=dict(width=design.marker_line_width, color=color),
+                    # line=dict(width=design.marker_line_width, color=color),
+                    line=dict(
+                        width=design.marker_line_width, color=design.marker_a_color
+                    ),
                 ),
                 opacity=design.marker_a_opacity,
                 secondary_y=False,
@@ -549,10 +587,15 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
                 mode="markers",
                 name=f"{ansatz} (EXPR)",
                 marker=dict(
-                    color=color,
-                    symbol=design.marker_b_style,
+                    # color=color,
+                    color=design.marker_b_color,
+                    # symbol=design.marker_b_style,
+                    symbol=symbol,
                     size=design.marker_size,
-                    line=dict(width=design.marker_line_width, color=color),
+                    # line=dict(width=design.marker_line_width, color=color),
+                    line=dict(
+                        width=design.marker_line_width, color=design.marker_b_color
+                    ),
                 ),
                 opacity=design.marker_b_opacity,
                 secondary_y=True,
@@ -565,10 +608,13 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
             mode="markers",
             name=f"{ansatz}",
             marker=dict(
-                color=color,
-                symbol="triangle-right",
+                # color=color,
+                color=design.legend_color,
+                # symbol="triangle-right",
+                symbol=symbol,
                 size=design.marker_size,
-                line=dict(width=design.marker_line_width, color=color),
+                # line=dict(width=design.marker_line_width, color=color),
+                line=dict(width=design.marker_line_width, color=design.legend_color),
             ),
             showlegend=True,
         )
@@ -579,10 +625,13 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
         mode="markers",
         name=f"FCC",
         marker=dict(
-            color=design.legend_color,
-            symbol=design.marker_a_style,
+            # color=design.legend_color,
+            color=design.marker_a_color,
+            # symbol=design.marker_a_style,
+            symbol="diamond",
             size=design.marker_size,
-            line=dict(width=design.marker_line_width, color=design.legend_color),
+            # line=dict(width=design.marker_line_width, color=design.legend_color),
+            line=dict(width=design.marker_line_width, color=design.marker_a_color),
         ),
         showlegend=True,
     )
@@ -592,10 +641,13 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
         mode="markers",
         name=f"Expressibility",
         marker=dict(
-            color=design.legend_color,
-            symbol=design.marker_b_style,
+            # color=design.legend_color,
+            color=design.marker_b_color,
+            # symbol=design.marker_b_style,
+            symbol="diamond",
             size=design.marker_size,
-            line=dict(width=design.marker_line_width, color=design.legend_color),
+            # line=dict(width=design.marker_line_width, color=design.legend_color),
+            line=dict(width=design.marker_line_width, color=design.marker_b_color),
         ),
         showlegend=True,
     )
@@ -674,8 +726,6 @@ def visualize_heatmap(df, selected_seed, weighted):
 
     rows = 2
     cols = len(ansaetze) // rows
-    max_corr = df.corr_mean.max()
-    min_corr = 0.0  # df.corr_mean.min()
 
     fig = make_subplots(
         rows=rows,
@@ -693,8 +743,7 @@ def visualize_heatmap(df, selected_seed, weighted):
         sub_fig_trace = get_plotly_artifact(
             _df.coeff_run_id.item(),
             f"coefficients_correlated{'_weighted' if weighted else ''}",
-            zmax=max_corr,
-            zmin=min_corr,
+            automax=True,
         )
         row_idx = 1 if it < cols else rows
         col_idx = (it % cols) + 1
@@ -706,8 +755,8 @@ def visualize_heatmap(df, selected_seed, weighted):
                 title="Coefficients" if row_idx == rows else "",
                 showticklabels=True if row_idx == rows else False,
                 tickvals=sub_fig_trace.x,
-                ticktext=tickval_to_latex(sub_fig_trace.x),
-                tickangle=design.tickangle,
+                ticktext=tickval_to_tex(sub_fig_trace.x),
+                tickangle=design.hm_tickangle,
                 # automargin=True,
             ),
             showgrid=False,
@@ -720,9 +769,9 @@ def visualize_heatmap(df, selected_seed, weighted):
                 showticklabels=True if col_idx == 1 else False,
                 autorange="reversed",
                 tickvals=sub_fig_trace.y,
-                ticktext=tickval_to_latex(sub_fig_trace.y),
+                ticktext=tickval_to_tex(sub_fig_trace.y),
                 scaleanchor="x",
-                tickangle=design.tickangle,
+                tickangle=design.hm_tickangle,
             ),
             showgrid=False,
             row=row_idx,
@@ -739,7 +788,7 @@ def visualize_heatmap(df, selected_seed, weighted):
         width=250 * cols,
         margin_pad=6,
         coloraxis=dict(
-            colorscale=design.colorscale, colorbar=dict(tickangle=design.tickangle)
+            colorscale=design.colorscale, colorbar=dict(tickangle=design.hm_tickangle)
         ),
     )
 
@@ -747,7 +796,6 @@ def visualize_heatmap(df, selected_seed, weighted):
 
 
 def visualize_single_heatmap(df, selected_seed, selected_ansatz, weighted):
-    ansaetze = df.ansatz.unique()
     qubit = df["qubits"].unique()[0]
 
     fig = go.Figure()
@@ -757,13 +805,10 @@ def visualize_single_heatmap(df, selected_seed, selected_ansatz, weighted):
         print(f"No data for q={qubit}, ansatz={selected_ansatz}, seed={selected_seed}")
         return fig
 
-    max_corr = df.corr_mean.max()
-    min_corr = 0.0  # df.corr_mean.min()
     sub_fig_trace = get_plotly_artifact(
         _df.coeff_run_id.item(),
         f"coefficients_correlated{'_weighted' if weighted else ''}",
-        zmax=max_corr,
-        zmin=min_corr,
+        automax=True,
     )
 
     fig.add_trace(sub_fig_trace)
@@ -771,8 +816,8 @@ def visualize_single_heatmap(df, selected_seed, selected_ansatz, weighted):
         dict(
             title="Coefficients",
             tickvals=sub_fig_trace.x,
-            ticktext=tickval_to_latex(sub_fig_trace.x),
-            tickangle=design.tickangle,
+            ticktext=tickval_to_tex(sub_fig_trace.x),
+            tickangle=design.hm_tickangle,
             # automargin=True,
         ),
         showgrid=False,
@@ -782,9 +827,9 @@ def visualize_single_heatmap(df, selected_seed, selected_ansatz, weighted):
             title="Coefficients",
             autorange="reversed",
             tickvals=sub_fig_trace.y,
-            ticktext=tickval_to_latex(sub_fig_trace.y),
+            ticktext=tickval_to_tex(sub_fig_trace.y),
             scaleanchor="x",
-            tickangle=design.tickangle,
+            tickangle=design.hm_tickangle,
             # automargin=True,
         ),
         showgrid=False,
@@ -799,7 +844,7 @@ def visualize_single_heatmap(df, selected_seed, selected_ansatz, weighted):
         width=110 * qubit,
         margin_pad=4,
         coloraxis=dict(
-            colorscale=design.colorscale, colorbar=dict(tickangle=design.tickangle)
+            colorscale=design.colorscale, colorbar=dict(tickangle=design.hm_tickangle)
         ),
     )
 
