@@ -21,7 +21,7 @@ data:
   mfs: 1
 
 coefficients:
-  n_samples: 500 #samples per parameter
+  n_samples: 500 #samples per parameter (500 for 1D, 250 for 2D)
   correlation_method: "pearson" #dcor, pearson, spearman
   triu: True # only use  the upper triangular part of the correlation matrix?
   weighting: "linear" # linear, coefficients_prod, coefficients_add, frequencies
@@ -47,20 +47,20 @@ model:
     AmplitudeDamping: 0.0
     PhaseDamping: 0.0
     Depolarizing: 0.0
-  mp_threshold: -1 # for expressibility experiments -1 otherwise
+  mp_threshold: -1 # for expressibility (1000) and 2D coefficients (3000) otherwise -1
 
 seed: 1000
 
 n_control_values: 0 # for sweeping control values
 
 training:
-  steps: 2000 # hep 2000, fs1d 2000 fs2d 4000
-  learning_rate: 0.01
+  steps: 3000 # hep 3000, fs1d 2000 fs2d 4000
+  learning_rate: 0.005 # Fourier Series 0.01 HEP 0.005
   batch_size: -1
   log_entangling: False
   log_coefficients: False # track coefficients during training?
   positive_coeffs_only: True
-  loss_function: ["mse", "null_loss"]
+  loss_function: ["mse", "kl_divergence"] # Fourier ["mse", "null_loss"] hep ["mse", "kl_divergence"]
   loss_scaler: [1.0, 0.001]
   convergence:
     threshold: -1 # threshold for the cost, -1 to disable
