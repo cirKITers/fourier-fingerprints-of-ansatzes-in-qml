@@ -22,10 +22,10 @@ class design:
     marker_a_opacity = 0.7
     marker_b_opacity = 0.5
     marker_a_style = "cross"
-    marker_a_color = "orange"
+    marker_a_color = "#009682"
     marker_b_style = "x"
-    marker_b_color = "purple"
-    legend_color = "DarkSlateGrey"
+    marker_b_color = "#DF9B1B"
+    legend_color = "#002D4C"
     colorscale = "Sunset"
     annotation_font_offset = 1
     tick_font_offset = 1
@@ -528,6 +528,9 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     main_colors_it, sec_colors_it = get_color_iterator(option=0)
     symbols_iterator = get_symbol_iterator(start=5)
+    symbols_iterator = iter(
+        ["circle", "square", "diamond", "cross", "x", "triangle-up", "hexagon", "star"]
+    )
     error_y = False
     error_x = False
 
@@ -628,7 +631,7 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
             # color=design.legend_color,
             color=design.marker_a_color,
             # symbol=design.marker_a_style,
-            symbol="diamond",
+            symbol="asterisk",
             size=design.marker_size,
             # line=dict(width=design.marker_line_width, color=design.legend_color),
             line=dict(width=design.marker_line_width, color=design.marker_a_color),
@@ -644,7 +647,7 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
             # color=design.legend_color,
             color=design.marker_b_color,
             # symbol=design.marker_b_style,
-            symbol="diamond",
+            symbol="asterisk",
             size=design.marker_size,
             # line=dict(width=design.marker_line_width, color=design.legend_color),
             line=dict(width=design.marker_line_width, color=design.marker_b_color),
