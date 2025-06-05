@@ -1,5 +1,6 @@
 mlruns
 mlruns_bckp
+notebooks/dep
 session_store.db
 *.csv
 model.txt
