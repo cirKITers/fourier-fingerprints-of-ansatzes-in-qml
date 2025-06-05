@@ -19,8 +19,8 @@ from plotly.subplots import make_subplots
 class design:
     marker_size = 15
     marker_line_width = 4
-    marker_a_opacity = 0.7
-    marker_b_opacity = 0.5
+    marker_a_opacity = 0.8
+    marker_b_opacity = 0.6
     marker_a_style = "cross"
     marker_a_color = "#009682"
     marker_b_style = "x"
