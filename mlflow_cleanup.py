@@ -3,7 +3,9 @@ import os
 import yaml
 import shutil
 
-mlflow_path = "./mlruns/547640067507594003"
+experiment_id = input("Experiment ID: ")
+
+mlflow_path = f"./mlruns/{experiment_id}"
 backup_dir = "./mlruns_bckp"
 dry_run = False
 
