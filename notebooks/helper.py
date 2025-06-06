@@ -17,10 +17,10 @@ from plotly.subplots import make_subplots
 
 
 class design:
-    marker_size = 15
-    marker_line_width = 4
-    marker_a_opacity = 0.8
-    marker_b_opacity = 0.6
+    marker_size = 14
+    marker_line_width = 1
+    marker_a_opacity = 1.0
+    marker_b_opacity = 1.0
     marker_a_style = "cross"
     marker_a_color = "#009682"
     marker_b_style = "x"
@@ -521,8 +521,6 @@ def visualize_scatter(df, ansatz_ids, metric, weighted=True):
 
 
 def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=False):
-    df = df.sort_values(by="ansatz", ascending=False)
-
     corr_mean = "corr_mean" if not weighted else "corr_w_mean"
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
@@ -537,44 +535,13 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
     for ansatz_id in ansatz_ids:
         color = next(main_colors_it)
         symbol = next(symbols_iterator)
-        _df = df[(df.ansatz_id == ansatz_id)].sort_values(by="ansatz", ascending=False)
+        _df = df[(df.ansatz_id == ansatz_id)]
         if len(_df) == 0:
             print(f"No data for ansatz_id={ansatz_id}")
             continue
         ansatz = _df["ansatz"].unique()[0]
         if not legendonly:
-            fig.add_scatter(
-                x=[_df[metric].mean()],
-                y=[_df[corr_mean].mean()],
-                error_x=dict(
-                    type="data",
-                    array=[_df[metric].std()],
-                    visible=error_x,
-                ),
-                error_y=dict(
-                    type="data",
-                    array=[_df[corr_mean].std()],
-                    visible=error_y,
-                ),
-                mode="markers",
-                name=f"{ansatz} (FCC)",
-                marker=dict(
-                    # color=color,
-                    color=design.marker_a_color,
-                    # symbol=design.marker_a_style,
-                    symbol=symbol,
-                    size=design.marker_size,
-                    # line=dict(width=design.marker_line_width, color=color),
-                    line=dict(
-                        width=design.marker_line_width, color=design.marker_a_color
-                    ),
-                ),
-                opacity=design.marker_a_opacity,
-                secondary_y=False,
-                showlegend=False,
-            )
-
-            fig.add_scatter(
+            fig.add_scattergl(
                 x=[_df[metric].mean()],
                 y=[_df["kl_divergence"].mean()],
                 error_x=dict(
@@ -605,7 +572,38 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
                 showlegend=False,
             )
 
-        fig.add_scatter(
+            fig.add_scattergl(
+                x=[_df[metric].mean()],
+                y=[_df[corr_mean].mean()],
+                error_x=dict(
+                    type="data",
+                    array=[_df[metric].std()],
+                    visible=error_x,
+                ),
+                error_y=dict(
+                    type="data",
+                    array=[_df[corr_mean].std()],
+                    visible=error_y,
+                ),
+                mode="markers",
+                name=f"{ansatz} (FCC)",
+                marker=dict(
+                    # color=color,
+                    color=design.marker_a_color,
+                    # symbol=design.marker_a_style,
+                    symbol=symbol,
+                    size=design.marker_size,
+                    # line=dict(width=design.marker_line_width, color=color),
+                    line=dict(
+                        width=design.marker_line_width, color=design.marker_a_color
+                    ),
+                ),
+                opacity=design.marker_a_opacity,
+                secondary_y=False,
+                showlegend=False,
+            )
+
+        fig.add_scattergl(
             x=[None],
             y=[None],
             mode="markers",
@@ -621,24 +619,7 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
             ),
             showlegend=True,
         )
-
-    fig.add_scatter(
-        x=[None],
-        y=[None],
-        mode="markers",
-        name=f"FCC",
-        marker=dict(
-            # color=design.legend_color,
-            color=design.marker_a_color,
-            # symbol=design.marker_a_style,
-            symbol="asterisk",
-            size=design.marker_size,
-            # line=dict(width=design.marker_line_width, color=design.legend_color),
-            line=dict(width=design.marker_line_width, color=design.marker_a_color),
-        ),
-        showlegend=True,
-    )
-    fig.add_scatter(
+    fig.add_scattergl(
         x=[None],
         y=[None],
         mode="markers",
@@ -651,6 +632,22 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
             size=design.marker_size,
             # line=dict(width=design.marker_line_width, color=design.legend_color),
             line=dict(width=design.marker_line_width, color=design.marker_b_color),
+        ),
+        showlegend=True,
+    )
+    fig.add_scattergl(
+        x=[None],
+        y=[None],
+        mode="markers",
+        name=f"FCC",
+        marker=dict(
+            # color=design.legend_color,
+            color=design.marker_a_color,
+            # symbol=design.marker_a_style,
+            symbol="asterisk",
+            size=design.marker_size,
+            # line=dict(width=design.marker_line_width, color=design.legend_color),
+            line=dict(width=design.marker_line_width, color=design.marker_a_color),
         ),
         showlegend=True,
     )
