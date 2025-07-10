@@ -720,7 +720,7 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
     return fig
 
 
-def visualize_heatmap(df, selected_seed, weighted):
+def visualize_heatmap(df, selected_seed, weighted, parameters=False):
     ansaetze = df.ansatz.unique()
     qubit = df["qubits"].unique()[0]
 
@@ -740,11 +740,19 @@ def visualize_heatmap(df, selected_seed, weighted):
         if len(_df) == 0:
             print(f"No data for q={qubit}, ansatz={ansatz}, seed={selected_seed}")
             continue
-        sub_fig_trace = get_plotly_artifact(
-            _df.coeff_run_id.item(),
-            f"coefficients_correlated{'_weighted' if weighted else ''}",
-            automax=True,
-        )
+
+        if not parameters:
+            sub_fig_trace = get_plotly_artifact(
+                _df.coeff_run_id.item(),
+                f"coefficients_correlated{'_weighted' if weighted else ''}",
+                automax=True,
+            )
+        else:
+            sub_fig_trace = get_plotly_artifact(
+                _df.coeff_run_id.item(),
+                f"parameters_coefficients_correlated",
+                automax=True,
+            )
         row_idx = 1 if it < cols else rows
         col_idx = (it % cols) + 1
 

@@ -409,9 +409,12 @@ def tikz_model(
         data_reupload=False,
         output_qubit=output_qubit,
     )
+    fig = model.draw(figure="mpl")
+    fig[0].savefig(f"{circuit_type}.svg")
 
     fig = model.draw(figure="tikz")
     fig.export(f"{circuit_type}.tex", full_document=False)
+
     return str(fig)
 
 

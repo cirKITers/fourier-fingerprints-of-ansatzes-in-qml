@@ -232,7 +232,7 @@ def visualize_model_spectrum(df: pd.DataFrame, model: Model, mts, mfs) -> go.Fig
 
 
 def visualize_coefficients_correlated(
-    df: pd.DataFrame, model: Model, discard_negative=True, triu=False
+    df: pd.DataFrame, model: Model, triu=False
 ) -> go.Figure:
 
     if triu:
@@ -284,7 +284,7 @@ def visualize_coefficients_correlated(
 
 
 def visualize_coefficients_correlated_3d(
-    df: pd.DataFrame, model: Model, discard_negative=True, triu=False
+    df: pd.DataFrame, model: Model, triu=False
 ) -> go.Figure:
 
     # if triu:
@@ -362,7 +362,7 @@ def visualize_coefficients_correlated_3d(
 
 
 def visualize_coefficients_correlated_filtered_weighted(
-    df: pd.DataFrame, model: Model, discard_negative=True, triu=False
+    df: pd.DataFrame, model: Model, triu=False
 ) -> go.Figure:
 
     if triu:
@@ -452,7 +452,7 @@ def visualize_parameters_coefficients_correlated(
     )
 
     fig = visualize_heatmap_filtered(
-        df=df_filtered,
+        df=df_filtered.abs(), zmax=df_filtered.max(axis=None)
     )
     fig.update_layout(
         title_text=f"Correlation Parameters Coefficients for {model.pqc.__class__.__name__}",
