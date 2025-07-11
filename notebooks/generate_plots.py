@@ -43,6 +43,8 @@ scenarios = {
         "cutoff_steps": 1e-2,
     },
 }
+enabled_plots = ["sce", "hm", "hms"]  # "bp", "sc", "sce", "hm", "hms"
+
 missing_items = {"1DFS": [], "2DFS": [], "2DHEP": []}
 
 for scenario, setting in scenarios.items():
@@ -198,87 +200,90 @@ for scenario, setting in scenarios.items():
 
     for metric in [f"{metric}_min"]:
         for q in qubits:
-            # fig = visualize_boxplot(df[df.qubits == q], metric)
-            # fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric}")
-            # save_fig(
-            #     fig,
-            #     f"{scenario}_{unique_id}_bp_{metric}_c{cutoff_steps}_q{q}",
-            #     expr_run_ids + coefficient_run_ids + training_run_ids,
-            #     unique_id,
-            # )
+            if "bp" in enabled_plots:
+                fig = visualize_boxplot(df[df.qubits == q], metric)
+                fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric}")
+                save_fig(
+                    fig,
+                    f"{scenario}_bp_{metric}_c{cutoff_steps}_q{q}",
+                    expr_run_ids + coefficient_run_ids + training_run_ids,
+                    scenario,
+                )
 
-            # fig = visualize_scatter(
-            #     df[df.qubits == q],
-            #     ansatz_ids,
-            #     metric,
-            #     weighted=weighted,
-            # )
-            # fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric})")
-            # save_fig(
-            #     fig,
-            #     f"{scenario}_{unique_id}_sc_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
-            #     expr_run_ids + coefficient_run_ids + training_run_ids,
-            #     unique_id,
-            # )
+            if "sc" in enabled_plots:
+                fig = visualize_scatter(
+                    df[df.qubits == q],
+                    ansatz_ids,
+                    metric,
+                    weighted=weighted,
+                )
+                fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric})")
+                save_fig(
+                    fig,
+                    f"{scenario}_sc_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
+                    expr_run_ids + coefficient_run_ids + training_run_ids,
+                    scenario,
+                )
 
-            # scatter plot
-            fig = visualize_expr_scatter(
-                df[df.qubits == q],
-                ansatz_ids,
-                metric,
-                weighted=weighted,
-                legendonly=False,
-            )
-            fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric})")
-            fig.update_layout(title=f"")
-            save_fig(
-                fig,
-                f"{scenario}_{unique_id}_sce_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
-                expr_run_ids + coefficient_run_ids + training_run_ids,
-                unique_id,
-                showlegend=False,
-                font_size=20,
-            )
+            if "sce" in enabled_plots:
+                # scatter plot
+                fig = visualize_expr_scatter(
+                    df[df.qubits == q],
+                    ansatz_ids,
+                    metric,
+                    weighted=weighted,
+                    legendonly=False,
+                )
+                fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric})")
+                fig.update_layout(title=f"")
+                save_fig(
+                    fig,
+                    f"{scenario}_sce_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
+                    expr_run_ids + coefficient_run_ids + training_run_ids,
+                    scenario,
+                    showlegend=False,
+                    font_size=20,
+                )
 
-            # legendonly
-            fig = visualize_expr_scatter(
-                df[df.qubits == q],
-                ansatz_ids,
-                metric,
-                weighted=weighted,
-                legendonly=True,
-            )
-            fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric})")
-            fig.update_layout(title=f"")
-            save_fig(
-                fig,
-                f"{scenario}_{unique_id}_sce_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}_legend",
-                expr_run_ids + coefficient_run_ids + training_run_ids,
-                unique_id,
-                showlegend=True,
-            )
+                # legendonly
+                fig = visualize_expr_scatter(
+                    df[df.qubits == q],
+                    ansatz_ids,
+                    metric,
+                    weighted=weighted,
+                    legendonly=True,
+                )
+                fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric})")
+                fig.update_layout(title=f"")
+                save_fig(
+                    fig,
+                    f"{scenario}_sce_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}_legend",
+                    expr_run_ids + coefficient_run_ids + training_run_ids,
+                    scenario,
+                    showlegend=True,
+                )
 
-            if scenario == "1DFS":
+            if scenario == "1DFS" and "hm" in enabled_plots:
                 fig = visualize_heatmap(df[df.qubits == q], 1000, weighted)
                 fig.update_layout(title=f"")
                 save_fig(
                     fig,
-                    f"{scenario}_{unique_id}_hm_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
+                    f"{scenario}_hm_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
                     expr_run_ids + coefficient_run_ids + training_run_ids,
-                    unique_id,
+                    scenario,
                     font_size=20,
                 )
 
-            if scenario == "2DFS":
+            if scenario == "2DFS" and "hms" in enabled_plots:
                 fig = visualize_single_heatmap(
                     df[df.qubits == q], 1000, "Hardware_Efficient", weighted
                 )
                 fig.update_layout(title=f"")
                 save_fig(
                     fig,
-                    f"{scenario}_{unique_id}_hms_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
+                    f"{scenario}_hms_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
                     expr_run_ids + coefficient_run_ids + training_run_ids,
-                    unique_id,
+                    scenario,
                     font_size=20,
                 )
 

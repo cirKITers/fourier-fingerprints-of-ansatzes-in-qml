@@ -3,11 +3,16 @@ import os
 import yaml
 import shutil
 
-mlflow_path = "./mlruns/744162421450326497"
-backup_dir = "./.mlruns_bckp"
+experiment_id = input("Experiment ID: ")
+
+mlflow_path = f"./mlruns/{experiment_id}"
+backup_dir = "./mlruns_bckp/{experiment_id}"
 dry_run = False
 
 cut_after = 0  # set to 0 to disable
+
+if not os.path.exists(backup_dir):
+    os.makedirs(backup_dir)
 
 print(f"Searching in: {mlflow_path}")
 print(f"Using backup directory: {backup_dir}")

@@ -96,13 +96,16 @@ fig.add_trace(
 )
 
 fig.update_layout(
-    xaxis=dict(title="# of Qubits (n)", dtick=1),
+    xaxis=dict(title="# of qubits (n)", dtick=1),
     yaxis=dict(
         # title="Unique Eigenvalues",
         type="log",
+        tickmode="array",
+        tickvals=[1, 10, 100, 1000],
+        ticktext=[1, 10, 100, 1000],
     ),
     template="simple_white",
     legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
 )
 
-fig.show()
+fig.write_image("unique_freqs.svg", width=450, height=350, scale=1)

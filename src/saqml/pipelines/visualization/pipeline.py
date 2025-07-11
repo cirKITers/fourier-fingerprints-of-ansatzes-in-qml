@@ -24,7 +24,6 @@ def create_pipeline() -> Pipeline:
                 inputs={
                     "df": "coefficients_correlated_filtered",
                     "model": "model",
-                    "discard_negative": "params:training.positive_coeffs_only",
                     "triu": "params:coefficients.triu",
                 },
                 outputs="fig_coefficients_correlated",
@@ -35,7 +34,6 @@ def create_pipeline() -> Pipeline:
             #     inputs={
             #         "df": "coefficients_correlated_filtered",
             #         "model": "model",
-            #         "discard_negative": "params:training.positive_coeffs_only",
             #         "triu": "params:coefficients.triu",
             #     },
             #     outputs="fig_coefficients_correlated_3d",
@@ -46,7 +44,6 @@ def create_pipeline() -> Pipeline:
                 inputs={
                     "df": "coefficients_correlated_filtered_weighted",
                     "model": "model",
-                    "discard_negative": "params:training.positive_coeffs_only",
                     "triu": "params:coefficients.triu",
                 },
                 outputs="fig_coefficients_correlated_weighted",
@@ -101,7 +98,6 @@ def create_randcoeffs_pipeline() -> Pipeline:
                 inputs={
                     "df": "random_coefficients_correlated",
                     "model": "model",
-                    "discard_negative": "params:training.positive_coeffs_only",
                     "triu": "params:coefficients.triu",
                 },
                 outputs="fig_random_coefficients_correlated",

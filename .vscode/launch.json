@@ -31,6 +31,19 @@
             "justMyCode": false
         },
         {
+            "name": "Plot",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "kedro",
+            "args": [
+                "run",
+                "--pipeline",
+                "visualize"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
             "name": "RandCoeffs",
             "type": "debugpy",
             "request": "launch",

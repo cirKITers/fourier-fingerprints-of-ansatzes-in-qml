@@ -21,7 +21,7 @@ data:
   mfs: 1
 
 coefficients:
-  n_samples: 500 #samples per parameter
+  n_samples: 500 #samples per parameter (500 for 1D, 250 for 2D)
   correlation_method: "pearson" #dcor, pearson, spearman
   triu: True # only use  the upper triangular part of the correlation matrix?
   weighting: "linear" # linear, coefficients_prod, coefficients_add, frequencies
