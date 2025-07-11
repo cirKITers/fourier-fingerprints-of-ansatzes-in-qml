@@ -502,6 +502,7 @@ def generate_fourier_series(
             raise ValueError(
                 "coefficients_distribution must be specified if coefficients_mean is not a list or float"
             )
+    # TODO: here, ensure uniform circle!
     elif coefficients_distribution == "uniform":
         coefficients = 1.0 * rng.uniform(
             coefficients_mean - coefficients_variance,
