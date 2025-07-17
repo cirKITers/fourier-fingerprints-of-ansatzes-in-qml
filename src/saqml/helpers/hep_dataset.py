@@ -18,6 +18,7 @@ import vector
 import warnings
 import copy
 
+from saqml.helpers.classical_model import set_torch_seed
 import logging
 
 log = logging.getLogger(__name__)
@@ -424,9 +425,8 @@ def get_loaders(
     if batch_size < 1:
         batch_size = len(train_dataset)
     # Loaders
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    torch.use_deterministic_algorithms(True)
+    set_torch_seed(seed)
+
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     valid_loader = DataLoader(valid_dataset, batch_size=batch_size)
     test_loader = DataLoader(test_dataset, batch_size=batch_size)

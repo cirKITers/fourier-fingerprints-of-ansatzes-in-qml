@@ -12,6 +12,7 @@ import pandas as pd
 import itertools
 
 from saqml.helpers.hep_dataset import get_data, get_loaders
+from saqml.helpers.classical_model import HEPRegressor, set_torch_seed
 
 import logging
 
@@ -390,6 +391,18 @@ def create_model(
     return model
 
 
+def create_classical_model(
+    width: int,
+    depth: int,
+    seed: int,
+) -> Model:
+    set_torch_seed(seed)
+
+    model = HEPRegressor(2, width=width, depth=depth)
+
+    return model
+
+
 def tikz_model(
     n_qubits: int,
     n_layers: int,
@@ -502,7 +515,6 @@ def generate_fourier_series(
             raise ValueError(
                 "coefficients_distribution must be specified if coefficients_mean is not a list or float"
             )
-    # TODO: here, ensure uniform circle!
     elif coefficients_distribution == "uniform":
         coefficients = 1.0 * rng.uniform(
             coefficients_mean - coefficients_variance,
@@ -523,6 +535,7 @@ def generate_fourier_series(
             coefficients_variance,
             int(np.ceil(frequencies.shape[0] / 2)),
         )
+    # TODO: ensure uniform circle on the coefficients!
 
     coefficients = coefficients.flatten()
     if not offset:

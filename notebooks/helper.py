@@ -174,7 +174,42 @@ def read_from_html(path):
     return plotly.io.from_json(json.dumps(plotly_json), skip_invalid=True)
 
 
-def get_plotly_artifact(run_id, identifier="coefficients_correlated", automax=True):
+def get_plotly_heatmap(run_id, identifier="coefficients_correlated", automax=True):
+    client = mlflow.tracking.MlflowClient()
+
+    fig_path = client.download_artifacts(run_id, f"{identifier}.html", "./")
+    fig = read_from_html(fig_path)
+    data_z = np.abs(np.array(fig.data[0].z, dtype=np.float64))
+
+    if automax:
+        zmax = np.nanmax(data_z)
+        if zmax > 0.1:
+            zmax = math.ceil(zmax * 10) / 10
+        elif zmax > 0.01:
+            zmax = math.ceil(zmax * 100) / 100
+        elif zmax > 0.001:
+            zmax = math.ceil(zmax * 1000) / 1000
+    else:
+        zmax = 1.0
+    zmin = 0.0
+
+    fig_trace = go.Heatmap(
+        z=data_z,
+        y=fig.data[0].y,
+        x=fig.data[0].x,
+        hoverongaps=False,
+        colorscale=design.colorscale,
+        zmax=zmax,
+        zmin=zmin,
+        coloraxis=f"coloraxis",
+    )
+
+    os.remove(fig_path)
+
+    return fig_trace
+
+
+def get_plotly_distribution(run_id, identifier="fig_distribution_train"):
     client = mlflow.tracking.MlflowClient()
 
     fig_path = client.download_artifacts(run_id, f"{identifier}.html", "./")
@@ -742,13 +777,13 @@ def visualize_heatmap(df, selected_seed, weighted, parameters=False):
             continue
 
         if not parameters:
-            sub_fig_trace = get_plotly_artifact(
+            sub_fig_trace = get_plotly_heatmap(
                 _df.coeff_run_id.item(),
                 f"coefficients_correlated{'_weighted' if weighted else ''}",
                 automax=True,
             )
         else:
-            sub_fig_trace = get_plotly_artifact(
+            sub_fig_trace = get_plotly_heatmap(
                 _df.coeff_run_id.item(),
                 f"parameters_coefficients_correlated",
                 automax=True,
@@ -803,6 +838,22 @@ def visualize_heatmap(df, selected_seed, weighted, parameters=False):
     return fig
 
 
+def visualize_distribution(df):
+    ansaetze = df.ansatz.unique()
+    qubit = df["qubits"].unique()[0]
+
+    for it, ansatz in enumerate(ansaetze):
+        _df = df[(df.ansatz == ansatz)]
+
+        if len(_df) == 0:
+            print(f"No data for q={qubit}, ansatz={ansatz}, seed={selected_seed}")
+            continue
+
+        pass
+
+    return fig
+
+
 def visualize_single_heatmap(df, selected_seed, selected_ansatz, weighted):
     qubit = df["qubits"].unique()[0]
 
@@ -813,7 +864,7 @@ def visualize_single_heatmap(df, selected_seed, selected_ansatz, weighted):
         print(f"No data for q={qubit}, ansatz={selected_ansatz}, seed={selected_seed}")
         return fig
 
-    sub_fig_trace = get_plotly_artifact(
+    sub_fig_trace = get_plotly_heatmap(
         _df.coeff_run_id.item(),
         f"coefficients_correlated{'_weighted' if weighted else ''}",
         automax=True,

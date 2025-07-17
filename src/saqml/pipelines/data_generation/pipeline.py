@@ -5,6 +5,7 @@ from .nodes import (
     generate_fourier_series,
     sample_fourier_series,
     create_model,
+    create_classical_model,
     tikz_model,
     print_model,
     get_fourier_dataset,
@@ -48,6 +49,31 @@ def create_model_pipeline() -> Pipeline:
                     "output_qubit": "params:model.output_qubit",
                     "seed": "params:seed",
                     "layer_multiplier": "params:model.layer_multiplier",
+                },
+                outputs="model",
+                name="create_model",
+            ),
+            node(
+                func=print_model,
+                inputs={
+                    "model": "model",
+                },
+                outputs="model_str",
+                name="print_model",
+            ),
+        ]
+    )
+
+
+def create_classical_model_pipeline() -> Pipeline:
+    return pipeline(
+        [
+            node(
+                func=create_classical_model,
+                inputs={
+                    "width": "params:model.width",
+                    "depth": "params:model.depth",
+                    "seed": "params:seed",
                 },
                 outputs="model",
                 name="create_model",
