@@ -638,13 +638,17 @@ def visualize_distribution(
     # access dataset directly, we don't need batches now
     domain_samples = data_loader.dataset.tensors[0].numpy()
     fourier_series = data_loader.dataset.tensors[1].numpy()
-    prediction = model(
-        params=model.params,
-        inputs=domain_samples,
-        noise_params=noise_params,
-        execution_type="expval",
-        force_mean=True,
-    )
+
+    if type(model) == Model:
+        prediction = model(
+            params=model.params,
+            inputs=domain_samples,
+            noise_params=noise_params,
+            execution_type="expval",
+            force_mean=True,
+        )
+    else:
+        prediction = model(torch.Tensor(domain_samples)).detach().numpy()
 
     # scaler 1 is for jets
     fourier_series = (

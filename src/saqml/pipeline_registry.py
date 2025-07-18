@@ -67,7 +67,6 @@ def register_pipelines() -> Dict[str, Pipeline]:
         "training_classical": create_classical_model_pipeline()
         + create_hep_pipeline()
         + create_training_pipeline()
-        + create_model_visualization_pipeline()
         + create_hep_visualization_pipeline(),
         "coefficients": create_model_pipeline()
         + create_coefficients_pipeline()
