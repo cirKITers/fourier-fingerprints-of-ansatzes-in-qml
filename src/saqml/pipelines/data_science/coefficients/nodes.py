@@ -272,7 +272,60 @@ def correlate(df: pd.DataFrame, method: str) -> pd.DataFrame:
         If the given method is not supported.
     """
     if method == "pearson" or method == "spearman":
-        result = df.corr(method=method)
+        result = df.corr(
+            method=method
+        )  # TODO: why are we getting real valued numbers only
+    elif method == "dcor":
+        data = df.to_numpy().transpose()  # -> (n_rvs, n_samples)
+
+        raise NotImplementedError()
+        # temporarily disabled because of issues with llvm
+        # dcor_data = lambda rv: dcor.rowwise(
+        #     dcor.distance_correlation,
+        #     data,
+        #     np.tile(rv, (data.shape[0], 1)),  # repeat over n_rvs
+        # )
+
+        # TODO: this can get really slow for large n_rvs
+        result = pd.DataFrame(
+            np.array([dcor_data(rv) for rv in data]),
+            index=df.columns,
+            columns=df.columns,
+        )
+    else:
+        raise ValueError(f"Unknown correlation method: {method}")
+
+    return result
+
+
+def correlate_complex(df: pd.DataFrame, method: str) -> pd.DataFrame:
+    """
+    Calculate correlation matrix of given dataframe.
+    Uses pandas correlation method if available, otherwise uses dcor
+    as implemented here: https://github.com/vnmabus/dcor
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Dataframe to calculate the correlation matrix of.
+    method : str
+        Correlation method to use. Supported methods are "pearson", "spearman", and
+        "dcor".
+
+    Returns
+    -------
+    pd.DataFrame
+        Correlation matrix of the dataframe.
+
+    Raises
+    ------
+    ValueError
+        If the given method is not supported.
+    """
+    if method == "pearson" or method == "spearman":
+        result = df.agg([np.real, np.imag]).corr(
+            method=method
+        )  # TODO: why are we getting real valued numbers only
     elif method == "dcor":
         data = df.to_numpy().transpose()  # -> (n_rvs, n_samples)
 
