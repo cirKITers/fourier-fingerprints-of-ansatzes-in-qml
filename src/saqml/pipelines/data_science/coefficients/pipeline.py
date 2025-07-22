@@ -5,6 +5,7 @@ from .nodes import (
     filter_coefficients,
     sample_coefficients,
     correlate,
+    correlate_complex,
     normalize,
     # sweep_control_values,
     calculate_decay,
@@ -65,6 +66,15 @@ def create_pipeline() -> Pipeline:
                 name="correlate_coefficients",
             ),
             node(
+                func=correlate_complex,
+                inputs={
+                    "df": "coefficients",
+                    "method": "params:coefficients.correlation_method",
+                },
+                outputs="coefficients_correlated_complex",
+                name="correlate_complex_coefficients",
+            ),
+            node(
                 func=filter_coefficients,
                 inputs={
                     "df": "coefficients_correlated",
@@ -72,6 +82,15 @@ def create_pipeline() -> Pipeline:
                 },
                 outputs="coefficients_correlated_filtered",
                 name="filter_coefficients_correlated",
+            ),
+            node(
+                func=filter_coefficients,
+                inputs={
+                    "df": "coefficients_correlated_complex",
+                    "model": "model",
+                },
+                outputs="coefficients_correlated_complex_filtered",
+                name="filter_coefficients_correlated_complex",
             ),
             node(
                 func=weight_coefficients,
