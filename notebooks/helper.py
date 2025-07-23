@@ -1,5 +1,6 @@
 import plotly
 from plotly.validators.scatter.marker import SymbolValidator
+import plotly.figure_factory as ff
 import re
 import json
 import hashlib
@@ -9,6 +10,7 @@ import numpy as np
 import os
 from rich.progress import track
 import math
+import ast
 
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -164,10 +166,20 @@ def generate_hash(run_ids):
     return hs
 
 
+# def read_from_html(path):
+#     with open(path) as f:
+#         html = f.read()
+#     call_arg_str = re.findall(r"Plotly\.newPlot\((.*)\)", html[-(2**16) :])[0]
+#     call_args = json.loads(f"[{call_arg_str}]")
+#     plotly_json = {"data": call_args[1], "layout": call_args[2]}
+
+#     return plotly.io.from_json(json.dumps(plotly_json), skip_invalid=True)
+
+
 def read_from_html(path):
     with open(path) as f:
         html = f.read()
-    call_arg_str = re.findall(r"Plotly\.newPlot\((.*)\)", html[-(2**16) :])[0]
+    call_arg_str = re.findall(r"Plotly\.newPlot\((.*)\)", html)[0]
     call_args = json.loads(f"[{call_arg_str}]")
     plotly_json = {"data": call_args[1], "layout": call_args[2]}
 
@@ -211,37 +223,16 @@ def get_plotly_heatmap(run_id, identifier="coefficients_correlated", automax=Tru
 
 def get_plotly_distribution(run_id, identifier="fig_distribution_train"):
     client = mlflow.tracking.MlflowClient()
-
-    fig_path = client.download_artifacts(run_id, f"{identifier}.html", "./")
+    try:
+        fig_path = client.download_artifacts(run_id, f"{identifier}.html", "./")
+    except FileNotFoundError:
+        print(f"File {fig_path} not found for run id {run_id}")
+        return None
     fig = read_from_html(fig_path)
-    data_z = np.abs(np.array(fig.data[0].z, dtype=np.float64))
-
-    if automax:
-        zmax = np.nanmax(data_z)
-        if zmax > 0.1:
-            zmax = math.ceil(zmax * 10) / 10
-        elif zmax > 0.01:
-            zmax = math.ceil(zmax * 100) / 100
-        elif zmax > 0.001:
-            zmax = math.ceil(zmax * 1000) / 1000
-    else:
-        zmax = 1.0
-    zmin = 0.0
-
-    fig_trace = go.Heatmap(
-        z=data_z,
-        y=fig.data[0].y,
-        x=fig.data[0].x,
-        hoverongaps=False,
-        colorscale=design.colorscale,
-        zmax=zmax,
-        zmin=zmin,
-        coloraxis=f"coloraxis",
-    )
 
     os.remove(fig_path)
 
-    return fig_trace
+    return fig
 
 
 def rgb_to_rgba(rgb_value: str, alpha: float):
@@ -255,6 +246,8 @@ def rgb_to_rgba(rgb_value: str, alpha: float):
 
 
 def get_training_df(run_ids, cutoff_mse=-1, cutoff_steps=-1, metric="mse"):
+    if run_ids is None:
+        return None
     df = pd.DataFrame(
         columns=[
             "training_run_id",
@@ -279,6 +272,56 @@ def get_training_df(run_ids, cutoff_mse=-1, cutoff_steps=-1, metric="mse"):
         df.loc[it, "training_run_id"] = run_id
         df.loc[it, "ansatz"] = client.get_run(run_id).data.params["model.circuit_type"]
         df.loc[it, "qubits"] = int(client.get_run(run_id).data.params["model.n_qubits"])
+        df.loc[it, "seed"] = int(client.get_run(run_id).data.params["seed"])
+        steps = int(client.get_run(run_id).data.params["training.steps"])
+
+        mse_hist = client.get_metric_history(run_id, f"{metric}")
+        mse_values = np.empty((steps))
+        mse_values[:] = np.nan
+
+        mse_values[: len(mse_hist)] = [
+            entity.value if entity.value > cutoff_mse else np.nan for entity in mse_hist
+        ]
+
+        df.loc[it, f"{metric}"] = mse_values
+        df.loc[it, f"{metric}_min"] = np.min(mse_values[: len(mse_hist)])
+        df.loc[it, f"{metric}_max"] = np.max(mse_values[: len(mse_hist)])
+        df.loc[it, "steps"] = mse_values[: len(mse_hist)][
+            mse_values > cutoff_steps
+        ].size
+
+    return df
+
+
+def get_classical_training_df(run_ids, cutoff_mse=-1, cutoff_steps=-1, metric="mse"):
+    if run_ids is None:
+        return None
+    df = pd.DataFrame(
+        columns=[
+            "training_run_id",
+            "width",
+            "depth",
+            "seed",
+            f"{metric}",
+            f"{metric}_min",
+            f"{metric}_max",
+            "steps",
+        ]
+    )
+
+    for it, run_id in track(
+        enumerate(run_ids),
+        description="Collecting classical training data..",
+        total=len(run_ids),
+    ):
+        client = mlflow.tracking.MlflowClient()
+        if client.get_run(run_id).info.status != "FINISHED":
+            print(f"Run {run_id} not finished")
+            continue
+
+        df.loc[it, "training_run_id"] = run_id
+        df.loc[it, "width"] = int(client.get_run(run_id).data.params["model.width"])
+        df.loc[it, "depth"] = int(client.get_run(run_id).data.params["model.depth"])
         df.loc[it, "seed"] = int(client.get_run(run_id).data.params["seed"])
         steps = int(client.get_run(run_id).data.params["training.steps"])
 
@@ -841,16 +884,85 @@ def visualize_heatmap(df, selected_seed, weighted, parameters=False):
 def visualize_distribution(df):
     ansaetze = df.ansatz.unique()
     qubit = df["qubits"].unique()[0]
+    seeds = df.seed.unique()
 
     for it, ansatz in enumerate(ansaetze):
-        _df = df[(df.ansatz == ansatz)]
+        classical_traces = {"Ground Truth": [], "Prediction": [], "Differences": []}
+        quantum_traces = {"Ground Truth": [], "Prediction": [], "Differences": []}
 
-        if len(_df) == 0:
-            print(f"No data for q={qubit}, ansatz={ansatz}, seed={selected_seed}")
-            continue
+        for seed in track(
+            seeds, description="Collecting distribution data..", total=len(seeds)
+        ):
+            _df = df[(df.ansatz == ansatz) & (df.seed == seed)]
+            if len(_df) == 0:
+                print(f"No data for q={qubit}, ansatz={ansatz}, seed={seed}")
+                continue
 
-        pass
+            training_run_ids = ast.literal_eval(_df.training_run_id.unique()[0])
+            classical_training_run_ids = ast.literal_eval(
+                _df.classical_training_run_id.unique()[0]
+            )
 
+            for training_run_id in training_run_ids:
+                fig = get_plotly_distribution(training_run_id)
+                if fig is None:
+                    print(
+                        f"No data for q={qubit}, ansatz={ansatz}, seed={seed}, training_id={training_run_id}"
+                    )
+                    continue
+                for dp in fig.data:
+                    if dp.type == "histogram":
+                        quantum_traces[dp.name].append(dp.x)
+
+            for classical_training_run_id in classical_training_run_ids:
+                fig = get_plotly_distribution(classical_training_run_id)
+                if fig is None:
+                    print(
+                        f"No data for q={qubit}, ansatz={ansatz}, seed={seed}, training_id={training_run_id}"
+                    )
+                    continue
+                for dp in fig.data:
+                    if dp.type == "histogram":
+                        classical_traces[dp.name].append(dp.x)
+        ground_truth_classical = np.mean(classical_traces["Ground Truth"], axis=0)
+        ground_truth_quantum = np.mean(quantum_traces["Ground Truth"], axis=0)
+        prediction_quantum = np.mean(quantum_traces["Prediction"], axis=0)
+        prediction_classical = np.mean(classical_traces["Prediction"], axis=0)
+        differences_quantum = np.mean(quantum_traces["Differences"], axis=0)
+        differences_classical = np.mean(classical_traces["Differences"], axis=0)
+
+        fig = ff.create_distplot(
+            [differences_quantum, differences_classical],
+            [
+                f"QFM: μ={differences_quantum.mean():.3f}, σ={differences_quantum.std():.2f}",
+                f"MLP: μ={differences_classical.mean():.3f}, σ={differences_classical.std():.2f}",
+            ],
+            colors=[design.marker_a_color, design.marker_b_color],
+            bin_size=2,
+            curve_type="kde",
+            show_rug=False,
+        )
+
+        fig.update_layout(
+            title_text=f"Ground Truth and Model Prediction and Differences",
+            plot_bgcolor="rgba(0,0,0,0)",
+            template="plotly_white",
+            xaxis=dict(
+                title="Absolute difference of transverse momenta",
+                showgrid=False,
+            ),
+            yaxis=dict(
+                title="Frequency",
+                showgrid=False,
+            ),
+            legend=dict(
+                orientation="v",
+                yanchor="top",
+                y=1.02,
+                xanchor="right",
+                x=1,
+            ),
+        )
     return fig
 
 

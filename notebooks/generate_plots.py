@@ -5,12 +5,14 @@ from helper import (
     cache_df,
     get_run_ids,
     get_training_df,
+    get_classical_training_df,
     get_coefficient_df,
     get_expressibility_df,
     assign_ansatz_id,
     visualize_boxplot,
     visualize_scatter,
     visualize_heatmap,
+    visualize_distribution,
     visualize_single_heatmap,
     visualize_expr_scatter,
 )
@@ -21,29 +23,30 @@ weighted = False
 unique_id = "expr_fcc"
 
 scenarios = {
-    "1DFS": {
-        "training_experiment_id": "264811618779563708",  # RX-enc: 499640227395518059, RY-enc: 264811618779563708
-        "coefficient_id": "286271885992155758",  # RX-enc: 294759570659091329, RY-enc: 286271885992155758
-        "expr_id": "182562157534908977",
-        "metric": "mse_valid",
-        "cutoff_steps": 1e-2,
-    },
-    "2DFS": {
-        "training_experiment_id": "964165187008575029",
-        "coefficient_id": "452677263305714256",
-        "expr_id": "182562157534908977",
-        "metric": "mse_valid",
-        "cutoff_steps": 1e-2,
-    },
+    # "1DFS": {
+    #     "training_experiment_id": "499640227395518059",  # RX-enc: 499640227395518059, RY-enc: 264811618779563708
+    #     "coefficient_id": "294759570659091329",  # RX-enc: 294759570659091329, RY-enc: 286271885992155758
+    #     "expr_id": "182562157534908977",
+    #     "metric": "mse_valid",
+    #     "cutoff_steps": 1e-2,
+    # },
+    # "2DFS": {
+    #     "training_experiment_id": "964165187008575029",
+    #     "coefficient_id": "452677263305714256",
+    #     "expr_id": "182562157534908977",
+    #     "metric": "mse_valid",
+    #     "cutoff_steps": 1e-2,
+    # },
     "2DHEP": {
-        "training_experiment_id": "547640067507594003",  # 3000 steps: 240205035422235647, 1000 steps: 547640067507594003
+        "training_experiment_id": "100058640076220878",  # 3000 steps: 240205035422235647, 1000 steps: 547640067507594003 # dists: 100058640076220878
+        "classical_training_experiment_id": "586651734695101284",
         "coefficient_id": "452677263305714256",
         "expr_id": "182562157534908977",
         "metric": "mse_valid",
         "cutoff_steps": 1e-2,
     },
 }
-enabled_plots = ["sce", "hm", "hms"]  # "bp", "sc", "sce", "hm", "hms"
+enabled_plots = ["sce", "hm", "hms", "dist"]  # "bp", "sc", "sce", "hm", "hms"
 
 missing_items = {"1DFS": [], "2DFS": [], "2DHEP": []}
 
@@ -56,16 +59,31 @@ for scenario, setting in scenarios.items():
     cutoff_steps = setting["cutoff_steps"]
 
     # get run_ids
-    training_run_ids = get_run_ids(setting["training_experiment_id"])
     coefficient_run_ids = get_run_ids(setting["coefficient_id"])
     expr_run_ids = get_run_ids(setting["expr_id"])
+    training_run_ids = get_run_ids(setting["training_experiment_id"])
+    if "classical_training_experiment_id" in setting:
+        classical_training_run_ids = get_run_ids(
+            setting["classical_training_experiment_id"]
+        )
+        df = cache_df(
+            training_run_ids
+            + classical_training_run_ids
+            + coefficient_run_ids
+            + expr_run_ids
+        )
+    else:
+        classical_training_run_ids = None
+        df = cache_df(training_run_ids + coefficient_run_ids + expr_run_ids)
 
-    df = cache_df(training_run_ids + coefficient_run_ids + expr_run_ids)
     if not cache or df is None:
 
         # get dataframes
         training_df = get_training_df(
             training_run_ids, cutoff_steps=cutoff_steps, metric=metric
+        )
+        classical_training_df = get_classical_training_df(
+            classical_training_run_ids, cutoff_steps=cutoff_steps, metric=metric
         )
         coefficients_df = get_coefficient_df(coefficient_run_ids)
         expr_df = get_expressibility_df(expr_run_ids)
@@ -108,6 +126,7 @@ for scenario, setting in scenarios.items():
                 "seed",
                 "coeff_run_id",
                 "training_run_id",
+                "classical_training_run_id",
                 "expr_run_id",
             ]
         )
@@ -182,15 +201,30 @@ for scenario, setting in scenarios.items():
                     df.loc[idx, "coeff_run_id"] = current_dataset.coeff_run_id.unique()[
                         0
                     ]
-                    # df.loc[idx, "training_run_id"] = (
-                    #     current_dataset.training_run_id.item()
-                    # )
+                    df.loc[idx, "training_run_id"] = (
+                        f"{current_dataset.training_run_id.to_list()}"
+                    )
+                    if classical_training_df is not None:
+                        df.loc[idx, "classical_training_run_id"] = (
+                            f"{classical_training_df[classical_training_df.seed==seed].training_run_id.to_list()}"
+                        )
                     df.loc[idx, "expr_run_id"] = current_dataset.expr_run_id.unique()[0]
 
                     idx += 1
 
         print(f"Caching dataframe: {df.describe()}")
-        cache_df(run_ids=training_run_ids + coefficient_run_ids + expr_run_ids, df=df)
+        if classical_training_df is not None:
+            cache_df(
+                run_ids=training_run_ids
+                + classical_training_run_ids
+                + coefficient_run_ids
+                + expr_run_ids,
+                df=df,
+            )
+        else:
+            cache_df(
+                run_ids=training_run_ids + coefficient_run_ids + expr_run_ids, df=df
+            )
     else:
         print(f"Using cached dataframe: {df.describe()}")
         # get unique values
@@ -282,6 +316,17 @@ for scenario, setting in scenarios.items():
                 save_fig(
                     fig,
                     f"{scenario}_hms_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
+                    expr_run_ids + coefficient_run_ids + training_run_ids,
+                    scenario,
+                    font_size=20,
+                )
+
+            if scenario == "2DHEP" and "dist" in enabled_plots:
+                fig = visualize_distribution(df[df.qubits == q])
+                fig.update_layout(title=f"")
+                save_fig(
+                    fig,
+                    f"{scenario}_dist_q{q}",
                     expr_run_ids + coefficient_run_ids + training_run_ids,
                     scenario,
                     font_size=20,
