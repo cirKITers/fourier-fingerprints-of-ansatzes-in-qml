@@ -904,7 +904,9 @@ def visualize_distribution(df):
             )
 
             for training_run_id in training_run_ids:
-                fig = get_plotly_distribution(training_run_id)
+                fig = get_plotly_distribution(
+                    training_run_id, identifier="fig_distribution_valid"
+                )
                 if fig is None:
                     print(
                         f"No data for q={qubit}, ansatz={ansatz}, seed={seed}, training_id={training_run_id}"
@@ -915,7 +917,9 @@ def visualize_distribution(df):
                         quantum_traces[dp.name].append(dp.x)
 
             for classical_training_run_id in classical_training_run_ids:
-                fig = get_plotly_distribution(classical_training_run_id)
+                fig = get_plotly_distribution(
+                    classical_training_run_id, identifier="fig_distribution_valid"
+                )
                 if fig is None:
                     print(
                         f"No data for q={qubit}, ansatz={ansatz}, seed={seed}, training_id={training_run_id}"
