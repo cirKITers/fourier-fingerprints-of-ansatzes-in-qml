@@ -56,13 +56,13 @@ seed: 1000
 n_control_values: 0 # for sweeping control values
 
 training:
-  steps: 3000 # hep 3000, fs1d 2000 fs2d 4000
+  steps: 150 # hepq 3000, hepc 150, fs1d 2000 fs2d 4000
   learning_rate: 0.005 # Fourier Series 0.01 HEP 0.005
-  batch_size: -1
+  batch_size: 256 # qfm -1, mlp 256
   log_entangling: False
   log_coefficients: False # track coefficients during training?
   positive_coeffs_only: True
-  loss_function: ["mse", "kl_divergence"] # Fourier ["mse", "null_loss"] hep ["mse", "kl_divergence"]
+  loss_function: ["kl_divergence", "huber_loss"] # Fourier ["mse", "null_loss"], hepq ["mse", "kl_divergence"], hepc ["kl_divergence", "huber_loss"]
   loss_scaler: [1.0, 0.001]
   convergence:
     threshold: -1 # threshold for the cost, -1 to disable
