@@ -323,9 +323,7 @@ def correlate_complex(df: pd.DataFrame, method: str) -> pd.DataFrame:
         If the given method is not supported.
     """
     if method == "pearson" or method == "spearman":
-        result = df.agg([np.real, np.imag]).corr(
-            method=method
-        )  # TODO: why are we getting real valued numbers only
+        result = df.agg([np.real, np.imag]).corr(method=method)
     elif method == "dcor":
         data = df.to_numpy().transpose()  # -> (n_rvs, n_samples)
 

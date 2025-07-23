@@ -283,6 +283,53 @@ def visualize_coefficients_correlated(
     return fig
 
 
+def visualize_coefficients_correlated_complex(
+    df: pd.DataFrame, model: Model, triu=False
+) -> go.Figure:
+
+    if triu:
+        for i in range(df.shape[0]):
+            for j in range(df.shape[1]):
+                if i <= j:
+                    df.iloc[i, j] = pnp.nan
+                    # df_weighted.iloc[i, j] = pnp.nan
+        df = df.dropna(how="all", axis=0).dropna(how="all", axis=1)
+        # df_weighted = df_weighted.dropna(how="all", axis=0).dropna(
+        #     how="all", axis=1
+        # )
+
+    if model.n_input_feat == 1:
+        fig = visualize_heatmap_filtered(
+            df=df.abs(),
+        )
+
+        fig.update_layout(
+            title_text=f"Correlated Coefficients for {model.pqc.__class__.__name__}",
+            xaxis=dict(
+                title="Coefficients",
+            ),
+            yaxis=dict(title="Coefficients", autorange="reversed", scaleanchor="x"),
+        )
+    elif model.n_input_feat == 2:
+        fig = visualize_heatmap_filtered(
+            df=df.abs(),
+        )
+
+        fig.update_layout(
+            title_text=f"Correlated Coefficients for {model.pqc.__class__.__name__}",
+            xaxis=dict(
+                title="Coefficients",
+            ),
+            yaxis=dict(title="Coefficients", autorange="reversed", scaleanchor="x"),
+        )
+    else:
+        raise NotImplementedError(
+            "Only implemented for n_input_feat=1 and n_input_feat=2"
+        )
+
+    return fig
+
+
 def visualize_coefficients_correlated_3d(
     df: pd.DataFrame, model: Model, triu=False
 ) -> go.Figure:
@@ -461,6 +508,80 @@ def visualize_parameters_coefficients_correlated(
         ),
         yaxis=dict(title="Parameters", autorange="reversed", scaleanchor="x"),
     )
+
+    return fig
+
+
+def visualize_parameters_coefficients_complex(
+    df: pd.DataFrame, model: Model, discard_negative=True
+) -> go.Figure:
+    df_filtered = df.filter(regex=f"(_\+?\d+){{{model.n_input_feat}}}", axis=1)
+
+    fig = make_subplots(
+        rows=model.params.size,
+        cols=model.degree,
+        shared_xaxes=True,
+        shared_yaxes=True,
+        column_titles=[f"c_{j}" for j in range(model.degree)],
+        row_titles=[f"p_{j}" for j in range(model.params.size)],
+        vertical_spacing=0.01,
+        horizontal_spacing=0.01,
+    )
+
+    def phase_to_color(phase):
+        n_samples = 360  # 1 color per degree
+        # sample colormap
+        colormap = np.array(pc.sample_colorscale(pc.cyclical.Phase, n_samples + 1))
+        # discretize array to n_samples
+        phase_bins = np.linspace(0, np.pi, n_samples)
+        # map phase to colormap
+        inds = np.digitize(phase % np.pi, phase_bins)
+        return colormap[inds]
+
+    max_c = [0 for _ in range(model.degree)]
+    for i in range(model.params.size):
+        for j in range(model.degree):
+            absolute = np.abs(df_filtered[f"c_+{j}"])
+            phase = np.angle(df_filtered[f"c_+{j}"])
+
+            if absolute.max() > max_c[j]:
+                max_c[j] = absolute.max()
+            fig.add_trace(
+                go.Scatter(
+                    x=absolute.to_list(),
+                    y=df_filtered[f"p_{i}"].to_list(),
+                    mode="markers",
+                    name=f"c_{j}p_{j}",
+                    marker=dict(size=2, color=phase_to_color(phase)),
+                    showlegend=False,
+                    xaxis="x",
+                    yaxis="y",
+                ),
+                row=i + 1,
+                col=j + 1,
+            )
+
+    fig.update_layout(
+        # title_text=f"Correlation Parameters Coefficients for {model.pqc.__class__.__name__}",
+        height=100 * model.params.size,
+        width=110 * model.degree,
+        showlegend=False,
+        plot_bgcolor="rgba(0,0,0,0)",
+        template="plotly_white",
+        margin={"l": 25, "r": 25, "t": 25, "b": 25},
+    )
+    for i in range(1, model.params.size + 1):
+        fig.update_yaxes(
+            range=[0, 2 * np.pi],
+            tickvals=[f"{0}", f"{np.pi:.2f}", f"{2*np.pi:.2f}"],
+            row=i,
+        )
+    for i in range(1, model.degree + 1):
+        fig.update_xaxes(
+            range=[0, max_c[i - 1]],
+            tickvals=[f"{0}", f"{0.9*max_c[i - 1]:.2f}"],
+            col=i,
+        )
 
     return fig
 

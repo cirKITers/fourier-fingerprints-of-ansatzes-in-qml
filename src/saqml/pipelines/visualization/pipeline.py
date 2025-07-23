@@ -2,9 +2,11 @@ from kedro.pipeline import Pipeline, node, pipeline
 
 from .nodes import (
     visualize_coefficients_correlated,
+    visualize_coefficients_correlated_complex,
     visualize_coefficients_correlated_3d,
     visualize_parameters_correlated,
     visualize_parameters_coefficients_correlated,
+    visualize_parameters_coefficients_complex,
     visualize_coefficients_correlated_control,
     visualize_model,
     visualize_distribution,
@@ -29,6 +31,16 @@ def create_pipeline() -> Pipeline:
                 outputs="fig_coefficients_correlated",
                 name="visualize_coefficients_correlated",
             ),
+            # node(
+            #     func=visualize_coefficients_correlated_complex,
+            #     inputs={
+            #         "df": "coefficients_correlated_complex_filtered",
+            #         "model": "model",
+            #         "triu": "params:coefficients.triu",
+            #     },
+            #     outputs="fig_coefficients_correlated_complex",
+            #     name="visualize_coefficients_correlated_complex",
+            # ),
             # node(
             #     func=visualize_coefficients_correlated_3d,
             #     inputs={
@@ -58,16 +70,16 @@ def create_pipeline() -> Pipeline:
                 outputs="fig_coefficients_decay",
                 name="visualize_coefficients_decay",
             ),
-            node(
-                func=visualize_parameters_correlated,
-                inputs={
-                    "df": "coefficients_correlated",
-                    "model": "model",
-                    "triu": "params:coefficients.triu",
-                },
-                outputs="fig_parameters_correlated",
-                name="visualize_parameters_correlated",
-            ),
+            # node(
+            #     func=visualize_parameters_correlated,
+            #     inputs={
+            #         "df": "coefficients_correlated",
+            #         "model": "model",
+            #         "triu": "params:coefficients.triu",
+            #     },
+            #     outputs="fig_parameters_correlated",
+            #     name="visualize_parameters_correlated",
+            # ),
             node(
                 func=visualize_parameters_coefficients_correlated,
                 inputs={
@@ -77,6 +89,15 @@ def create_pipeline() -> Pipeline:
                 outputs="fig_parameters_coefficients_correlated",
                 name="visualize_parameters_coefficients_correlated",
             ),
+            # node(
+            #     func=visualize_parameters_coefficients_complex,
+            #     inputs={
+            #         "df": "coefficients",
+            #         "model": "model",
+            #     },
+            #     outputs="fig_parameters_coefficients_complex",
+            #     name="visualize_parameters_coefficients_complex",
+            # ),
             # node(
             #     func=visualize_coefficients_correlated_control,
             #     inputs={
