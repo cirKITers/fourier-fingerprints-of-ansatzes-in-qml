@@ -73,6 +73,7 @@ class Losses:
     def huber_loss(prediction, target, delta=1.0):
         a = prediction - target
         if type(target) == torch.Tensor and type(prediction) == torch.Tensor:
+            # return torch.nn.functional.huber_loss(prediction, target)
             abs_a = torch.abs(a)
             return torch.mean(
                 torch.where(abs_a <= delta, 0.5 * a**2, delta * (abs_a - 0.5 * delta))
@@ -145,6 +146,8 @@ def train_model(
 
     else:
         opt = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-5)
+        sched = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, factor=0.75, patience=6)
+        epochs_before_decay = 4
 
         def cost(inputs, targets):
             prediction = model(inputs)
@@ -310,13 +313,18 @@ def train_model(
                 )
             else:
                 step_cost_val = cost(domain_samples, fourier_series)
+                opt.zero_grad()
                 step_cost_val.backward()
                 opt.step()
 
-            if type(step_cost_val) == torch.Tensor:
-                step_cost_val = step_cost_val.item()
             cost_val += step_cost_val
         cost_val /= len(train_loader)
+
+        if step % epochs_before_decay == 0 and type(model) != Model:
+            sched.step(cost_val)
+
+        if type(cost_val) == torch.Tensor:
+            cost_val = cost_val.item()
 
         if log_coefficients and type(model) == Model:
             # log coefficients
@@ -333,15 +341,6 @@ def train_model(
                     ),
                 ]
             )
-
-            # try:
-            #     fcmse_val = fcmse(
-            #         np.abs(coeffs[len(coeffs) // 2 :]),
-            #         coeffs_target.coefficients.to_numpy(),
-            #     )
-            #     mlflow.log_metric("fcmse", fcmse_val, step)
-            # except Exception as e:
-            #     print(e)
 
         # log cost
         log.debug(f"Cost in step {step}: {cost_val}")
