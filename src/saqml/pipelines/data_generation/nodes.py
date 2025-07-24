@@ -388,6 +388,8 @@ def create_model(
         random_seed=seed,
     )
 
+    log.info(f"Created quantum model with {model.params.size} trainable parameters.")
+
     return model
 
 
@@ -399,6 +401,10 @@ def create_classical_model(
     set_torch_seed(seed)
 
     model = HEPRegressor(2, width=width, depth=depth)
+
+    log.info(
+        f"Created classical model with {sum(p.numel() for p in model.parameters() if p.requires_grad)} trainable parameters."
+    )
 
     return model
 
