@@ -617,7 +617,8 @@ def visualize_parameters_coefficients_dist(
             )
         return result
 
-    y_binned = []
+    y_binned_abs = []
+    y_binned_angle = []
     for i in range(model.params.size):
         # get all parameter values
         x = df_filtered[f"p_{i}"].to_numpy()
@@ -626,16 +627,22 @@ def visualize_parameters_coefficients_dist(
         bins = np.linspace(0, 2 * np.pi, n_bins)
         inds = np.digitize(x, bins, right=True)
 
-        y_binned_c = []
+        y_binned_abs_c = []
+        y_binned_angle_c = []
         for j in range(model.degree):
             # get coefficient values
             y = df_filtered[f"c_+{j}"].to_numpy()
             y_abs = np.abs(y)
-            y_binned_c.append(
+            y_binned_abs_c.append(
                 [np.quantile(y_abs[inds == j], 0.75) for j in range(1, n_bins)]
             )
+            y_angle = np.angle(y)
+            y_binned_angle_c.append(
+                [np.quantile(y_angle[inds == j], 0.25) for j in range(1, n_bins)]
+            )
 
-        y_binned.append(y_binned_c)
+        y_binned_abs.append(y_binned_abs_c)
+        y_binned_angle.append(y_binned_angle_c)
 
     def butter_lowpass_filter(data, cutoff=15, order=2):
         normal_cutoff = cutoff / (2 * n_bins)
@@ -645,26 +652,55 @@ def visualize_parameters_coefficients_dist(
         return y
 
     threshold = 1e-6
-    y_averaged = np.array(y_binned)
-    # y_averaged = y_binned[:-2]
-    fig = go.Figure()
 
-    for i in range(len(y_averaged)):
+    fig = make_subplots(
+        rows=2,
+        cols=1,
+        shared_xaxes=True,
+        shared_yaxes=False,
+        vertical_spacing=0.05,
+        # subplot_titles=["Absolute Value", "Phase"],
+    )
+
+    for i in range(len(y_binned_abs)):
         main_colors_it = iter(pc.qualitative.Dark2)
         for j in range(model.degree):
-            if np.mean(y_averaged[i][j]) < threshold:
-                y = [None]
+            if np.isclose(
+                np.mean(y_binned_angle[i][j]), np.pi, rtol=1e-2
+            ) or np.isclose(np.mean(y_binned_angle[i][j]), 0, rtol=1e-2):
+                y_angle = [None]
             else:
-                y = butter_lowpass_filter(y_averaged[i][j])
+                y_angle = butter_lowpass_filter(y_binned_angle[i][j])
+            if np.mean(y_binned_abs[i][j]) < threshold:
+                y_abs = [None]
+                y_angle = [None]
+            else:
+                y_abs = butter_lowpass_filter(y_binned_abs[i][j])
+
+            color = rgb_to_rgba(next(main_colors_it), 0.3)
             fig.add_trace(
                 go.Scatter(
                     x=bins,
-                    y=y,
+                    y=y_abs,
                     mode="lines",
-                    name=f"c_{j}",
-                    marker=dict(color=rgb_to_rgba(next(main_colors_it), 0.3)),
+                    name=f"c_{j}_abs",
+                    marker=dict(color=color),
                     showlegend=False,
-                )
+                ),
+                row=1,
+                col=1,
+            )
+            fig.add_trace(
+                go.Scatter(
+                    x=bins,
+                    y=y_angle,
+                    mode="lines",
+                    name=f"c_{j}_angle",
+                    marker=dict(color=color),
+                    showlegend=False,
+                ),
+                row=2,
+                col=1,
             )
 
     main_colors_it = iter(pc.qualitative.Dark2)
@@ -686,11 +722,22 @@ def visualize_parameters_coefficients_dist(
         title_text=f"Coefficient Parameter Relation",
         plot_bgcolor="rgba(0,0,0,0)",
         template="plotly_white",
-        xaxis=dict(
+        xaxis2=dict(
             title="Parameter Value",
             showgrid=False,
+            range=[0, 2 * np.pi],
+            tickmode="array",
+            tickvals=[0, np.pi / 2, np.pi, 3 * np.pi / 2, 2 * np.pi],
+            ticktext=[
+                r"$0$",
+                r"$\frac{\pi}{2}$",
+                r"$\pi$",
+                r"$\frac{3\pi}{2}$",
+                r"$2\pi$",
+            ],
         ),
-        yaxis=dict(title="Coefficient Value", showgrid=False, type="log"),
+        yaxis=dict(title="Absolute", showgrid=False, type="log"),
+        yaxis2=dict(title="Phase", showgrid=False),
     )
     fig.write_image(f"coeff_param_{model.pqc.__class__.__name__.lower()}.pdf")
     return fig
