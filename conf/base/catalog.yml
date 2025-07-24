@@ -71,6 +71,10 @@ fig_parameters_coefficients_correlated:
   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "parameters_coefficients_correlated.html"
 
+fig_parameters_coefficients_complex:
+  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  filepath: "parameters_coefficients_complex.html"
+
 # fig_model_initial:
 #   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
 #   filepath: "model_initial.html"

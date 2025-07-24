@@ -11,12 +11,23 @@ import pandas as pd
 import mlflow
 import plotly.express as px
 import logging
+import scipy
 from qml_essentials import coefficients as QMLCoefficients
 
 
 from typing import Dict, List
 
 log = logging.getLogger(__name__)
+
+
+def rgb_to_rgba(rgb_value: str, alpha: float):
+    """
+    Adds the alpha channel to an RGB Value and returns it as an RGBA Value
+    :param rgb_value: Input RGB Value
+    :param alpha: Alpha Value to add  in range [0,1]
+    :return: RGBA Value
+    """
+    return f"rgba{rgb_value[3:-1]}, {alpha})"
 
 
 def visualize_heatmap_filtered(
@@ -583,6 +594,105 @@ def visualize_parameters_coefficients_complex(
             col=i,
         )
 
+    return fig
+
+
+def visualize_parameters_coefficients_dist(
+    df: pd.DataFrame, model: Model, discard_negative=True
+) -> go.Figure:
+    df_filtered = df.filter(regex=f"(_\+?\d+){{{model.n_input_feat}}}", axis=1)
+
+    def two_d_gaussian(x, *args):
+        # args should contain multiple of a, mu, sigma
+        # where a is the amplitude, mu is the mean, and sigma is the standard deviation
+        # such that f(x)=a {\frac {1}{\sigma {\sqrt {2\pi }}}}\exp \left(-{\frac {1}{2}}{\frac {(x-\mu )^{2}}{\sigma ^{2}}}\right)
+        # for 1 gaussian
+        result = 0
+        for i in range(0, len(args), 3):
+            a, mu, sigma = args[i : i + 3]
+            result += (
+                a
+                * (1 / np.sqrt(2 * np.pi * sigma**2))
+                * np.exp(-((x - mu) ** 2) / (2 * sigma**2))
+            )
+        return result
+
+    y_binned = []
+    for i in range(model.params.size):
+        # get all parameter values
+        x = df_filtered[f"p_{i}"].to_numpy()
+        # create indices for coefficients in bins
+        n_bins = 100
+        bins = np.linspace(0, 2 * np.pi, n_bins)
+        inds = np.digitize(x, bins, right=True)
+
+        y_binned_c = []
+        for j in range(model.degree):
+            # get coefficient values
+            y = df_filtered[f"c_+{j}"].to_numpy()
+            y_abs = np.abs(y)
+            y_binned_c.append(
+                [np.quantile(y_abs[inds == j], 0.75) for j in range(1, n_bins)]
+            )
+
+        y_binned.append(y_binned_c)
+
+    def butter_lowpass_filter(data, cutoff=15, order=2):
+        normal_cutoff = cutoff / (2 * n_bins)
+        # Get the filter coefficients
+        b, a = scipy.signal.butter(order, normal_cutoff, btype="low", analog=False)
+        y = scipy.signal.filtfilt(b, a, data)
+        return y
+
+    threshold = 1e-6
+    y_averaged = np.array(y_binned)
+    # y_averaged = y_binned[:-2]
+    fig = go.Figure()
+
+    for i in range(len(y_averaged)):
+        main_colors_it = iter(pc.qualitative.Dark2)
+        for j in range(model.degree):
+            if np.mean(y_averaged[i][j]) < threshold:
+                y = [None]
+            else:
+                y = butter_lowpass_filter(y_averaged[i][j])
+            fig.add_trace(
+                go.Scatter(
+                    x=bins,
+                    y=y,
+                    mode="lines",
+                    name=f"c_{j}",
+                    marker=dict(color=rgb_to_rgba(next(main_colors_it), 0.3)),
+                    showlegend=False,
+                )
+            )
+
+    main_colors_it = iter(pc.qualitative.Dark2)
+    for j in range(model.degree):
+        fig.add_scattergl(
+            x=[None],
+            y=[None],
+            mode="markers",
+            name=f"c_{j}",
+            marker=dict(
+                # color=design.legend_color,
+                color=next(main_colors_it),
+            ),
+            showlegend=True,
+        )
+
+    # add log scale
+    fig.update_layout(
+        title_text=f"Coefficient Parameter Relation",
+        plot_bgcolor="rgba(0,0,0,0)",
+        template="plotly_white",
+        xaxis=dict(
+            title="Parameter Value",
+            showgrid=False,
+        ),
+        yaxis=dict(title="Coefficient Value", showgrid=False, type="log"),
+    )
+    fig.write_image(f"coeff_param_{model.pqc.__class__.__name__.lower()}.pdf")
     return fig
 
 

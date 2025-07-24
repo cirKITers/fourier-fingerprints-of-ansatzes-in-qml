@@ -7,6 +7,7 @@ from .nodes import (
     visualize_parameters_correlated,
     visualize_parameters_coefficients_correlated,
     visualize_parameters_coefficients_complex,
+    visualize_parameters_coefficients_dist,
     visualize_coefficients_correlated_control,
     visualize_model,
     visualize_distribution,
@@ -98,6 +99,15 @@ def create_pipeline() -> Pipeline:
             #     outputs="fig_parameters_coefficients_complex",
             #     name="visualize_parameters_coefficients_complex",
             # ),
+            node(
+                func=visualize_parameters_coefficients_dist,
+                inputs={
+                    "df": "coefficients",
+                    "model": "model",
+                },
+                outputs="fig_parameters_coefficients_complex",
+                name="visualize_parameters_coefficients_dist",
+            ),
             # node(
             #     func=visualize_coefficients_correlated_control,
             #     inputs={
