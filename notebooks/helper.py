@@ -881,7 +881,7 @@ def visualize_heatmap(df, selected_seed, weighted, parameters=False):
     return fig
 
 
-def visualize_distribution(df):
+def visualize_distribution(df, identifier="fig_distribution_valid"):
     ansaetze = df.ansatz.unique()
     qubit = df["qubits"].unique()[0]
     seeds = df.seed.unique()
@@ -904,9 +904,7 @@ def visualize_distribution(df):
             )
 
             for training_run_id in training_run_ids:
-                fig = get_plotly_distribution(
-                    training_run_id, identifier="fig_distribution_valid"
-                )
+                fig = get_plotly_distribution(training_run_id, identifier=identifier)
                 if fig is None:
                     print(
                         f"No data for q={qubit}, ansatz={ansatz}, seed={seed}, training_id={training_run_id}"
@@ -918,7 +916,7 @@ def visualize_distribution(df):
 
             for classical_training_run_id in classical_training_run_ids:
                 fig = get_plotly_distribution(
-                    classical_training_run_id, identifier="fig_distribution_valid"
+                    classical_training_run_id, identifier=identifier
                 )
                 if fig is None:
                     print(
@@ -938,8 +936,8 @@ def visualize_distribution(df):
         fig = ff.create_distplot(
             [differences_quantum, differences_classical],
             [
-                f"QFM: μ={differences_quantum.mean():.3f}, σ={differences_quantum.std():.2f}",
-                f"MLP: μ={differences_classical.mean():.3f}, σ={differences_classical.std():.2f}",
+                f"QFM:<br>μ={differences_quantum.mean():.3f}<br>σ={differences_quantum.std():.2f}",
+                f"MLP:<br>μ={differences_classical.mean():.3f}<br>σ={differences_classical.std():.2f}",
             ],
             colors=[design.marker_a_color, design.marker_b_color],
             bin_size=2,
