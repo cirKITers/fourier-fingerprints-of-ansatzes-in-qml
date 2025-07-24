@@ -39,7 +39,7 @@ scenarios = {
     # },
     "2DHEP": {
         "training_experiment_id": "100058640076220878",  # 3000 steps: 240205035422235647, 1000 steps: 547640067507594003 # dists: 100058640076220878
-        "classical_training_experiment_id": "586651734695101284",
+        "classical_training_experiment_id": "310042118257145976",
         "coefficient_id": "452677263305714256",
         "expr_id": "182562157534908977",
         "metric": "mse_valid",
@@ -322,11 +322,25 @@ for scenario, setting in scenarios.items():
                 )
 
             if scenario == "2DHEP" and "dist" in enabled_plots:
-                fig = visualize_distribution(df[df.qubits == q])
+                fig = visualize_distribution(
+                    df[df.qubits == q], identifier="fig_distribution_train"
+                )
                 fig.update_layout(title=f"")
                 save_fig(
                     fig,
-                    f"{scenario}_dist_q{q}",
+                    f"{scenario}_dist_train_q{q}",
+                    expr_run_ids + coefficient_run_ids + training_run_ids,
+                    scenario,
+                    font_size=20,
+                )
+
+                fig = visualize_distribution(
+                    df[df.qubits == q], identifier="fig_distribution_valid"
+                )
+                fig.update_layout(title=f"")
+                save_fig(
+                    fig,
+                    f"{scenario}_dist_valid_q{q}",
                     expr_run_ids + coefficient_run_ids + training_run_ids,
                     scenario,
                     font_size=20,
