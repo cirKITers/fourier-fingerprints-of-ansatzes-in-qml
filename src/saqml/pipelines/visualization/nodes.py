@@ -722,9 +722,12 @@ def visualize_parameters_coefficients_dist(
         title_text=f"Coefficient Parameter Relation",
         plot_bgcolor="rgba(0,0,0,0)",
         template="plotly_white",
+        xaxis=dict(
+            showgrid=True,
+        ),
         xaxis2=dict(
             title="Parameter Value",
-            showgrid=False,
+            showgrid=True,
             range=[0, 2 * np.pi],
             tickmode="array",
             tickvals=[0, np.pi / 2, np.pi, 3 * np.pi / 2, 2 * np.pi],
