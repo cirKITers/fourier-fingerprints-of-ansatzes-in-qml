@@ -107,6 +107,19 @@
             ],
             "console": "integratedTerminal",
             "justMyCode": false
+        },
+        {
+            "name": "Training Classical",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "kedro",
+            "args": [
+                "run",
+                "--pipeline",
+                "training_classical"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
         }
     ]
 }
