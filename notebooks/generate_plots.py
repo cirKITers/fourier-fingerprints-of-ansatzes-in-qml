@@ -15,6 +15,7 @@ from helper import (
     visualize_distribution,
     visualize_single_heatmap,
     visualize_expr_scatter,
+    visualize_coeff_param_relation,
 )
 import json
 
@@ -25,28 +26,37 @@ unique_id = "expr_fcc"
 scenarios = {
     # "1DFS": {
     #     "training_experiment_id": "499640227395518059",  # RX-enc: 499640227395518059, RY-enc: 264811618779563708
-    #     "coefficient_id": "294759570659091329",  # RX-enc: 294759570659091329, RY-enc: 286271885992155758
+    #     "coefficient_id": "654703589739658185",  # RX-enc: 294759570659091329, RY-enc: 286271885992155758, RY-enc-2:654703589739658185
     #     "expr_id": "182562157534908977",
-    #     "metric": "mse_valid",
+    #     "metric": "mse_valid_min",
     #     "cutoff_steps": 1e-2,
     # },
     # "2DFS": {
     #     "training_experiment_id": "964165187008575029",
     #     "coefficient_id": "452677263305714256",
     #     "expr_id": "182562157534908977",
-    #     "metric": "mse_valid",
+    #     "metric": "mse_valid_min",
     #     "cutoff_steps": 1e-2,
     # },
     "2DHEP": {
-        "training_experiment_id": "100058640076220878",  # 3000 steps: 240205035422235647, 1000 steps: 547640067507594003 # dists: 100058640076220878
-        "classical_training_experiment_id": "310042118257145976",
+        "training_experiment_id": "547640067507594003",  # 3000 steps: 240205035422235647, 1000 steps: 547640067507594003 # dists: 100058640076220878
         "coefficient_id": "452677263305714256",
         "expr_id": "182562157534908977",
-        "metric": "mse_valid",
+        "metric": "kl_divergence_valid",  # mse_valid, kl_divergence_valid
+        "metric_name": "KL Divergence",  # Mean Squared Error, KL Divergence
         "cutoff_steps": 1e-2,
     },
+    # "2DHEPC": {
+    #     "training_experiment_id": "240205035422235647",  # 3000 steps: 240205035422235647, 1000 steps: 547640067507594003 # dists: 100058640076220878
+    #     "classical_training_experiment_id": "310042118257145976",
+    #     "coefficient_id": "452677263305714256",
+    #     "expr_id": "182562157534908977",
+    #     "metric": "mse_valid",  # mse_valid, kl_divergence
+    #     "metric_name": "Mean Squared Error",  # Mean Squared Error, KL Divergence
+    #     "cutoff_steps": 1e-2,
+    # },
 }
-enabled_plots = ["sce", "hm", "hms", "dist"]  # "bp", "sc", "sce", "hm", "hms"
+enabled_plots = ["sce"]  # "bp", "sc", "sce", "hm", "hms"
 
 missing_items = {"1DFS": [], "2DFS": [], "2DHEP": []}
 
@@ -56,6 +66,7 @@ for scenario, setting in scenarios.items():
     print(f"{'-' * 100}")
 
     metric = setting["metric"]
+    metric_name = setting["metric_name"]
     cutoff_steps = setting["cutoff_steps"]
 
     # get run_ids
@@ -66,15 +77,20 @@ for scenario, setting in scenarios.items():
         classical_training_run_ids = get_run_ids(
             setting["classical_training_experiment_id"]
         )
-        df = cache_df(
+        cache_id = (
             training_run_ids
             + classical_training_run_ids
             + coefficient_run_ids
             + expr_run_ids
         )
+
+        df = cache_df(cache_id)
     else:
         classical_training_run_ids = None
-        df = cache_df(training_run_ids + coefficient_run_ids + expr_run_ids)
+
+        cache_id = training_run_ids + coefficient_run_ids + expr_run_ids
+
+        df = cache_df(cache_id)
 
     if not cache or df is None:
 
@@ -213,18 +229,14 @@ for scenario, setting in scenarios.items():
                     idx += 1
 
         print(f"Caching dataframe: {df.describe()}")
+
         if classical_training_df is not None:
             cache_df(
-                run_ids=training_run_ids
-                + classical_training_run_ids
-                + coefficient_run_ids
-                + expr_run_ids,
+                run_ids=cache_id,
                 df=df,
             )
         else:
-            cache_df(
-                run_ids=training_run_ids + coefficient_run_ids + expr_run_ids, df=df
-            )
+            cache_df(run_ids=cache_id, df=df)
     else:
         print(f"Using cached dataframe: {df.describe()}")
         # get unique values
@@ -232,119 +244,131 @@ for scenario, setting in scenarios.items():
         ansaetze = df.ansatz.unique()
         ansatz_ids = df.ansatz_id.unique()
 
-    for metric in [f"{metric}_min"]:
-        for q in qubits:
-            if "bp" in enabled_plots:
-                fig = visualize_boxplot(df[df.qubits == q], metric)
-                fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric}")
-                save_fig(
-                    fig,
-                    f"{scenario}_bp_{metric}_c{cutoff_steps}_q{q}",
-                    expr_run_ids + coefficient_run_ids + training_run_ids,
-                    scenario,
-                )
+    for q in qubits:
+        if "bp" in enabled_plots:
+            fig = visualize_boxplot(df[df.qubits == q], metric)
+            fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric}")
+            save_fig(
+                fig,
+                f"{scenario}_bp_{metric}_c{cutoff_steps}_q{q}",
+                cache_id,
+                scenario,
+            )
 
-            if "sc" in enabled_plots:
-                fig = visualize_scatter(
-                    df[df.qubits == q],
-                    ansatz_ids,
-                    metric,
-                    weighted=weighted,
-                )
-                fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric})")
-                save_fig(
-                    fig,
-                    f"{scenario}_sc_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
-                    expr_run_ids + coefficient_run_ids + training_run_ids,
-                    scenario,
-                )
+        if "sc" in enabled_plots:
+            fig = visualize_scatter(
+                df[df.qubits == q],
+                ansatz_ids,
+                metric,
+                weighted=weighted,
+            )
+            fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric})")
+            save_fig(
+                fig,
+                f"{scenario}_sc_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
+                cache_id,
+                scenario,
+            )
 
-            if "sce" in enabled_plots:
-                # scatter plot
-                fig = visualize_expr_scatter(
-                    df[df.qubits == q],
-                    ansatz_ids,
-                    metric,
-                    weighted=weighted,
-                    legendonly=False,
-                )
-                fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric})")
-                fig.update_layout(title=f"")
-                save_fig(
-                    fig,
-                    f"{scenario}_sce_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
-                    expr_run_ids + coefficient_run_ids + training_run_ids,
-                    scenario,
-                    showlegend=False,
-                    font_size=20,
-                )
+        if "sce" in enabled_plots:
+            # scatter plot
+            fig = visualize_expr_scatter(
+                df[df.qubits == q],
+                ansatz_ids,
+                f"{metric}_min",
+                metric_name,
+                weighted=weighted,
+                legendonly=False,
+            )
+            fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric})")
+            fig.update_layout(title=f"")
+            save_fig(
+                fig,
+                f"{scenario}_sce_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
+                cache_id,
+                scenario,
+                showlegend=False,
+                font_size=20,
+            )
 
-                # legendonly
-                fig = visualize_expr_scatter(
-                    df[df.qubits == q],
-                    ansatz_ids,
-                    metric,
-                    weighted=weighted,
-                    legendonly=True,
-                )
-                fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric})")
-                fig.update_layout(title=f"")
-                save_fig(
-                    fig,
-                    f"{scenario}_sce_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}_legend",
-                    expr_run_ids + coefficient_run_ids + training_run_ids,
-                    scenario,
-                    showlegend=True,
-                )
+            # legendonly
+            fig = visualize_expr_scatter(
+                df[df.qubits == q],
+                ansatz_ids,
+                f"{metric}_min",
+                metric_name,
+                weighted=weighted,
+                legendonly=True,
+            )
+            fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric})")
+            fig.update_layout(title=f"")
+            save_fig(
+                fig,
+                f"{scenario}_sce_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}_legend",
+                cache_id,
+                scenario,
+                showlegend=True,
+            )
 
-            if scenario == "1DFS" and "hm" in enabled_plots:
-                fig = visualize_heatmap(df[df.qubits == q], 1000, weighted)
-                fig.update_layout(title=f"")
-                save_fig(
-                    fig,
-                    f"{scenario}_hm_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
-                    expr_run_ids + coefficient_run_ids + training_run_ids,
-                    scenario,
-                    font_size=20,
-                )
+        if scenario == "1DFS" and "hm" in enabled_plots:
+            fig = visualize_heatmap(df[df.qubits == q], 1000, weighted)
+            fig.update_layout(title=f"")
+            save_fig(
+                fig,
+                f"{scenario}_hm_q{q}_{'w' if weighted else 'uw'}",
+                cache_id,
+                scenario,
+                font_size=20,
+            )
 
-            if scenario == "2DFS" and "hms" in enabled_plots:
-                fig = visualize_single_heatmap(
-                    df[df.qubits == q], 1000, "Hardware_Efficient", weighted
-                )
-                fig.update_layout(title=f"")
-                save_fig(
-                    fig,
-                    f"{scenario}_hms_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
-                    expr_run_ids + coefficient_run_ids + training_run_ids,
-                    scenario,
-                    font_size=20,
-                )
+        if scenario == "1DFS" and "rel" in enabled_plots:
+            fig = visualize_coeff_param_relation(df[df.qubits == q], 1000)
+            fig.update_layout(title=f"")
+            save_fig(
+                fig,
+                f"{scenario}_rel_q{q}_{'w' if weighted else 'uw'}",
+                cache_id,
+                scenario,
+                font_size=20,
+            )
 
-            if scenario == "2DHEP" and "dist" in enabled_plots:
-                fig = visualize_distribution(
-                    df[df.qubits == q], identifier="fig_distribution_train"
-                )
-                fig.update_layout(title=f"")
-                save_fig(
-                    fig,
-                    f"{scenario}_dist_train_q{q}",
-                    expr_run_ids + coefficient_run_ids + training_run_ids,
-                    scenario,
-                    font_size=20,
-                )
+        if scenario == "2DFS" and "hms" in enabled_plots:
+            fig = visualize_single_heatmap(
+                df[df.qubits == q], 1000, "Hardware_Efficient", weighted
+            )
+            fig.update_layout(title=f"")
+            save_fig(
+                fig,
+                f"{scenario}_hms_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
+                cache_id,
+                scenario,
+                font_size=20,
+            )
 
-                fig = visualize_distribution(
-                    df[df.qubits == q], identifier="fig_distribution_valid"
-                )
-                fig.update_layout(title=f"")
-                save_fig(
-                    fig,
-                    f"{scenario}_dist_valid_q{q}",
-                    expr_run_ids + coefficient_run_ids + training_run_ids,
-                    scenario,
-                    font_size=20,
-                )
+        if scenario == "2DHEPC" and "dist" in enabled_plots:
+            fig = visualize_distribution(
+                df[df.qubits == q], identifier="fig_distribution_train"
+            )
+            fig.update_layout(title=f"")
+            save_fig(
+                fig,
+                f"{scenario}_dist_train_q{q}",
+                cache_id,
+                scenario,
+                font_size=20,
+            )
+
+            fig = visualize_distribution(
+                df[df.qubits == q], identifier="fig_distribution_valid"
+            )
+            fig.update_layout(title=f"")
+            save_fig(
+                fig,
+                f"{scenario}_dist_valid_q{q}",
+                cache_id,
+                scenario,
+                font_size=20,
+            )
 
 with open("missing_items.json", "w") as f:
     json.dump(missing_items, f)
