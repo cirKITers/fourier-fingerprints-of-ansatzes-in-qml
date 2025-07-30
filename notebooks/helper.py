@@ -33,6 +33,7 @@ class design:
     tick_font_offset = 1
     large_tick_font_offset = 0
     hm_tickangle = 0
+    rel_tickangle = 30
 
 
 def save_fig(
@@ -221,7 +222,7 @@ def get_plotly_heatmap(run_id, identifier="coefficients_correlated", automax=Tru
     return fig_trace
 
 
-def get_plotly_distribution(run_id, identifier="fig_distribution_train"):
+def get_plotly_figure(run_id, identifier):
     client = mlflow.tracking.MlflowClient()
     try:
         fig_path = client.download_artifacts(run_id, f"{identifier}.html", "./")
@@ -598,7 +599,9 @@ def visualize_scatter(df, ansatz_ids, metric, weighted=True):
     return fig
 
 
-def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=False):
+def visualize_expr_scatter(
+    df, ansatz_ids, metric, metric_name, weighted=False, legendonly=False
+):
     corr_mean = "corr_mean" if not weighted else "corr_w_mean"
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
@@ -735,7 +738,7 @@ def visualize_expr_scatter(df, ansatz_ids, metric, weighted=False, legendonly=Fa
             title_text="Direct Correlation ({qubit} Qubits, Metric: {metric})",
             template="plotly_white",
             xaxis=dict(
-                title="Mean Squared Error",
+                title=metric_name,
                 showgrid=True,
             ),
             yaxis=dict(
@@ -904,7 +907,7 @@ def visualize_distribution(df, identifier="fig_distribution_valid"):
             )
 
             for training_run_id in training_run_ids:
-                fig = get_plotly_distribution(training_run_id, identifier=identifier)
+                fig = get_plotly_figure(training_run_id, identifier=identifier)
                 if fig is None:
                     print(
                         f"No data for q={qubit}, ansatz={ansatz}, seed={seed}, training_id={training_run_id}"
@@ -915,7 +918,7 @@ def visualize_distribution(df, identifier="fig_distribution_valid"):
                         quantum_traces[dp.name].append(dp.x)
 
             for classical_training_run_id in classical_training_run_ids:
-                fig = get_plotly_distribution(
+                fig = get_plotly_figure(
                     classical_training_run_id, identifier=identifier
                 )
                 if fig is None:
@@ -965,6 +968,151 @@ def visualize_distribution(df, identifier="fig_distribution_valid"):
                 x=1,
             ),
         )
+    return fig
+
+
+def visualize_coeff_param_relation(df, selected_seed):
+    ansaetze = df.ansatz.unique()
+    qubit = df["qubits"].unique()[0]
+
+    rows = 4
+    cols = len(ansaetze) // (rows // 2)
+
+    # first half of ansatz names, then one line empty, then second half and one line empty
+    titles = []
+    for r in range(rows):
+        for c in range(cols):
+            if r == 0:
+                titles.append(ansaetze[c].replace("_", " "))
+            elif r == 2:
+                titles.append(ansaetze[len(ansaetze) // 2 + c].replace("_", " "))
+            else:
+                titles.append("")
+    fig = make_subplots(
+        rows=rows,
+        cols=cols,
+        subplot_titles=titles,
+        horizontal_spacing=0.02,
+        vertical_spacing=0.01,
+    )
+
+    for it, ansatz in enumerate(ansaetze):
+        _df = df[(df.ansatz == ansatz) & (df.seed == selected_seed)]
+        if len(_df) == 0:
+            print(f"No data for q={qubit}, ansatz={ansatz}, seed={selected_seed}")
+            continue
+
+        sub_fig_trace = get_plotly_figure(
+            _df.coeff_run_id.item(),
+            f"parameters_coefficients_complex",
+        )
+        col_idx = (it % cols) + 1
+        row_idx = 1 if it < cols else 3
+
+        fig.add_traces(
+            sub_fig_trace.data,
+            cols=col_idx,
+            rows=[row_idx, row_idx + 1] * (len(sub_fig_trace.data) // 2),
+        )
+
+        if row_idx == 3:
+            fig.update_xaxes(
+                dict(
+                    title="",
+                    showticklabels=False,
+                    showgrid=True,
+                ),
+                showgrid=False,
+                row=row_idx,
+                col=col_idx,
+            )
+            fig.update_xaxes(
+                dict(
+                    title="Parameters",
+                    showticklabels=True,
+                    showgrid=True,
+                    range=[0, 2 * np.pi],
+                    tickmode="array",
+                    tickvals=[0, np.pi / 2, np.pi, 3 * np.pi / 2, 2 * np.pi],
+                    ticktext=[
+                        r"$0$",
+                        r"$\frac{\pi}{2}$",
+                        r"$\pi$",
+                        r"$\frac{3\pi}{2}$",
+                        r"$2\pi$",
+                    ],
+                ),
+                showgrid=False,
+                row=row_idx + 1,
+                col=col_idx,
+            )
+        else:
+            fig.update_xaxes(
+                dict(
+                    title="",
+                    showticklabels=False,
+                    showgrid=True,
+                ),
+                showgrid=False,
+                row=row_idx,
+                col=col_idx,
+            )
+            fig.update_xaxes(
+                dict(
+                    title="",
+                    showticklabels=False,
+                    showgrid=True,
+                ),
+                showgrid=False,
+                row=row_idx + 1,
+                col=col_idx,
+            )
+        fig.update_yaxes(
+            dict(
+                title="Absolute" if it % cols == 0 else "",
+                showticklabels=True if col_idx == 1 else False,
+                showgrid=False,
+                type="log",
+            ),
+            showgrid=False,
+            row=row_idx,
+            col=col_idx,
+            # automargin=True,
+        )
+        fig.update_yaxes(
+            dict(
+                title="Phase" if it % cols == 0 else "",
+                showticklabels=True if col_idx == 1 else False,
+                showgrid=False,
+            ),
+            showgrid=False,
+            row=row_idx + 1,
+            col=col_idx,
+            # automargin=True,
+        )
+        fig.update_traces(showlegend=False, row=row_idx, col=col_idx)
+        fig.update_traces(showlegend=False, row=row_idx + 1, col=col_idx)
+
+    main_colors_it = iter(plotly.colors.qualitative.Dark2)
+    for j in range(qubit):
+        fig.add_scattergl(
+            x=[None],
+            y=[None],
+            mode="markers",
+            name=f"c_{j}",
+            marker=dict(
+                # color=design.legend_color,
+                color=next(main_colors_it),
+            ),
+            showlegend=True,
+        )
+    # fig.update_annotations(yshift=-10)
+    fig.update_layout(
+        title_text=(f"Parameter - Coefficient Relation for {qubit} Qubits"),
+        template="plotly_white",
+        height=220 * rows,
+        width=280 * cols,
+    )
     return fig
 
 
