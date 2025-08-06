@@ -114,7 +114,7 @@ def create_randcoeffs_pipeline() -> Pipeline:
                 inputs={
                     "model": "model",
                     "n_samples": "params:coefficients.n_samples",
-                    "seed": "params:seed",
+                    "seed": "params:data.seed",
                 },
                 outputs="random_coefficients",
                 name="sample_coefficients",
@@ -127,6 +127,15 @@ def create_randcoeffs_pipeline() -> Pipeline:
                 },
                 outputs="random_coefficients_correlated",
                 name="correlate_random_coefficients",
+            ),
+            node(
+                func=filter_coefficients,
+                inputs={
+                    "df": "random_coefficients_correlated",
+                    "model": "model",
+                },
+                outputs="random_coefficients_correlated_filtered",
+                name="filter_coefficients_correlated",
             ),
         ]
     )

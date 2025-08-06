@@ -5,7 +5,6 @@ from helper import (
     cache_df,
     get_run_ids,
     get_training_df,
-    get_classical_training_df,
     get_coefficient_df,
     get_expressibility_df,
     assign_ansatz_id,
@@ -24,29 +23,63 @@ weighted = False
 unique_id = "expr_fcc"
 
 scenarios = {
-    # "1DFS": {
+    "1dfs_rc": {
+        "training_experiment_id": None,  # RX-enc: 499640227395518059, RY-enc: 264811618779563708
+        "coefficient_id": "552541178809486661",  # RX-enc: 294759570659091329, RY-enc: 286271885992155758, RY-enc-2:654703589739658185
+        "expr_id": None,
+        "metric": None,
+        "metric_name": None,
+        "cutoff_steps": None,
+    },
+    # "1dfs_rx": {
     #     "training_experiment_id": "499640227395518059",  # RX-enc: 499640227395518059, RY-enc: 264811618779563708
-    #     "coefficient_id": "654703589739658185",  # RX-enc: 294759570659091329, RY-enc: 286271885992155758, RY-enc-2:654703589739658185
+    #     "coefficient_id": "294759570659091329",  # RX-enc: 294759570659091329, RY-enc: 286271885992155758, RY-enc-2:654703589739658185
     #     "expr_id": "182562157534908977",
-    #     "metric": "mse_valid_min",
+    #     "metric": "mse_valid",
+    #     "metric_name": "Mean Squared Error",
     #     "cutoff_steps": 1e-2,
     # },
-    # "2DFS": {
+    # "1dfs_ry": {
+    #     "training_experiment_id": "264811618779563708",  # RX-enc: 499640227395518059, RY-enc: 264811618779563708
+    #     "coefficient_id": "654703589739658185",  # RX-enc: 294759570659091329, RY-enc: 286271885992155758, RY-enc-2:654703589739658185
+    #     "expr_id": "182562157534908977",
+    #     "metric": "mse_valid",
+    #     "metric_name": "Mean Squared Error",
+    #     "cutoff_steps": 1e-2,
+    # },
+    # "2dfs": {
     #     "training_experiment_id": "964165187008575029",
     #     "coefficient_id": "452677263305714256",
     #     "expr_id": "182562157534908977",
-    #     "metric": "mse_valid_min",
+    #     "metric": "mse_valid",
+    #     "metric_name": "Mean Squared Error",
     #     "cutoff_steps": 1e-2,
     # },
-    "2DHEP": {
-        "training_experiment_id": "547640067507594003",  # 3000 steps: 240205035422235647, 1000 steps: 547640067507594003 # dists: 100058640076220878
-        "coefficient_id": "452677263305714256",
-        "expr_id": "182562157534908977",
-        "metric": "kl_divergence_valid",  # mse_valid, kl_divergence_valid
-        "metric_name": "KL Divergence",  # Mean Squared Error, KL Divergence
-        "cutoff_steps": 1e-2,
-    },
-    # "2DHEPC": {
+    # "2dhep_mse": {
+    #     "training_experiment_id": "547640067507594003",  # 3000 steps: 240205035422235647, 1000 steps: 547640067507594003 # dists: 100058640076220878
+    #     "coefficient_id": "452677263305714256",
+    #     "expr_id": "182562157534908977",
+    #     "metric": "mse_valid",  # mse_valid, kl_divergence_valid, huber_loss_valid
+    #     "metric_name": "Mean Squared Error",  # Mean Squared Error, KL Divergence, Huber Loss
+    #     "cutoff_steps": 1e-2,
+    # },
+    # "2dhep_kl": {
+    #     "training_experiment_id": "547640067507594003",  # 3000 steps: 240205035422235647, 1000 steps: 547640067507594003 # dists: 100058640076220878
+    #     "coefficient_id": "452677263305714256",
+    #     "expr_id": "182562157534908977",
+    #     "metric": "kl_divergence_valid",  # mse_valid, kl_divergence_valid, huber_loss_valid
+    #     "metric_name": "KL Divergence",  # Mean Squared Error, KL Divergence, Huber Loss
+    #     "cutoff_steps": 1e-2,
+    # },
+    # "2dhep_hl": {
+    #     "training_experiment_id": "547640067507594003",  # 3000 steps: 240205035422235647, 1000 steps: 547640067507594003 # dists: 100058640076220878
+    #     "coefficient_id": "452677263305714256",
+    #     "expr_id": "182562157534908977",
+    #     "metric": "huber_loss_valid",  # mse_valid, kl_divergence_valid, huber_loss_valid
+    #     "metric_name": "Huber Loss",  # Mean Squared Error, KL Divergence, Huber Loss
+    #     "cutoff_steps": 1e-2,
+    # },
+    # "2dhepc": {
     #     "training_experiment_id": "240205035422235647",  # 3000 steps: 240205035422235647, 1000 steps: 547640067507594003 # dists: 100058640076220878
     #     "classical_training_experiment_id": "310042118257145976",
     #     "coefficient_id": "452677263305714256",
@@ -56,9 +89,9 @@ scenarios = {
     #     "cutoff_steps": 1e-2,
     # },
 }
-enabled_plots = ["sce"]  # "bp", "sc", "sce", "hm", "hms"
+enabled_plots = ["hm"]  # "bp", "sc", "sce", "hm", "hms"
 
-missing_items = {"1DFS": [], "2DFS": [], "2DHEP": []}
+all_metrics = ["mse_valid", "huber_loss_valid", "kl_divergence_valid"]
 
 for scenario, setting in scenarios.items():
     print(f"{'-' * 100}")
@@ -77,18 +110,13 @@ for scenario, setting in scenarios.items():
         classical_training_run_ids = get_run_ids(
             setting["classical_training_experiment_id"]
         )
-        cache_id = (
-            training_run_ids
-            + classical_training_run_ids
-            + coefficient_run_ids
-            + expr_run_ids
-        )
+        cache_id = setting
 
         df = cache_df(cache_id)
     else:
         classical_training_run_ids = None
 
-        cache_id = training_run_ids + coefficient_run_ids + expr_run_ids
+        cache_id = setting
 
         df = cache_df(cache_id)
 
@@ -96,24 +124,33 @@ for scenario, setting in scenarios.items():
 
         # get dataframes
         training_df = get_training_df(
-            training_run_ids, cutoff_steps=cutoff_steps, metric=metric
+            training_run_ids,
+            cutoff_steps=cutoff_steps,
+            metrics=all_metrics,
+            run_id_tag="training_run_id",
         )
-        classical_training_df = get_classical_training_df(
-            classical_training_run_ids, cutoff_steps=cutoff_steps, metric=metric
+        classical_training_df = get_training_df(
+            classical_training_run_ids,
+            cutoff_steps=cutoff_steps,
+            metrics=all_metrics,
+            run_id_tag="classical_training_run_id",
         )
         coefficients_df = get_coefficient_df(coefficient_run_ids)
         expr_df = get_expressibility_df(expr_run_ids)
 
         # combine dataframes
-        combined_df = pd.merge(
-            training_df,
-            pd.merge(
-                coefficients_df,
-                expr_df,
+        if training_df is None and expr_df is None:
+            combined_df = coefficients_df
+        else:
+            combined_df = pd.merge(
+                training_df,
+                pd.merge(
+                    coefficients_df,
+                    expr_df,
+                    on=["ansatz", "qubits", "seed"],
+                ),
                 on=["ansatz", "qubits", "seed"],
-            ),
-            on=["ansatz", "qubits", "seed"],
-        )
+            )
         # add ids to ansatz
         combined_df = combined_df.sort_values(by="ansatz", ascending=False)
         combined_df = assign_ansatz_id(combined_df)
@@ -134,11 +171,11 @@ for scenario, setting in scenarios.items():
                 "corr_max",
                 "corr_min",
                 "corr_var",
-                "kl_divergence",
+                "expressibility",
                 "steps",
                 "steps_var",
-                "mse_min",
-                "mse_min_var",
+                *[f"{metric}_min" for metric in all_metrics],
+                *[f"{metric}_var" for metric in all_metrics],
                 "seed",
                 "coeff_run_id",
                 "training_run_id",
@@ -168,20 +205,7 @@ for scenario, setting in scenarios.items():
                                     ]
                                 )
                             )
-                        missing_items[scenario].append(
-                            {
-                                "configuration": {
-                                    "qubits": q,
-                                    "ansatz": ansatz,
-                                    "seed": seed,
-                                },
-                                "occurences": {
-                                    "training": _occurences[0],
-                                    "coefficients": _occurences[1],
-                                    "expressibility": _occurences[2],
-                                },
-                            }
-                        )
+
                         continue
 
                     df.loc[idx, "qubits"] = q
@@ -203,28 +227,34 @@ for scenario, setting in scenarios.items():
                     df.loc[idx, "corr_var"] = (
                         current_dataset.coefficients_correlation_variance.mean()
                     )
-                    df.loc[idx, "steps"] = current_dataset.steps.mean()
-                    df.loc[idx, "steps_var"] = current_dataset.steps.var()
-                    df.loc[idx, f"{metric}_min"] = current_dataset[
-                        f"{metric}_min"
-                    ].mean()
-                    df.loc[idx, f"{metric}_min_var"] = current_dataset[
-                        f"{metric}_min"
-                    ].var()
-                    df.loc[idx, "kl_divergence"] = current_dataset.kl_divergence.mean()
-
                     df.loc[idx, "seed"] = seed
                     df.loc[idx, "coeff_run_id"] = current_dataset.coeff_run_id.unique()[
                         0
                     ]
-                    df.loc[idx, "training_run_id"] = (
-                        f"{current_dataset.training_run_id.to_list()}"
-                    )
-                    if classical_training_df is not None:
-                        df.loc[idx, "classical_training_run_id"] = (
-                            f"{classical_training_df[classical_training_df.seed==seed].training_run_id.to_list()}"
+                    if training_df is not None:
+                        df.loc[idx, "steps"] = current_dataset.steps.mean()
+                        df.loc[idx, "steps_var"] = current_dataset.steps.var()
+                        df.loc[idx, f"{metric}_min"] = current_dataset[
+                            f"{metric}_min"
+                        ].mean()
+                        df.loc[idx, f"{metric}_min_var"] = current_dataset[
+                            f"{metric}_min"
+                        ].var()
+                        df.loc[idx, "training_run_id"] = (
+                            f"{current_dataset.training_run_id.to_list()}"
                         )
-                    df.loc[idx, "expr_run_id"] = current_dataset.expr_run_id.unique()[0]
+                        if classical_training_df is not None:
+                            df.loc[idx, "classical_training_run_id"] = (
+                                f"{classical_training_df[classical_training_df.seed==seed].training_run_id.to_list()}"
+                            )
+                    if expr_df is not None:
+                        df.loc[idx, "expressibility"] = (
+                            current_dataset.expressibility.mean()
+                        )
+
+                        df.loc[idx, "expr_run_id"] = (
+                            current_dataset.expr_run_id.unique()[0]
+                        )
 
                     idx += 1
 
@@ -250,7 +280,7 @@ for scenario, setting in scenarios.items():
             fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric}")
             save_fig(
                 fig,
-                f"{scenario}_bp_{metric}_c{cutoff_steps}_q{q}",
+                f"{scenario}_bp_q{q}",
                 cache_id,
                 scenario,
             )
@@ -265,7 +295,7 @@ for scenario, setting in scenarios.items():
             fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric})")
             save_fig(
                 fig,
-                f"{scenario}_sc_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
+                f"{scenario}_sc_q{q}_{'w' if weighted else 'uw'}",
                 cache_id,
                 scenario,
             )
@@ -284,7 +314,7 @@ for scenario, setting in scenarios.items():
             fig.update_layout(title=f"")
             save_fig(
                 fig,
-                f"{scenario}_sce_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
+                f"{scenario}_sce_q{q}_{'w' if weighted else 'uw'}",
                 cache_id,
                 scenario,
                 showlegend=False,
@@ -304,13 +334,27 @@ for scenario, setting in scenarios.items():
             fig.update_layout(title=f"")
             save_fig(
                 fig,
-                f"{scenario}_sce_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}_legend",
+                f"{scenario}_sce_q{q}_{'w' if weighted else 'uw'}_legend",
                 cache_id,
                 scenario,
                 showlegend=True,
             )
 
-        if scenario == "1DFS" and "hm" in enabled_plots:
+        if scenario == "1dfs_rc":
+            fig = visualize_single_heatmap(
+                df[df.qubits == q],
+                1000,
+                f"random_coefficients_correlated",
+            )
+            fig.update_layout(title=f"")
+            save_fig(
+                fig,
+                f"{scenario}_hm_q{q}_{'w' if weighted else 'uw'}",
+                cache_id,
+                scenario,
+                font_size=20,
+            )
+        elif "1dfs" in scenario and "hm" in enabled_plots:
             fig = visualize_heatmap(df[df.qubits == q], 1000, weighted)
             fig.update_layout(title=f"")
             save_fig(
@@ -321,7 +365,7 @@ for scenario, setting in scenarios.items():
                 font_size=20,
             )
 
-        if scenario == "1DFS" and "rel" in enabled_plots:
+        if "1dfs" in scenario and "rel" in enabled_plots:
             fig = visualize_coeff_param_relation(df[df.qubits == q], 1000)
             fig.update_layout(title=f"")
             save_fig(
@@ -332,20 +376,22 @@ for scenario, setting in scenarios.items():
                 font_size=20,
             )
 
-        if scenario == "2DFS" and "hms" in enabled_plots:
+        if "2dfs" in scenario and "hms" in enabled_plots:
             fig = visualize_single_heatmap(
-                df[df.qubits == q], 1000, "Hardware_Efficient", weighted
+                df[(df.qubits == q) & (df.ansatz == "Hardware_Efficient")],
+                1000,
+                f"coefficients_correlated{'_weighted' if weighted else ''}",
             )
             fig.update_layout(title=f"")
             save_fig(
                 fig,
-                f"{scenario}_hms_{metric}_c{cutoff_steps}_q{q}_{'w' if weighted else 'uw'}",
+                f"{scenario}_hms_q{q}_{'w' if weighted else 'uw'}",
                 cache_id,
                 scenario,
                 font_size=20,
             )
 
-        if scenario == "2DHEPC" and "dist" in enabled_plots:
+        if "2dhepc" in scenario and "dist" in enabled_plots:
             fig = visualize_distribution(
                 df[df.qubits == q], identifier="fig_distribution_train"
             )
@@ -369,6 +415,3 @@ for scenario, setting in scenarios.items():
                 scenario,
                 font_size=20,
             )
-
-with open("missing_items.json", "w") as f:
-    json.dump(missing_items, f)

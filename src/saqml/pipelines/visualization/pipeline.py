@@ -127,7 +127,7 @@ def create_randcoeffs_pipeline() -> Pipeline:
             node(
                 func=visualize_coefficients_correlated,
                 inputs={
-                    "df": "random_coefficients_correlated",
+                    "df": "random_coefficients_correlated_filtered",
                     "model": "model",
                     "triu": "params:coefficients.triu",
                 },

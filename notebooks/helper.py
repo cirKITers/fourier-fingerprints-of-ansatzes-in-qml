@@ -11,6 +11,7 @@ import os
 from rich.progress import track
 import math
 import ast
+import io
 
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -82,6 +83,8 @@ def save_fig(
 
 
 def get_run_ids(experiment_id):
+    if experiment_id is None:
+        return None
     print(f"Searching experiment with id {experiment_id}")
     df = mlflow.search_runs([experiment_id])
     print(f"Found {len(df)} runs")
@@ -246,18 +249,24 @@ def rgb_to_rgba(rgb_value: str, alpha: float):
     return f"rgba{rgb_value[3:-1]}, {alpha})"
 
 
-def get_training_df(run_ids, cutoff_mse=-1, cutoff_steps=-1, metric="mse"):
+def get_training_df(
+    run_ids,
+    cutoff_mse=-1,
+    cutoff_steps=-1,
+    metrics=["mse"],
+    run_id_tag="training_run_id",
+):
     if run_ids is None:
         return None
     df = pd.DataFrame(
         columns=[
-            "training_run_id",
+            run_id_tag,
             "ansatz",
             "qubits",
             "seed",
-            f"{metric}",
-            f"{metric}_min",
-            f"{metric}_max",
+            *[f"{metric}" for metric in metrics],
+            *[f"{metric}_min" for metric in metrics],
+            *[f"{metric}_max" for metric in metrics],
             "steps",
         ]
     )
@@ -276,70 +285,22 @@ def get_training_df(run_ids, cutoff_mse=-1, cutoff_steps=-1, metric="mse"):
         df.loc[it, "seed"] = int(client.get_run(run_id).data.params["seed"])
         steps = int(client.get_run(run_id).data.params["training.steps"])
 
-        mse_hist = client.get_metric_history(run_id, f"{metric}")
-        mse_values = np.empty((steps))
-        mse_values[:] = np.nan
+        for metric in metrics:
+            mse_hist = client.get_metric_history(run_id, f"{metric}")
+            mse_values = np.empty((steps))
+            mse_values[:] = np.nan
 
-        mse_values[: len(mse_hist)] = [
-            entity.value if entity.value > cutoff_mse else np.nan for entity in mse_hist
-        ]
+            mse_values[: len(mse_hist)] = [
+                entity.value if entity.value > cutoff_mse else np.nan
+                for entity in mse_hist
+            ]
 
-        df.loc[it, f"{metric}"] = mse_values
-        df.loc[it, f"{metric}_min"] = np.min(mse_values[: len(mse_hist)])
-        df.loc[it, f"{metric}_max"] = np.max(mse_values[: len(mse_hist)])
-        df.loc[it, "steps"] = mse_values[: len(mse_hist)][
-            mse_values > cutoff_steps
-        ].size
-
-    return df
-
-
-def get_classical_training_df(run_ids, cutoff_mse=-1, cutoff_steps=-1, metric="mse"):
-    if run_ids is None:
-        return None
-    df = pd.DataFrame(
-        columns=[
-            "training_run_id",
-            "width",
-            "depth",
-            "seed",
-            f"{metric}",
-            f"{metric}_min",
-            f"{metric}_max",
-            "steps",
-        ]
-    )
-
-    for it, run_id in track(
-        enumerate(run_ids),
-        description="Collecting classical training data..",
-        total=len(run_ids),
-    ):
-        client = mlflow.tracking.MlflowClient()
-        if client.get_run(run_id).info.status != "FINISHED":
-            print(f"Run {run_id} not finished")
-            continue
-
-        df.loc[it, "training_run_id"] = run_id
-        df.loc[it, "width"] = int(client.get_run(run_id).data.params["model.width"])
-        df.loc[it, "depth"] = int(client.get_run(run_id).data.params["model.depth"])
-        df.loc[it, "seed"] = int(client.get_run(run_id).data.params["seed"])
-        steps = int(client.get_run(run_id).data.params["training.steps"])
-
-        mse_hist = client.get_metric_history(run_id, f"{metric}")
-        mse_values = np.empty((steps))
-        mse_values[:] = np.nan
-
-        mse_values[: len(mse_hist)] = [
-            entity.value if entity.value > cutoff_mse else np.nan for entity in mse_hist
-        ]
-
-        df.loc[it, f"{metric}"] = mse_values
-        df.loc[it, f"{metric}_min"] = np.min(mse_values[: len(mse_hist)])
-        df.loc[it, f"{metric}_max"] = np.max(mse_values[: len(mse_hist)])
-        df.loc[it, "steps"] = mse_values[: len(mse_hist)][
-            mse_values > cutoff_steps
-        ].size
+            df.loc[it, f"{metric}"] = mse_values
+            df.loc[it, f"{metric}_min"] = np.min(mse_values[: len(mse_hist)])
+            df.loc[it, f"{metric}_max"] = np.max(mse_values[: len(mse_hist)])
+            df.loc[it, "steps"] = mse_values[: len(mse_hist)][
+                mse_values > cutoff_steps
+            ].size
 
     return df
 
@@ -353,7 +314,7 @@ def get_coefficient_df(run_ids, expr=False):
                 "qubits",
                 "layer_multiplier",
                 "seed",
-                "kl_divergence",
+                "expressibility",
                 "coefficients_correlation_mean",
                 "coefficients_correlation_max",
                 "coefficients_correlation_min",
@@ -423,7 +384,7 @@ def get_coefficient_df(run_ids, expr=False):
                 client.get_run(run_id).data.params["model.layer_multiplier"]
             )
         if "expressibility" in client.get_run(run_id).data.metrics:
-            df.loc[it, "kl_divergence"] = client.get_run(run_id).data.metrics[
+            df.loc[it, "expressibility"] = client.get_run(run_id).data.metrics[
                 "expressibility"
             ]
 
@@ -431,13 +392,15 @@ def get_coefficient_df(run_ids, expr=False):
 
 
 def get_expressibility_df(run_ids):
+    if run_ids is None:
+        return None
     df = pd.DataFrame(
         columns=[
             "expr_run_id",
             "ansatz",
             "qubits",
             "seed",
-            "kl_divergence",
+            "expressibility",
         ]
     )
 
@@ -457,7 +420,7 @@ def get_expressibility_df(run_ids):
 
         df.loc[it, "seed"] = int(client.get_run(run_id).data.params["seed"])
 
-        df.loc[it, "kl_divergence"] = client.get_run(run_id).data.metrics[
+        df.loc[it, "expressibility"] = client.get_run(run_id).data.metrics[
             "expressibility"
         ]
 
@@ -492,7 +455,7 @@ def visualize_boxplot(
     fig.add_trace(
         go.Box(
             x=df.ansatz,
-            y=df.kl_divergence,
+            y=df.expressibility,
             name=f"KL Divergence",
             marker=dict(color=rgb_to_rgba(next(main_colors_it), 0.5)),
             yaxis="y2",
@@ -624,7 +587,7 @@ def visualize_expr_scatter(
         if not legendonly:
             fig.add_scattergl(
                 x=[_df[metric].mean()],
-                y=[_df["kl_divergence"].mean()],
+                y=[_df["expressibility"].mean()],
                 error_x=dict(
                     type="data",
                     array=[_df[metric].std()],
@@ -632,7 +595,7 @@ def visualize_expr_scatter(
                 ),
                 error_y=dict(
                     type="data",
-                    array=[_df["kl_divergence"].std()],
+                    array=[_df["expressibility"].std()],
                     visible=error_y,
                 ),
                 mode="markers",
@@ -751,7 +714,7 @@ def visualize_expr_scatter(
                 showgrid=False,
             ),
             yaxis2=dict(
-                title=("Expressibility"),
+                title=("1 - Expressibility"),
                 side="right",
                 anchor="x",
                 showgrid=False,
@@ -1116,28 +1079,30 @@ def visualize_coeff_param_relation(df, selected_seed):
     return fig
 
 
-def visualize_single_heatmap(df, selected_seed, selected_ansatz, weighted):
+def visualize_single_heatmap(df, selected_seed, identifier="coefficients_correlated"):
     qubit = df["qubits"].unique()[0]
 
     fig = go.Figure()
 
-    _df = df[(df.ansatz == selected_ansatz) & (df.seed == selected_seed)]
+    _df = df[(df.seed == selected_seed)]
     if len(_df) == 0:
-        print(f"No data for q={qubit}, ansatz={selected_ansatz}, seed={selected_seed}")
+        print(f"No data for q={qubit}, seed={selected_seed}")
         return fig
 
-    sub_fig_trace = get_plotly_heatmap(
-        _df.coeff_run_id.item(),
-        f"coefficients_correlated{'_weighted' if weighted else ''}",
-        automax=True,
-    )
+    # sub_fig_trace = get_plotly_heatmap(
+    #     _df.coeff_run_id.item(),
+    #     identifier,
+    #     automax=True,
+    # )
 
-    fig.add_trace(sub_fig_trace)
+    fig = get_plotly_figure(_df.coeff_run_id.item(), identifier)
+
+    # fig.add_trace(sub_fig_trace)
     fig.update_xaxes(
         dict(
             title="Coefficients",
-            tickvals=sub_fig_trace.x,
-            ticktext=tickval_to_tex(sub_fig_trace.x),
+            tickvals=fig.data[0].x,
+            ticktext=tickval_to_tex(fig.data[0].x),
             tickangle=design.hm_tickangle,
             # automargin=True,
         ),
@@ -1147,8 +1112,8 @@ def visualize_single_heatmap(df, selected_seed, selected_ansatz, weighted):
         dict(
             title="Coefficients",
             autorange="reversed",
-            tickvals=sub_fig_trace.y,
-            ticktext=tickval_to_tex(sub_fig_trace.y),
+            tickvals=fig.data[0].y,
+            ticktext=tickval_to_tex(fig.data[0].y),
             scaleanchor="x",
             tickangle=design.hm_tickangle,
             # automargin=True,
@@ -1158,7 +1123,7 @@ def visualize_single_heatmap(df, selected_seed, selected_ansatz, weighted):
 
     fig.update_layout(
         title_text=(
-            f"{'Weighted ' if weighted else ''}Correlation of Coefficients for Different Ansaetze ({qubit} Qubits)"
+            f"Correlation of Coefficients for Different Ansaetze ({qubit} Qubits)"
         ),
         template="plotly_white",
         height=100 * qubit,
