@@ -20,8 +20,8 @@ from plotly.subplots import make_subplots
 
 
 class design:
-    marker_size = 14
-    marker_line_width = 1
+    marker_size = 16
+    marker_line_width = 2
     marker_a_opacity = 1.0
     marker_b_opacity = 1.0
     marker_a_style = "cross"
@@ -30,7 +30,7 @@ class design:
     marker_b_color = "#DF9B1B"
     legend_color = "#002D4C"
     colorscale = "Sunset"
-    annotation_font_offset = 1
+    annotation_font_offset = 0
     tick_font_offset = 1
     large_tick_font_offset = 0
     hm_tickangle = 0
@@ -905,8 +905,8 @@ def visualize_coeff_variance(df, weighted):
             f"Variance of coefficients for different circuits ({qubit} Qubits)"
         ),
         template="plotly_white",
-        # height=400,
-        # width=800,
+        height=400,
+        width=700,
         # margin_pad=6,
         coloraxis=dict(
             colorscale=design.colorscale, colorbar=dict(tickangle=design.hm_tickangle)
