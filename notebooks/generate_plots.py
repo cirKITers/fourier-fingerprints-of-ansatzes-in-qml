@@ -15,6 +15,7 @@ from helper import (
     visualize_single_heatmap,
     visualize_expr_scatter,
     visualize_coeff_param_relation,
+    visualize_coeff_variance,
 )
 import json
 
@@ -23,14 +24,14 @@ weighted = False
 unique_id = "expr_fcc"
 
 scenarios = {
-    "1dfs_rc": {
-        "training_experiment_id": None,  # RX-enc: 499640227395518059, RY-enc: 264811618779563708
-        "coefficient_id": "552541178809486661",  # RX-enc: 294759570659091329, RY-enc: 286271885992155758, RY-enc-2:654703589739658185
-        "expr_id": None,
-        "metric": None,
-        "metric_name": None,
-        "cutoff_steps": None,
-    },
+    # "1dfs_rc": {
+    #     "training_experiment_id": None,  # RX-enc: 499640227395518059, RY-enc: 264811618779563708
+    #     "coefficient_id": "552541178809486661",  # RX-enc: 294759570659091329, RY-enc: 286271885992155758, RY-enc-2:654703589739658185
+    #     "expr_id": None,
+    #     "metric": None,
+    #     "metric_name": None,
+    #     "cutoff_steps": None,
+    # },
     # "1dfs_rx": {
     #     "training_experiment_id": "499640227395518059",  # RX-enc: 499640227395518059, RY-enc: 264811618779563708
     #     "coefficient_id": "294759570659091329",  # RX-enc: 294759570659091329, RY-enc: 286271885992155758, RY-enc-2:654703589739658185
@@ -39,14 +40,14 @@ scenarios = {
     #     "metric_name": "Mean Squared Error",
     #     "cutoff_steps": 1e-2,
     # },
-    # "1dfs_ry": {
-    #     "training_experiment_id": "264811618779563708",  # RX-enc: 499640227395518059, RY-enc: 264811618779563708
-    #     "coefficient_id": "654703589739658185",  # RX-enc: 294759570659091329, RY-enc: 286271885992155758, RY-enc-2:654703589739658185
-    #     "expr_id": "182562157534908977",
-    #     "metric": "mse_valid",
-    #     "metric_name": "Mean Squared Error",
-    #     "cutoff_steps": 1e-2,
-    # },
+    "1dfs_ry": {
+        "training_experiment_id": "264811618779563708",  # RX-enc: 499640227395518059, RY-enc: 264811618779563708
+        "coefficient_id": "654703589739658185",  # RX-enc: 294759570659091329, RY-enc: 286271885992155758, RY-enc-2:654703589739658185
+        "expr_id": "182562157534908977",
+        "metric": "mse_valid",
+        "metric_name": "Mean Squared Error",
+        "cutoff_steps": 1e-2,
+    },
     # "2dfs": {
     #     "training_experiment_id": "964165187008575029",
     #     "coefficient_id": "452677263305714256",
@@ -89,7 +90,12 @@ scenarios = {
     #     "cutoff_steps": 1e-2,
     # },
 }
-enabled_plots = ["hm"]  # "bp", "sc", "sce", "hm", "hms"
+# hm(s): heatmap as collection (single)
+# sce: scatter plots of fcc and expressibility over mse
+# rel: coefficient-parameter relation
+# var: coefficient variance
+# dist: distribution plot (for classical training)
+enabled_plots = ["var"]  # "bp", "sc", "sce", "hm", "hms"
 
 all_metrics = ["mse_valid", "huber_loss_valid", "kl_divergence_valid"]
 
@@ -123,6 +129,8 @@ for scenario, setting in scenarios.items():
     if not cache or df is None:
 
         # get dataframes
+        coefficients_df = get_coefficient_df(coefficient_run_ids)
+        expr_df = get_expressibility_df(expr_run_ids)
         training_df = get_training_df(
             training_run_ids,
             cutoff_steps=cutoff_steps,
@@ -135,8 +143,6 @@ for scenario, setting in scenarios.items():
             metrics=all_metrics,
             run_id_tag="classical_training_run_id",
         )
-        coefficients_df = get_coefficient_df(coefficient_run_ids)
-        expr_df = get_expressibility_df(expr_run_ids)
 
         # combine dataframes
         if training_df is None and expr_df is None:
@@ -171,6 +177,12 @@ for scenario, setting in scenarios.items():
                 "corr_max",
                 "corr_min",
                 "corr_var",
+                "coeff_var_real",
+                "coeff_var_imag",
+                "coeff_var_abs",
+                "coeff_mean_real",
+                "coeff_mean_imag",
+                "coeff_mean_abs",
                 "expressibility",
                 "steps",
                 "steps_var",
@@ -231,6 +243,25 @@ for scenario, setting in scenarios.items():
                     df.loc[idx, "coeff_run_id"] = current_dataset.coeff_run_id.unique()[
                         0
                     ]
+                    df.at[idx, "coeff_var_real"] = (
+                        current_dataset.coeff_var_real.mean().tolist()
+                    )
+                    df.at[idx, "coeff_var_imag"] = (
+                        current_dataset.coeff_var_imag.mean().tolist()
+                    )
+                    df.at[idx, "coeff_var_abs"] = (
+                        current_dataset.coeff_var_abs.mean().tolist()
+                    )
+                    df.at[idx, "coeff_mean_real"] = (
+                        current_dataset.coeff_mean_real.mean().tolist()
+                    )
+                    df.at[idx, "coeff_mean_imag"] = (
+                        current_dataset.coeff_mean_imag.mean().tolist()
+                    )
+                    df.at[idx, "coeff_mean_abs"] = (
+                        current_dataset.coeff_mean_abs.mean().tolist()
+                    )
+
                     if training_df is not None:
                         df.loc[idx, "steps"] = current_dataset.steps.mean()
                         df.loc[idx, "steps_var"] = current_dataset.steps.var()
@@ -318,7 +349,6 @@ for scenario, setting in scenarios.items():
                 cache_id,
                 scenario,
                 showlegend=False,
-                font_size=20,
             )
 
             # legendonly
@@ -338,6 +368,7 @@ for scenario, setting in scenarios.items():
                 cache_id,
                 scenario,
                 showlegend=True,
+                font_size=20,
             )
 
         if scenario == "1dfs_rc":
@@ -352,7 +383,6 @@ for scenario, setting in scenarios.items():
                 f"{scenario}_hm_q{q}_{'w' if weighted else 'uw'}",
                 cache_id,
                 scenario,
-                font_size=20,
             )
         elif "1dfs" in scenario and "hm" in enabled_plots:
             fig = visualize_heatmap(df[df.qubits == q], 1000, weighted)
@@ -362,7 +392,6 @@ for scenario, setting in scenarios.items():
                 f"{scenario}_hm_q{q}_{'w' if weighted else 'uw'}",
                 cache_id,
                 scenario,
-                font_size=20,
             )
 
         if "1dfs" in scenario and "rel" in enabled_plots:
@@ -373,7 +402,17 @@ for scenario, setting in scenarios.items():
                 f"{scenario}_rel_q{q}_{'w' if weighted else 'uw'}",
                 cache_id,
                 scenario,
-                font_size=20,
+                # font_size=20,
+            )
+
+        if "1dfs" in scenario and "var" in enabled_plots:
+            fig = visualize_coeff_variance(df[df.qubits == q], weighted=False)
+            fig.update_layout(title=f"")
+            save_fig(
+                fig,
+                f"{scenario}_var_q{q}_{'w' if weighted else 'uw'}",
+                cache_id,
+                scenario,
             )
 
         if "2dfs" in scenario and "hms" in enabled_plots:
@@ -388,7 +427,6 @@ for scenario, setting in scenarios.items():
                 f"{scenario}_hms_q{q}_{'w' if weighted else 'uw'}",
                 cache_id,
                 scenario,
-                font_size=20,
             )
 
         if "2dhepc" in scenario and "dist" in enabled_plots:
@@ -401,7 +439,6 @@ for scenario, setting in scenarios.items():
                 f"{scenario}_dist_train_q{q}",
                 cache_id,
                 scenario,
-                font_size=20,
             )
 
             fig = visualize_distribution(
@@ -413,5 +450,4 @@ for scenario, setting in scenarios.items():
                 f"{scenario}_dist_valid_q{q}",
                 cache_id,
                 scenario,
-                font_size=20,
             )

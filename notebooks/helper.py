@@ -239,6 +239,20 @@ def get_plotly_figure(run_id, identifier):
     return fig
 
 
+def get_csv_artifact(run_id, identifier):
+    client = mlflow.tracking.MlflowClient()
+    try:
+        fig_path = client.download_artifacts(run_id, f"{identifier}.csv", "./")
+    except FileNotFoundError:
+        print(f"File {fig_path} not found for run id {run_id}")
+        return None
+    df = pd.read_csv(fig_path)
+
+    os.remove(fig_path)
+
+    return df
+
+
 def rgb_to_rgba(rgb_value: str, alpha: float):
     """
     Adds the alpha channel to an RGB Value and returns it as an RGBA Value
@@ -305,38 +319,28 @@ def get_training_df(
     return df
 
 
-def get_coefficient_df(run_ids, expr=False):
-    if expr:
-        df = pd.DataFrame(
-            columns=[
-                "coeff_run_id",
-                "ansatz",
-                "qubits",
-                "layer_multiplier",
-                "seed",
-                "expressibility",
-                "coefficients_correlation_mean",
-                "coefficients_correlation_max",
-                "coefficients_correlation_min",
-                "coefficients_correlation_variance",
-            ]
-        )
-    else:
-        df = pd.DataFrame(
-            columns=[
-                "coeff_run_id",
-                "ansatz",
-                "qubits",
-                "layer_multiplier",
-                "seed",
-                "coefficients_correlation_mean",
-                "coefficients_correlation_weighted_mean",
-                "coefficients_correlation_max",
-                "coefficients_correlation_min",
-                "coefficients_correlation_variance",
-            ]
-        )
+def get_coefficient_df(run_ids, expr=False, raw_csv=True):
 
+    df = pd.DataFrame(
+        columns=[
+            "coeff_run_id",
+            "ansatz",
+            "qubits",
+            "layer_multiplier",
+            "seed",
+            "coeff_mean_real",
+            "coeff_mean_imag",
+            "coeff_mean_abs",
+            "coeff_var_real",
+            "coeff_var_imag",
+            "coeff_var_abs",
+            "coefficients_correlation_mean",
+            "coefficients_correlation_weighted_mean",
+            "coefficients_correlation_max",
+            "coefficients_correlation_min",
+            "coefficients_correlation_variance",
+        ]
+    )
     for it, run_id in track(
         enumerate(run_ids),
         description="Collecting coefficients data..",
@@ -387,6 +391,18 @@ def get_coefficient_df(run_ids, expr=False):
             df.loc[it, "expressibility"] = client.get_run(run_id).data.metrics[
                 "expressibility"
             ]
+        if raw_csv:
+            coeff_df = (
+                get_csv_artifact(run_id, "coefficients_filtered")
+                .map(lambda s: complex(s))
+                .filter(regex="c_.*")
+            ).to_numpy()
+            df.at[it, "coeff_var_real"] = np.var(np.real(coeff_df), axis=0)
+            df.at[it, "coeff_var_imag"] = np.var(np.imag(coeff_df), axis=0)
+            df.at[it, "coeff_var_abs"] = np.var(np.abs(coeff_df), axis=0)
+            df.at[it, "coeff_mean_real"] = np.mean(np.real(coeff_df), axis=0)
+            df.at[it, "coeff_mean_imag"] = np.mean(np.imag(coeff_df), axis=0)
+            df.at[it, "coeff_mean_abs"] = np.mean(np.abs(coeff_df), axis=0)
 
     return df
 
@@ -667,7 +683,7 @@ def visualize_expr_scatter(
         x=[None],
         y=[None],
         mode="markers",
-        name=f"Expressibility",
+        name=f"1 - Expressibility",
         marker=dict(
             # color=design.legend_color,
             color=design.marker_b_color,
@@ -764,6 +780,157 @@ def visualize_expr_scatter(
     return fig
 
 
+def visualize_coeff_variance(df, weighted):
+    pass
+    ansaetze = df.ansatz.unique()
+    qubit = df["qubits"].unique()[0]
+
+    cols = len(ansaetze)
+    # fig = make_subplots(
+    #     rows=1,
+    #     cols=cols,
+    #     subplot_titles=[ansatz.replace("_", " ") for ansatz in ansaetze],
+    #     horizontal_spacing=0.03,
+    #     vertical_spacing=0.03,
+    # )
+    fig = go.Figure()
+    colors = get_color_iterator()[0]
+    for col_idx, ansatz in enumerate(ansaetze):
+        _df = df[(df.ansatz == ansatz)]
+
+        coeff_var_abs = (
+            _df["coeff_var_abs"].apply(lambda x: np.array(eval(x)), 0).mean(axis=0)
+        )
+        coeff_var_real = (
+            _df["coeff_var_real"].apply(lambda x: np.array(eval(x)), 0).mean(axis=0)
+        )
+        coeff_var_imag = (
+            _df["coeff_var_imag"].apply(lambda x: np.array(eval(x)), 0).mean(axis=0)
+        )
+        coeff_mean_abs = (
+            _df["coeff_mean_abs"].apply(lambda x: np.array(eval(x)), 0).mean(axis=0)
+        )
+        coeff_mean_real = (
+            _df["coeff_mean_real"].apply(lambda x: np.array(eval(x)), 0).mean(axis=0)
+        )
+        coeff_mean_imag = (
+            _df["coeff_mean_imag"].apply(lambda x: np.array(eval(x)), 0).mean(axis=0)
+        )
+
+        coeff_var_abs[coeff_var_abs < 1e-10] = np.nan
+        fig.add_trace(
+            go.Scatter(
+                y=coeff_var_abs,
+                name=f"{ansatz}",
+                mode="markers+lines",
+                line=dict(color=next(colors)),
+                showlegend=True,
+                opacity=0.8,
+            ),
+            # row=1,
+            # col=col_idx + 1,
+        )
+
+        # fig.add_trace(
+        #     go.Scatter(
+        #         y=coeff_var_imag,
+        #         name=f"{ansatz}",
+        #         mode="lines",
+        #         line=dict(color=design.marker_b_color),
+        #         showlegend=False,
+        #     ),
+        #     row=1,
+        #     col=col_idx + 1,
+        # )
+
+        # colors = get_color_iterator()[0]
+        # fig.add_trace(
+        #     go.Scatter(
+        #         y=coeff_mean_real,
+        #         name=f"{ansatz}",
+        #         mode="lines",
+        #         line=dict(color=next(colors)),
+        #     ),
+        #     row=2,
+        #     col=it + 1,
+        # )
+
+        # fig.add_trace(
+        #     go.Scatter(
+        #         y=coeff_mean_imag,
+        #         name=f"{ansatz}",
+        #         mode="lines",
+        #         line=dict(color=next(colors)),
+        #     ),
+        #     row=2,
+        #     col=it + 1,
+        # )
+
+        # fig.update_yaxes(
+        #     dict(
+        #         title="Variance (Abs.)" if col_idx == 0 else "",
+        #         showticklabels=True,
+        #         showgrid=False,
+        #         type="log",
+        #     ),
+        #     showgrid=False,
+        #     # row=1,
+        #     # col=col_idx + 1,
+        #     # automargin=True,
+        # )
+
+    # fig.add_scattergl(
+    #     x=[None],
+    #     y=[None],
+    #     mode="markers",
+    #     name=f"Real",
+    #     marker=dict(
+    #         color=design.marker_a_color,
+    #     ),
+    #     showlegend=True,
+    # )
+    # fig.add_scattergl(
+    #     x=[None],
+    #     y=[None],
+    #     mode="markers",
+    #     name=f"Imag.",
+    #     marker=dict(
+    #         color=design.marker_b_color,
+    #     ),
+    #     showlegend=True,
+    # )
+
+    fig.update_layout(
+        title_text=(
+            f"Variance of coefficients for different circuits ({qubit} Qubits)"
+        ),
+        template="plotly_white",
+        # height=400,
+        # width=800,
+        # margin_pad=6,
+        coloraxis=dict(
+            colorscale=design.colorscale, colorbar=dict(tickangle=design.hm_tickangle)
+        ),
+        showlegend=True,
+        xaxis=dict(
+            title=r"$\omega$",
+            showgrid=True,
+        ),
+        yaxis=dict(
+            title=(
+                r"$\text{Var}(\vert c_{\omega} \vert)$"
+                if not weighted
+                else "Weighted Fourier Coefficient Correlation"
+            ),
+            anchor="x",
+            showgrid=False,
+            type="log",
+        ),
+    )
+
+    return fig
+
+
 def visualize_heatmap(df, selected_seed, weighted, parameters=False):
     ansaetze = df.ansatz.unique()
     qubit = df["qubits"].unique()[0]
@@ -776,7 +943,7 @@ def visualize_heatmap(df, selected_seed, weighted, parameters=False):
         cols=cols,
         subplot_titles=[ansatz.replace("_", " ") for ansatz in ansaetze],
         horizontal_spacing=0.01,
-        vertical_spacing=0.03,
+        vertical_spacing=0.04,
     )
 
     for it, ansatz in enumerate(ansaetze):
@@ -1033,7 +1200,7 @@ def visualize_coeff_param_relation(df, selected_seed):
         fig.update_yaxes(
             dict(
                 title="Absolute" if it % cols == 0 else "",
-                showticklabels=True if col_idx == 1 else False,
+                showticklabels=False if col_idx == 1 else False,
                 showgrid=False,
                 type="log",
             ),
@@ -1045,7 +1212,7 @@ def visualize_coeff_param_relation(df, selected_seed):
         fig.update_yaxes(
             dict(
                 title="Phase" if it % cols == 0 else "",
-                showticklabels=True if col_idx == 1 else False,
+                showticklabels=False if col_idx == 1 else False,
                 showgrid=False,
             ),
             showgrid=False,
@@ -1121,6 +1288,7 @@ def visualize_single_heatmap(df, selected_seed, identifier="coefficients_correla
         showgrid=False,
     )
 
+    fig.update_annotations(yshift=-10)
     fig.update_layout(
         title_text=(
             f"Correlation of Coefficients for Different Ansaetze ({qubit} Qubits)"
