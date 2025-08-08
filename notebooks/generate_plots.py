@@ -32,14 +32,14 @@ scenarios = {
     #     "metric_name": None,
     #     "cutoff_steps": None,
     # },
-    # "1dfs_rx": {
-    #     "training_experiment_id": "499640227395518059",  # RX-enc: 499640227395518059, RY-enc: 264811618779563708
-    #     "coefficient_id": "294759570659091329",  # RX-enc: 294759570659091329, RY-enc: 286271885992155758, RY-enc-2:654703589739658185
-    #     "expr_id": "182562157534908977",
-    #     "metric": "mse_valid",
-    #     "metric_name": "Mean Squared Error",
-    #     "cutoff_steps": 1e-2,
-    # },
+    "1dfs_rx": {
+        "training_experiment_id": "499640227395518059",  # RX-enc: 499640227395518059, RY-enc: 264811618779563708
+        "coefficient_id": "294759570659091329",  # RX-enc: 294759570659091329, RY-enc: 286271885992155758, RY-enc-2:654703589739658185
+        "expr_id": "182562157534908977",
+        "metric": "mse_valid",
+        "metric_name": "Mean Squared Error",
+        "cutoff_steps": 1e-2,
+    },
     "1dfs_ry": {
         "training_experiment_id": "264811618779563708",  # RX-enc: 499640227395518059, RY-enc: 264811618779563708
         "coefficient_id": "654703589739658185",  # RX-enc: 294759570659091329, RY-enc: 286271885992155758, RY-enc-2:654703589739658185
@@ -406,13 +406,30 @@ for scenario, setting in scenarios.items():
             )
 
         if "1dfs" in scenario and "var" in enabled_plots:
-            fig = visualize_coeff_variance(df[df.qubits == q], weighted=False)
+            fig = visualize_coeff_variance(
+                df[df.qubits == q], weighted=False, legendonly=False
+            )
             fig.update_layout(title=f"")
             save_fig(
                 fig,
                 f"{scenario}_var_q{q}_{'w' if weighted else 'uw'}",
                 cache_id,
                 scenario,
+                showlegend=False,
+            )
+
+            # legendonly
+            fig = visualize_coeff_variance(
+                df[df.qubits == q], weighted=False, legendonly=True
+            )
+            fig.update_layout(title=f"")
+            save_fig(
+                fig,
+                f"{scenario}_sce_q{q}_{'w' if weighted else 'uw'}_legend",
+                cache_id,
+                scenario,
+                showlegend=True,
+                font_size=20,
             )
 
         if "2dfs" in scenario and "hms" in enabled_plots:

@@ -20,8 +20,8 @@ from plotly.subplots import make_subplots
 
 
 class design:
-    marker_size = 16
-    marker_line_width = 2
+    marker_size = 14
+    marker_line_width = 3
     marker_a_opacity = 1.0
     marker_b_opacity = 1.0
     marker_a_style = "cross"
@@ -780,7 +780,7 @@ def visualize_expr_scatter(
     return fig
 
 
-def visualize_coeff_variance(df, weighted):
+def visualize_coeff_variance(df, weighted, legendonly=False):
     pass
     ansaetze = df.ansatz.unique()
     qubit = df["qubits"].unique()[0]
@@ -796,137 +796,145 @@ def visualize_coeff_variance(df, weighted):
     fig = go.Figure()
     colors = get_color_iterator()[0]
     for col_idx, ansatz in enumerate(ansaetze):
-        _df = df[(df.ansatz == ansatz)]
+        color = next(colors)
+        if not legendonly:
+            _df = df[(df.ansatz == ansatz)]
 
-        coeff_var_abs = (
-            _df["coeff_var_abs"].apply(lambda x: np.array(eval(x)), 0).mean(axis=0)
-        )
-        coeff_var_real = (
-            _df["coeff_var_real"].apply(lambda x: np.array(eval(x)), 0).mean(axis=0)
-        )
-        coeff_var_imag = (
-            _df["coeff_var_imag"].apply(lambda x: np.array(eval(x)), 0).mean(axis=0)
-        )
-        coeff_mean_abs = (
-            _df["coeff_mean_abs"].apply(lambda x: np.array(eval(x)), 0).mean(axis=0)
-        )
-        coeff_mean_real = (
-            _df["coeff_mean_real"].apply(lambda x: np.array(eval(x)), 0).mean(axis=0)
-        )
-        coeff_mean_imag = (
-            _df["coeff_mean_imag"].apply(lambda x: np.array(eval(x)), 0).mean(axis=0)
-        )
+            coeff_var_abs = (
+                _df["coeff_var_abs"].apply(lambda x: np.array(eval(x)), 0).mean(axis=0)
+            )
+            coeff_var_real = (
+                _df["coeff_var_real"].apply(lambda x: np.array(eval(x)), 0).mean(axis=0)
+            )
+            coeff_var_imag = (
+                _df["coeff_var_imag"].apply(lambda x: np.array(eval(x)), 0).mean(axis=0)
+            )
+            coeff_mean_abs = (
+                _df["coeff_mean_abs"].apply(lambda x: np.array(eval(x)), 0).mean(axis=0)
+            )
+            coeff_mean_real = (
+                _df["coeff_mean_real"]
+                .apply(lambda x: np.array(eval(x)), 0)
+                .mean(axis=0)
+            )
+            coeff_mean_imag = (
+                _df["coeff_mean_imag"]
+                .apply(lambda x: np.array(eval(x)), 0)
+                .mean(axis=0)
+            )
 
-        coeff_var_abs[coeff_var_abs < 1e-10] = np.nan
-        fig.add_trace(
-            go.Scatter(
-                y=coeff_var_abs,
-                name=f"{ansatz}",
-                mode="markers+lines",
-                line=dict(color=next(colors)),
-                showlegend=True,
-                opacity=0.8,
+            coeff_var_real[coeff_var_abs < 1e-10] = np.nan
+            fig.add_trace(
+                go.Scatter(
+                    y=coeff_var_real,
+                    name=f"{ansatz}",
+                    mode="lines",
+                    line=dict(color=color, width=4),
+                    showlegend=False,
+                    opacity=0.8,
+                    marker=dict(
+                        # color=color,
+                        color=color,
+                        # symbol=design.marker_b_style,
+                        size=10,
+                        # line=dict(width=design.marker_line_width, color=color),
+                        line=dict(width=4, color=color),
+                    ),
+                ),
+            )
+            coeff_var_imag[coeff_var_imag < 1e-10] = np.nan
+            fig.add_trace(
+                go.Scatter(
+                    y=coeff_var_imag,
+                    name=f"{ansatz}",
+                    mode="markers",
+                    line=dict(color=color, width=4),
+                    showlegend=False,
+                    opacity=0.8,
+                    marker=dict(
+                        # color=color,
+                        color=color,
+                        # symbol=design.marker_b_style,
+                        size=10,
+                        # line=dict(width=design.marker_line_width, color=color),
+                        line=dict(width=4, color=color),
+                    ),
+                ),
+            )
+
+        fig.add_scattergl(
+            x=[None],
+            y=[None],
+            mode="markers+lines",
+            name=f"{ansatz}",
+            line=dict(color=color, width=4),
+            marker=dict(
+                # color=color,
+                color=color,
+                # symbol=design.marker_b_style,
+                size=10,
+                # line=dict(width=design.marker_line_width, color=color),
+                line=dict(width=4, color=color),
             ),
-            # row=1,
-            # col=col_idx + 1,
+            showlegend=True,
         )
 
-        # fig.add_trace(
-        #     go.Scatter(
-        #         y=coeff_var_imag,
-        #         name=f"{ansatz}",
-        #         mode="lines",
-        #         line=dict(color=design.marker_b_color),
-        #         showlegend=False,
-        #     ),
-        #     row=1,
-        #     col=col_idx + 1,
-        # )
-
-        # colors = get_color_iterator()[0]
-        # fig.add_trace(
-        #     go.Scatter(
-        #         y=coeff_mean_real,
-        #         name=f"{ansatz}",
-        #         mode="lines",
-        #         line=dict(color=next(colors)),
-        #     ),
-        #     row=2,
-        #     col=it + 1,
-        # )
-
-        # fig.add_trace(
-        #     go.Scatter(
-        #         y=coeff_mean_imag,
-        #         name=f"{ansatz}",
-        #         mode="lines",
-        #         line=dict(color=next(colors)),
-        #     ),
-        #     row=2,
-        #     col=it + 1,
-        # )
-
-        # fig.update_yaxes(
-        #     dict(
-        #         title="Variance (Abs.)" if col_idx == 0 else "",
-        #         showticklabels=True,
-        #         showgrid=False,
-        #         type="log",
-        #     ),
-        #     showgrid=False,
-        #     # row=1,
-        #     # col=col_idx + 1,
-        #     # automargin=True,
-        # )
-
-    # fig.add_scattergl(
-    #     x=[None],
-    #     y=[None],
-    #     mode="markers",
-    #     name=f"Real",
-    #     marker=dict(
-    #         color=design.marker_a_color,
-    #     ),
-    #     showlegend=True,
-    # )
-    # fig.add_scattergl(
-    #     x=[None],
-    #     y=[None],
-    #     mode="markers",
-    #     name=f"Imag.",
-    #     marker=dict(
-    #         color=design.marker_b_color,
-    #     ),
-    #     showlegend=True,
-    # )
-
-    fig.update_layout(
-        title_text=(
-            f"Variance of coefficients for different circuits ({qubit} Qubits)"
-        ),
-        template="plotly_white",
-        height=400,
-        width=700,
-        # margin_pad=6,
-        coloraxis=dict(
-            colorscale=design.colorscale, colorbar=dict(tickangle=design.hm_tickangle)
-        ),
-        showlegend=True,
-        xaxis=dict(
-            title=r"$\omega$",
-            showgrid=True,
-        ),
-        yaxis=dict(
-            title=(
-                r"$\text{Var}(\vert c_{\omega} \vert)$"
-                if not weighted
-                else "Weighted Fourier Coefficient Correlation"
+    if not legendonly:
+        fig.update_layout(
+            title_text=(
+                f"Variance of coefficients for different circuits ({qubit} Qubits)"
             ),
-            anchor="x",
-            showgrid=False,
-            type="log",
-        ),
-    )
+            template="plotly_white",
+            height=400,
+            width=550,
+            # margin_pad=6,
+            coloraxis=dict(
+                colorscale=design.colorscale,
+                colorbar=dict(tickangle=design.hm_tickangle),
+            ),
+            xaxis=dict(
+                title="Frequency",
+                showgrid=True,
+            ),
+            yaxis=dict(
+                title=("Coefficient Variance"),
+                anchor="x",
+                showgrid=False,
+                type="log",
+            ),
+            legend=dict(
+                x=1.15,  # Adjust legend position as needed
+                y=0.5,  # Adjust legend position as needed
+                tracegroupgap=20,
+                # indention=20,
+            ),
+        )
+    else:
+        fig.update_layout(
+            xaxis=dict(
+                title="",
+                showline=False,
+                showgrid=False,
+                showticklabels=False,
+                zeroline=False,
+            ),
+            yaxis=dict(
+                title="",
+                showline=False,
+                showgrid=False,
+                showticklabels=False,
+                zeroline=False,
+            ),
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            showlegend=True,
+            legend=dict(
+                x=0,  # Adjust legend position as needed
+                y=1,  # Adjust legend position as needed
+                tracegroupgap=20,
+                # indention=20,
+            ),
+        )
 
     return fig
 
