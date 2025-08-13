@@ -320,7 +320,7 @@ def train_model(
             cost_val += step_cost_val
         cost_val /= len(train_loader)
 
-        if step % epochs_before_decay == 0 and type(model) != Model:
+        if type(model) != Model and step % epochs_before_decay == 0:
             sched.step(cost_val)
 
         if type(cost_val) == torch.Tensor:
