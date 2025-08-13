@@ -501,6 +501,38 @@ def generate_fourier_series(
     mts = 1
     mfs = 1
     rng = np.random.default_rng(seed)
+
+    def uniform_circle(low=0.0, high=1.0, size=None, density_correct=True):
+        """Random number generator for complex numbers sampled inside the unit circle
+
+        Args:
+            low (float, optional): Minimum Radius. Defaults to 0.0.
+            high (float, optional): Maximum Radius. Defaults to 1.0.
+            size (int, optional): Number of samples. Defaults to None.
+        """
+
+        if density_correct:
+            return np.sqrt(rng.uniform(low, high, size)) * np.exp(
+                2j * np.pi * rng.uniform(low=0, high=1, size=size)
+            )
+        else:
+            return rng.uniform(low, high, size) * np.exp(
+                2j * np.pi * rng.uniform(low=0, high=1, size=size)
+            )
+
+    def normal_circle(loc=0.0, scale=1.0, size=None):
+        """Random number generator for complex numbers sampled inside the unit circle
+
+        Args:
+            loc (float, optional): Mean. Defaults to 0.0.
+            scale (float, optional): Standard Deviation. Defaults to 1.0.
+            size (int, optional): Number of samples. Defaults to None.
+        """
+
+        return np.sqrt(rng.normal(loc, scale, size)) * np.exp(
+            2j * np.pi * rng.uniform(low=0, high=1, size=size)
+        )
+
     frequencies = np.stack(
         np.meshgrid(
             *[
@@ -522,32 +554,38 @@ def generate_fourier_series(
                 "coefficients_distribution must be specified if coefficients_mean is not a list or float"
             )
     elif coefficients_distribution == "uniform":
-        coefficients = 1.0 * rng.uniform(
-            coefficients_mean - coefficients_variance,
-            coefficients_mean + coefficients_variance,
-            int(np.ceil(frequencies.shape[0] / 2)),
-        ) + 1.0j * rng.uniform(
+        coefficients = uniform_circle(
             coefficients_mean - coefficients_variance,
             coefficients_mean + coefficients_variance,
             int(np.ceil(frequencies.shape[0] / 2)),
         )
     elif coefficients_distribution == "normal":
-        coefficients = 1.0 * rng.normal(
-            coefficients_mean,
-            coefficients_variance,
-            int(np.ceil(frequencies.shape[0] / 2)),
-        ) + 1.0j * rng.normal(
-            coefficients_mean,
-            coefficients_variance,
+        coefficients = normal_circle(
+            coefficients_mean - coefficients_variance,
+            coefficients_mean + coefficients_variance,
             int(np.ceil(frequencies.shape[0] / 2)),
         )
     # TODO: ensure uniform circle on the coefficients!
 
     coefficients = coefficients.flatten()
+
+    # import matplotlib.pyplot as plt
+
+    # plt.figure(figsize=(4, 4))
+    # plt.scatter(np.real(coefficients), np.imag(coefficients), s=1, alpha=0.3)
+    # plt.gca().set_aspect("equal")
+    # plt.xlim(-1, 1)
+    # plt.ylim(-1, 1)
+    # plt.title("Uniform points in unit disk")
+    # plt.show()
+
+    # ensure the first coefficient is real
     if not offset:
         coefficients[0] = 0.0
     else:
         coefficients[0] = coefficients[0].real
+
+    # ensure symmetry
     coefficients = np.concat(
         [np.flip(coefficients[1:]).conjugate(), coefficients],
     )
