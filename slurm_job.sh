@@ -1,7 +1,7 @@
 #!/bin/bash
 # 
 # name of the job for better recognizing it in the queue overview
-#SBATCH --job-name=entangling-the-waves
+#SBATCH --job-name=saqml
 # 
 # define how many nodes we need
 #SBATCH --nodes=1
@@ -11,7 +11,7 @@
 #
 # expected duration of the job
 #              hh:mm:ss
-#SBATCH --time=10:00:00
+#SBATCH --time=08:00:00
 # 
 # partition the job will run on
 #SBATCH --partition cpu
@@ -31,21 +31,24 @@ module load devel/python/3.11.7
 # ~/entangling-the-waves/.venv/bin/python -m kedro run --pipeline expressibility --params=$1
 
 # For Coefficients and Expressibility
-for seed in 1000 1001 1002 1003 1004 1005 1006 1007 1008 1009
-do
-    echo "--- Seed $seed ---"
-    ~/entangling-the-waves/.venv/bin/python -m kedro run --pipeline coefficients --params="$1,seed=$seed"
-    # ~/entangling-the-waves/.venv/bin/python -m kedro run --pipeline expressibility --params="$1,seed=$seed"
-done
+# for seed in 1000 1001 1002 1003 1004 1005 1006 1007 1008 1009
+# do
+#     echo "--- Seed $seed ---"
+#     ~/entangling-the-waves/.venv/bin/python -m kedro run --pipeline coefficients --params="$1,seed=$seed"
+#     # ~/entangling-the-waves/.venv/bin/python -m kedro run --pipeline expressibility --params="$1,seed=$seed"
+# done
 
 # For Training
-# for training_seed in 1000 1001 1002 1003 1004 1005 1006 1007 1008 1009
-# do
-#     echo "--- Training Seed $training_seed ---"
-#     # ~/entangling-the-waves/.venv/bin/python -m kedro run --pipeline training_fourier --params="$1,data.seed=$training_seed"
-#     # ~/entangling-the-waves/.venv/bin/python -m kedro run --pipeline training_hep --params="$1,data.seed=$training_seed"
-#     ~/entangling-the-waves/.venv/bin/python -m kedro run --pipeline training_classical --params="$1,data.seed=$training_seed"
-# done
+for training_seed in 1000 1001 1002 1003 1004 1005 1006 1007 1008 1009
+do
+    echo "--- Training Seed $training_seed ---"
+    ~/entangling-the-waves/.venv/bin/python -m kedro run --pipeline training_fourier --params="$1,data.seed=$training_seed" &
+    # ~/entangling-the-waves/.venv/bin/python -m kedro run --pipeline training_hep --params="$1,data.seed=$training_seed"
+    # ~/entangling-the-waves/.venv/bin/python -m kedro run --pipeline training_classical --params="$1,data.seed=$training_seed"
+
+    sleep 60
+done
+wait
 
 # for encoding in RX RY RZ
 # do
