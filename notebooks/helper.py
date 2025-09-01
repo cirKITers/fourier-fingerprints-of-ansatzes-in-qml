@@ -1,5 +1,5 @@
 import plotly
-from plotly.validators.scatter.marker import SymbolValidator
+from plotly.validator_cache import ValidatorCache
 import plotly.figure_factory as ff
 import re
 import json
@@ -20,8 +20,8 @@ from plotly.subplots import make_subplots
 
 
 class design:
-    marker_size = 14
-    marker_line_width = 3
+    marker_size = 18
+    marker_line_width = 1
     marker_a_opacity = 1.0
     marker_b_opacity = 1.0
     marker_a_style = "cross"
@@ -35,6 +35,7 @@ class design:
     large_tick_font_offset = 0
     hm_tickangle = 0
     rel_tickangle = 30
+    font_size = 22
 
 
 def save_fig(
@@ -42,7 +43,7 @@ def save_fig(
     name,
     run_ids,
     experiment_id,
-    font_size=16,
+    font_size=design.font_size,
     scale=1,
     showlegend=True,
     tight=False,
@@ -157,7 +158,8 @@ def get_color_iterator(option=0):
 
 
 def get_symbol_iterator(start=0):
-    raw_symbols = SymbolValidator().values
+    SymbolValidator = ValidatorCache.get_validator("scatter.marker", "symbol")
+    raw_symbols = SymbolValidator.values
     symbols = []
     for i in range(start * 12, len(raw_symbols) - (start * 12), 12):
         symbols.append(raw_symbols[i])
@@ -223,6 +225,19 @@ def get_plotly_heatmap(run_id, identifier="coefficients_correlated", automax=Tru
     os.remove(fig_path)
 
     return fig_trace
+
+
+def beautify_circuit_name(circuit):
+
+    if circuit.lower() == "hardware_efficient":
+        circuit = "HEA"
+    elif circuit.lower() == "circuit_yzy_entangling":
+        circuit = "Circuit YZY Ent."
+
+    circuit = circuit.replace("_", " ")
+    circuit = circuit.replace("circuit", "C")
+    circuit = circuit.replace("Circuit", "C")
+    return circuit
 
 
 def get_plotly_figure(run_id, identifier):
@@ -294,8 +309,13 @@ def get_training_df(
             continue
 
         df.loc[it, "training_run_id"] = run_id
-        df.loc[it, "ansatz"] = client.get_run(run_id).data.params["model.circuit_type"]
-        df.loc[it, "qubits"] = int(client.get_run(run_id).data.params["model.n_qubits"])
+        if run_id_tag != "classical_training_run_id":
+            df.loc[it, "ansatz"] = client.get_run(run_id).data.params[
+                "model.circuit_type"
+            ]
+            df.loc[it, "qubits"] = int(
+                client.get_run(run_id).data.params["model.n_qubits"]
+            )
         df.loc[it, "seed"] = int(client.get_run(run_id).data.params["seed"])
         steps = int(client.get_run(run_id).data.params["training.steps"])
 
@@ -328,12 +348,12 @@ def get_coefficient_df(run_ids, expr=False, raw_csv=True):
             "qubits",
             "layer_multiplier",
             "seed",
+            "coeff_var_abs",
+            "coeff_mean_abs",
             "coeff_mean_real",
             "coeff_mean_imag",
-            "coeff_mean_abs",
             "coeff_var_real",
             "coeff_var_imag",
-            "coeff_var_abs",
             "coefficients_correlation_mean",
             "coefficients_correlation_weighted_mean",
             "coefficients_correlation_max",
@@ -501,7 +521,7 @@ def visualize_boxplot(
         ),
     )
 
-    fig.update_yaxes(title_text=f"Correlation", secondary_y=False)
+    fig.update_yaxes(title_text=f"Fourier Coefficient Corr.", secondary_y=False)
     fig.update_yaxes(title_text="KL Divergence", secondary_y=True)
     fig.update_layout(
         title=f"FCC and Expressibility ({qubit} Qubits, Metric: {metric})",
@@ -558,15 +578,15 @@ def visualize_scatter(df, ansatz_ids, metric, weighted=True):
                 visible=True,
             ),
             mode="markers",
-            name=f"{ansatz}",
+            name=f"{beautify_circuit_name(ansatz)}",
             marker=dict(color=next(main_colors_it), symbol=symbol),
         )
 
     fig.update_layout(
-        title_text="Direct Correlation ({qubit} Qubits, Metric: {metric})",
+        title_text="Direct Corr. ({qubit} Qubits, Metric: {metric})",
         template="plotly_white",
         xaxis=dict(
-            title=("Correlation Mean" if not weighted else "Weighted Correlation Mean"),
+            title=("Corr. Mean" if not weighted else "Weight. Corr. Mean"),
         ),
         yaxis=dict(
             title=metric.title(),
@@ -615,7 +635,7 @@ def visualize_expr_scatter(
                     visible=error_y,
                 ),
                 mode="markers",
-                name=f"{ansatz} (EXPR)",
+                name=f"{beautify_circuit_name(ansatz)} (EXPR)",
                 marker=dict(
                     # color=color,
                     color=design.marker_b_color,
@@ -646,7 +666,7 @@ def visualize_expr_scatter(
                     visible=error_y,
                 ),
                 mode="markers",
-                name=f"{ansatz} (FCC)",
+                name=f"{beautify_circuit_name(ansatz)} (FCC)",
                 marker=dict(
                     # color=color,
                     color=design.marker_a_color,
@@ -667,7 +687,7 @@ def visualize_expr_scatter(
             x=[None],
             y=[None],
             mode="markers",
-            name=f"{ansatz}",
+            name=beautify_circuit_name(ansatz),
             marker=dict(
                 # color=color,
                 color=design.legend_color,
@@ -714,17 +734,19 @@ def visualize_expr_scatter(
 
     if not legendonly:
         fig.update_layout(
-            title_text="Direct Correlation ({qubit} Qubits, Metric: {metric})",
+            title_text="Direct Corr. ({qubit} Qubits, Metric: {metric})",
             template="plotly_white",
+            height=500,
+            width=680,
             xaxis=dict(
                 title=metric_name,
                 showgrid=True,
             ),
             yaxis=dict(
                 title=(
-                    "Fourier Coefficient Correlation"
+                    "Fourier Coefficient Corr."
                     if not weighted
-                    else "Weighted Fourier Coefficient Correlation"
+                    else "Weight. Fourier Coefficient Corr."
                 ),
                 anchor="x",
                 showgrid=False,
@@ -734,12 +756,6 @@ def visualize_expr_scatter(
                 side="right",
                 anchor="x",
                 showgrid=False,
-            ),
-            legend=dict(
-                x=1.15,  # Adjust legend position as needed
-                y=0.5,  # Adjust legend position as needed
-                tracegroupgap=20,
-                # indention=20,
             ),
         )
 
@@ -780,6 +796,50 @@ def visualize_expr_scatter(
     return fig
 
 
+def calculate_errors(df, ansatz_ids, metric, weighted=False):
+    corr_mean = "corr_mean" if not weighted else "corr_w_mean"
+    variables = ["expressibility", corr_mean, metric]
+
+    means_by_seed = df.groupby(["seed", "ansatz"], as_index=False)[variables].mean()
+
+    std_across_seeds = means_by_seed.groupby("ansatz")[
+        variables
+    ].std()  # ddof=1 by default (sample variance)
+
+    result = std_across_seeds.T
+    result.index = variables  # give the rows human‑readable names
+
+    print(result)
+    return result
+
+
+def export_pandas_table(result, name, run_ids, experiment_id):
+    hs = generate_hash(run_ids)
+    path = f"results/{experiment_id}/{hs}/"
+    os.makedirs(path, exist_ok=True)
+    print(f"Saving csv table to {path}{name}.csv")
+    result.to_csv(f"{path}{name}.csv")
+
+    def wrap_num(x):
+        # format in scientific notation with 5 significant figures
+        return f"\\num{{{x:.1e}}}"
+
+    df_num = result.applymap(wrap_num)
+
+    latex = df_num.to_latex(
+        escape=False,  # we already escaped everything we need
+        index=True,
+        header=True,
+        column_format="l"
+        + "c" * len(result.columns),  # first column left‑justified, rest centered
+        position="htbp",
+    )
+
+    print(f"Saving latex table to {path}{name}.tex")
+    with open(f"{path}{name}.tex", "w") as f:
+        f.write(latex)
+
+
 def visualize_coeff_variance(df, weighted, legendonly=False):
     pass
     ansaetze = df.ansatz.unique()
@@ -789,7 +849,7 @@ def visualize_coeff_variance(df, weighted, legendonly=False):
     # fig = make_subplots(
     #     rows=1,
     #     cols=cols,
-    #     subplot_titles=[ansatz.replace("_", " ") for ansatz in ansaetze],
+    #     subplot_titles=[beautify_circuit_name(ansatz) for ansatz in ansaetze],
     #     horizontal_spacing=0.03,
     #     vertical_spacing=0.03,
     # )
@@ -827,7 +887,7 @@ def visualize_coeff_variance(df, weighted, legendonly=False):
             fig.add_trace(
                 go.Scatter(
                     y=coeff_var_real,
-                    name=f"{ansatz}",
+                    name=f"{beautify_circuit_name(ansatz)}",
                     mode="lines",
                     line=dict(color=color, width=4),
                     showlegend=False,
@@ -846,7 +906,7 @@ def visualize_coeff_variance(df, weighted, legendonly=False):
             fig.add_trace(
                 go.Scatter(
                     y=coeff_var_imag,
-                    name=f"{ansatz}",
+                    name=f"{beautify_circuit_name(ansatz)}",
                     mode="markers",
                     line=dict(color=color, width=4),
                     showlegend=False,
@@ -866,7 +926,7 @@ def visualize_coeff_variance(df, weighted, legendonly=False):
             x=[None],
             y=[None],
             mode="markers+lines",
-            name=f"{ansatz}",
+            name=f"{beautify_circuit_name(ansatz)}",
             line=dict(color=color, width=4),
             marker=dict(
                 # color=color,
@@ -949,7 +1009,7 @@ def visualize_heatmap(df, selected_seed, weighted, parameters=False):
     fig = make_subplots(
         rows=rows,
         cols=cols,
-        subplot_titles=[ansatz.replace("_", " ") for ansatz in ansaetze],
+        subplot_titles=[beautify_circuit_name(ansatz) for ansatz in ansaetze],
         horizontal_spacing=0.01,
         vertical_spacing=0.04,
     )
@@ -957,7 +1017,9 @@ def visualize_heatmap(df, selected_seed, weighted, parameters=False):
     for it, ansatz in enumerate(ansaetze):
         _df = df[(df.ansatz == ansatz) & (df.seed == selected_seed)]
         if len(_df) == 0:
-            print(f"No data for q={qubit}, ansatz={ansatz}, seed={selected_seed}")
+            print(
+                f"No data for q={qubit}, ansatz={beautify_circuit_name(ansatz)}, seed={selected_seed}"
+            )
             continue
 
         if not parameters:
@@ -1008,7 +1070,7 @@ def visualize_heatmap(df, selected_seed, weighted, parameters=False):
     fig.update_annotations(yshift=-10)
     fig.update_layout(
         title_text=(
-            f"{'Weighted ' if weighted else ''}Correlation of Coefficients for Different Ansaetze ({qubit} Qubits)"
+            f"{'Weight. ' if weighted else ''}Corr. of Coefficients for Different Ansaetze ({qubit} Qubits)"
         ),
         template="plotly_white",
         height=300 * rows,
@@ -1036,7 +1098,9 @@ def visualize_distribution(df, identifier="fig_distribution_valid"):
         ):
             _df = df[(df.ansatz == ansatz) & (df.seed == seed)]
             if len(_df) == 0:
-                print(f"No data for q={qubit}, ansatz={ansatz}, seed={seed}")
+                print(
+                    f"No data for q={qubit}, ansatz={beautify_circuit_name(ansatz)}, seed={seed}"
+                )
                 continue
 
             training_run_ids = ast.literal_eval(_df.training_run_id.unique()[0])
@@ -1048,7 +1112,7 @@ def visualize_distribution(df, identifier="fig_distribution_valid"):
                 fig = get_plotly_figure(training_run_id, identifier=identifier)
                 if fig is None:
                     print(
-                        f"No data for q={qubit}, ansatz={ansatz}, seed={seed}, training_id={training_run_id}"
+                        f"No data for q={qubit}, ansatz={beautify_circuit_name(ansatz)}, seed={seed}, training_id={training_run_id}"
                     )
                     continue
                 for dp in fig.data:
@@ -1061,7 +1125,7 @@ def visualize_distribution(df, identifier="fig_distribution_valid"):
                 )
                 if fig is None:
                     print(
-                        f"No data for q={qubit}, ansatz={ansatz}, seed={seed}, training_id={training_run_id}"
+                        f"No data for q={qubit}, ansatz={beautify_circuit_name(ansatz)}, seed={seed}, training_id={training_run_id}"
                     )
                     continue
                 for dp in fig.data:
@@ -1137,7 +1201,9 @@ def visualize_coeff_param_relation(df, selected_seed):
     for it, ansatz in enumerate(ansaetze):
         _df = df[(df.ansatz == ansatz) & (df.seed == selected_seed)]
         if len(_df) == 0:
-            print(f"No data for q={qubit}, ansatz={ansatz}, seed={selected_seed}")
+            print(
+                f"No data for q={qubit}, ansatz={beautify_circuit_name(ansatz)}, seed={selected_seed}"
+            )
             continue
 
         sub_fig_trace = get_plotly_figure(
@@ -1298,9 +1364,7 @@ def visualize_single_heatmap(df, selected_seed, identifier="coefficients_correla
 
     fig.update_annotations(yshift=-10)
     fig.update_layout(
-        title_text=(
-            f"Correlation of Coefficients for Different Ansaetze ({qubit} Qubits)"
-        ),
+        title_text=(f"Corr. of Coefficients for Different Ansaetze ({qubit} Qubits)"),
         template="plotly_white",
         height=100 * qubit,
         width=110 * qubit,
