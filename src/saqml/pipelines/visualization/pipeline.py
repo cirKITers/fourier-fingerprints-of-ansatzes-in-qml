@@ -99,15 +99,15 @@ def create_pipeline() -> Pipeline:
             #     outputs="fig_parameters_coefficients_complex",
             #     name="visualize_parameters_coefficients_complex",
             # ),
-            node(
-                func=visualize_parameters_coefficients_dist,
-                inputs={
-                    "df": "coefficients",
-                    "model": "model",
-                },
-                outputs="fig_parameters_coefficients_complex",
-                name="visualize_parameters_coefficients_dist",
-            ),
+            # node(
+            #     func=visualize_parameters_coefficients_dist,
+            #     inputs={
+            #         "df": "coefficients",
+            #         "model": "model",
+            #     },
+            #     outputs="fig_parameters_coefficients_complex",
+            #     name="visualize_parameters_coefficients_dist",
+            # ),
             # node(
             #     func=visualize_coefficients_correlated_control,
             #     inputs={
@@ -131,7 +131,7 @@ def create_randcoeffs_pipeline() -> Pipeline:
                     "model": "model",
                     "triu": "params:coefficients.triu",
                 },
-                outputs="fig_random_coefficients_correlated",
+                outputs="fig_coefficients_correlated",
                 name="visualize_random_coefficients_correlated",
             ),
         ]

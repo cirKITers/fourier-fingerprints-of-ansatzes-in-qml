@@ -559,6 +559,15 @@ def generate_fourier_series(
             coefficients_mean + coefficients_variance,
             int(np.ceil(frequencies.shape[0] / 2)),
         )
+        # coefficients = 1.0 * rng.uniform(
+        #     coefficients_mean - coefficients_variance,
+        #     coefficients_mean + coefficients_variance,
+        #     int(np.ceil(frequencies.shape[0] / 2)),
+        # ) + 1.0j * rng.uniform(
+        #     coefficients_mean - coefficients_variance,
+        #     coefficients_mean + coefficients_variance,
+        #     int(np.ceil(frequencies.shape[0] / 2)),
+        # )
     elif coefficients_distribution == "normal":
         coefficients = normal_circle(
             coefficients_mean - coefficients_variance,

@@ -5,7 +5,7 @@ import numpy as nnp
 from rich.progress import Progress
 import itertools
 
-# import dcor
+import dcor
 
 import pandas as pd
 from typing import Dict, List
@@ -71,9 +71,19 @@ def calculate_coefficients(
     coeffs, freqs = Coefficients.calculate_coefficients(
         model, noise_params=noise_params
     )
+
+    normalize = False
+    if normalize:
+        params = (model.params - model.params.min()) / (
+            model.params.max() - model.params.min()
+        )
+        params = params * 2 - 1
+    else:
+        params = model.params
+
     log.info(f"Aggregating results..")
     concatenated = np.concatenate(
-        [model.params.reshape(-1, total_samples), coeffs.reshape(-1, total_samples)],
+        [params.reshape(-1, total_samples), coeffs.reshape(-1, total_samples)],
         axis=0,
     )
     for i, c in enumerate(df.columns):
@@ -276,15 +286,16 @@ def correlate(df: pd.DataFrame, method: str) -> pd.DataFrame:
             method=method
         )  # TODO: why are we getting real valued numbers only
     elif method == "dcor":
-        data = df.to_numpy().transpose()  # -> (n_rvs, n_samples)
+        # only works with non-complex values
+        data = np.abs(df.to_numpy().transpose())  # -> (n_rvs, n_samples)
 
-        raise NotImplementedError()
+        # raise NotImplementedError()
         # temporarily disabled because of issues with llvm
-        # dcor_data = lambda rv: dcor.rowwise(
-        #     dcor.distance_correlation,
-        #     data,
-        #     np.tile(rv, (data.shape[0], 1)),  # repeat over n_rvs
-        # )
+        dcor_data = lambda rv: dcor.rowwise(
+            dcor.distance_correlation,
+            data,
+            np.tile(rv, (data.shape[0], 1)),  # repeat over n_rvs
+        )
 
         # TODO: this can get really slow for large n_rvs
         result = pd.DataFrame(
@@ -325,15 +336,15 @@ def correlate_complex(df: pd.DataFrame, method: str) -> pd.DataFrame:
     if method == "pearson" or method == "spearman":
         result = df.agg([np.real, np.imag]).corr(method=method)
     elif method == "dcor":
-        data = df.to_numpy().transpose()  # -> (n_rvs, n_samples)
+        data = np.abs(df.to_numpy().transpose())  # -> (n_rvs, n_samples)
 
-        raise NotImplementedError()
+        # raise NotImplementedError()
         # temporarily disabled because of issues with llvm
-        # dcor_data = lambda rv: dcor.rowwise(
-        #     dcor.distance_correlation,
-        #     data,
-        #     np.tile(rv, (data.shape[0], 1)),  # repeat over n_rvs
-        # )
+        dcor_data = lambda rv: dcor.rowwise(
+            dcor.distance_correlation,
+            data,
+            np.tile(rv, (data.shape[0], 1)),  # repeat over n_rvs
+        )
 
         # TODO: this can get really slow for large n_rvs
         result = pd.DataFrame(
