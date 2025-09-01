@@ -57,6 +57,7 @@ h5py = "^3.13.0"
 aiohttp = "^3.11.16"
 vector = "^1.6.2"
 nbformat = "^5.10.4"
+dcor = "^0.6"
 
 
 [[tool.poetry.source]]
