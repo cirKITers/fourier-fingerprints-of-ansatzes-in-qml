@@ -16,86 +16,131 @@ from helper import (
     visualize_expr_scatter,
     visualize_coeff_param_relation,
     visualize_coeff_variance,
+    calculate_errors,
+    export_pandas_table,
 )
-import json
 
 cache = True
-weighted = False
-unique_id = "expr_fcc"
+
 
 scenarios = {
-    # "1dfs_rc": {
-    #     "training_experiment_id": None,  # RX-enc: 499640227395518059, RY-enc: 264811618779563708
-    #     "coefficient_id": "552541178809486661",  # RX-enc: 294759570659091329, RY-enc: 286271885992155758, RY-enc-2:654703589739658185
-    #     "expr_id": None,
-    #     "metric": None,
-    #     "metric_name": None,
-    #     "cutoff_steps": None,
-    # },
-    "1dfs_rx": {
-        "training_experiment_id": "499640227395518059",  # RX-enc: 499640227395518059, RY-enc: 264811618779563708
-        "coefficient_id": "294759570659091329",  # RX-enc: 294759570659091329, RY-enc: 286271885992155758, RY-enc-2:654703589739658185
+    "1dfs_rc": {  # random correlation
+        "training_experiment_id": None,
+        "coefficient_id": "552541178809486661",
+        "expr_id": None,
+        "metric": None,
+        "metric_name": None,
+        "cutoff_steps": None,
+        "enabled_plots": ["hms"],
+        "weighted": False,
+    },
+    "1dfs_rx_mse_uw": {
+        "training_experiment_id": "153018957004361226",  # "499640227395518059",
+        "coefficient_id": "294759570659091329",
         "expr_id": "182562157534908977",
         "metric": "mse_valid",
         "metric_name": "Mean Squared Error",
         "cutoff_steps": 1e-2,
+        "enabled_plots": ["hm", "sce", "var"],
+        "weighted": False,
     },
-    "1dfs_ry": {
-        "training_experiment_id": "264811618779563708",  # RX-enc: 499640227395518059, RY-enc: 264811618779563708
-        "coefficient_id": "654703589739658185",  # RX-enc: 294759570659091329, RY-enc: 286271885992155758, RY-enc-2:654703589739658185
+    "1dfs_ry_mse_uw": {
+        "training_experiment_id": "210691117894984179",
+        "coefficient_id": "654703589739658185",
         "expr_id": "182562157534908977",
         "metric": "mse_valid",
         "metric_name": "Mean Squared Error",
         "cutoff_steps": 1e-2,
+        "enabled_plots": ["hm", "sce", "var"],
+        "weighted": False,
     },
-    # "2dfs": {
-    #     "training_experiment_id": "964165187008575029",
-    #     "coefficient_id": "452677263305714256",
-    #     "expr_id": "182562157534908977",
-    #     "metric": "mse_valid",
-    #     "metric_name": "Mean Squared Error",
-    #     "cutoff_steps": 1e-2,
-    # },
-    # "2dhep_mse": {
-    #     "training_experiment_id": "547640067507594003",  # 3000 steps: 240205035422235647, 1000 steps: 547640067507594003 # dists: 100058640076220878
-    #     "coefficient_id": "452677263305714256",
-    #     "expr_id": "182562157534908977",
-    #     "metric": "mse_valid",  # mse_valid, kl_divergence_valid, huber_loss_valid
-    #     "metric_name": "Mean Squared Error",  # Mean Squared Error, KL Divergence, Huber Loss
-    #     "cutoff_steps": 1e-2,
-    # },
-    # "2dhep_kl": {
-    #     "training_experiment_id": "547640067507594003",  # 3000 steps: 240205035422235647, 1000 steps: 547640067507594003 # dists: 100058640076220878
-    #     "coefficient_id": "452677263305714256",
-    #     "expr_id": "182562157534908977",
-    #     "metric": "kl_divergence_valid",  # mse_valid, kl_divergence_valid, huber_loss_valid
-    #     "metric_name": "KL Divergence",  # Mean Squared Error, KL Divergence, Huber Loss
-    #     "cutoff_steps": 1e-2,
-    # },
-    # "2dhep_hl": {
-    #     "training_experiment_id": "547640067507594003",  # 3000 steps: 240205035422235647, 1000 steps: 547640067507594003 # dists: 100058640076220878
-    #     "coefficient_id": "452677263305714256",
-    #     "expr_id": "182562157534908977",
-    #     "metric": "huber_loss_valid",  # mse_valid, kl_divergence_valid, huber_loss_valid
-    #     "metric_name": "Huber Loss",  # Mean Squared Error, KL Divergence, Huber Loss
-    #     "cutoff_steps": 1e-2,
-    # },
-    # "2dhepc": {
-    #     "training_experiment_id": "240205035422235647",  # 3000 steps: 240205035422235647, 1000 steps: 547640067507594003 # dists: 100058640076220878
-    #     "classical_training_experiment_id": "310042118257145976",
-    #     "coefficient_id": "452677263305714256",
-    #     "expr_id": "182562157534908977",
-    #     "metric": "mse_valid",  # mse_valid, kl_divergence
-    #     "metric_name": "Mean Squared Error",  # Mean Squared Error, KL Divergence
-    #     "cutoff_steps": 1e-2,
-    # },
+    "1dfs_rx_mse_w": {
+        "training_experiment_id": "153018957004361226",
+        "coefficient_id": "294759570659091329",
+        "expr_id": "182562157534908977",
+        "metric": "mse_valid",
+        "metric_name": "Mean Squared Error",
+        "cutoff_steps": 1e-2,
+        "enabled_plots": ["hm", "sce"],
+        "weighted": True,
+    },
+    "1dfs_ry_mse_w": {
+        "training_experiment_id": "210691117894984179",
+        "coefficient_id": "654703589739658185",
+        "expr_id": "182562157534908977",
+        "metric": "mse_valid",
+        "metric_name": "Mean Squared Error",
+        "cutoff_steps": 1e-2,
+        "enabled_plots": ["hm", "sce"],
+        "weighted": True,
+    },
+    "2dfs_mse_uw": {
+        "training_experiment_id": "503145545493832494",  # "964165187008575029",
+        "coefficient_id": "452677263305714256",
+        "expr_id": "182562157534908977",
+        "metric": "mse_valid",
+        "metric_name": "Mean Squared Error",
+        "cutoff_steps": 1e-2,
+        "enabled_plots": ["hms", "sce"],
+        "weighted": False,
+    },
+    "2dfs_mse_w": {
+        "training_experiment_id": "503145545493832494",  # "964165187008575029",
+        "coefficient_id": "452677263305714256",
+        "expr_id": "182562157534908977",
+        "metric": "mse_valid",
+        "metric_name": "Mean Squared Error",
+        "cutoff_steps": 1e-2,
+        "enabled_plots": ["hms", "sce"],
+        "weighted": True,
+    },
+    "2dhep_mse_uw": {
+        "training_experiment_id": "547640067507594003",  # 3000 steps: 240205035422235647, 1000 steps: 547640067507594003 # dists: 100058640076220878
+        "coefficient_id": "452677263305714256",
+        "expr_id": "182562157534908977",
+        "metric": "mse_valid",  # mse_valid, kl_divergence_valid, huber_loss_valid
+        "metric_name": "Mean Squared Error",  # Mean Squared Error, KL Divergence, Huber Loss
+        "cutoff_steps": 1e-2,
+        "enabled_plots": ["sce"],
+        "weighted": False,
+    },
+    "2dhep_kl_uw": {
+        "training_experiment_id": "547640067507594003",  # 3000 steps: 240205035422235647, 1000 steps: 547640067507594003 # dists: 100058640076220878
+        "coefficient_id": "452677263305714256",
+        "expr_id": "182562157534908977",
+        "metric": "kl_divergence_valid",  # mse_valid, kl_divergence_valid, huber_loss_valid
+        "metric_name": "KL Divergence",  # Mean Squared Error, KL Divergence, Huber Loss
+        "cutoff_steps": 1e-2,
+        "enabled_plots": ["sce"],
+        "weighted": False,
+    },
+    "2dhep_hl_uw": {
+        "training_experiment_id": "547640067507594003",  # 3000 steps: 240205035422235647, 1000 steps: 547640067507594003 # dists: 100058640076220878
+        "coefficient_id": "452677263305714256",
+        "expr_id": "182562157534908977",
+        "metric": "huber_loss_valid",  # mse_valid, kl_divergence_valid, huber_loss_valid
+        "metric_name": "Huber Loss",  # Mean Squared Error, KL Divergence, Huber Loss
+        "cutoff_steps": 1e-2,
+        "enabled_plots": ["sce"],
+        "weighted": False,
+    },
+    "2dhepc": {
+        "training_experiment_id": "240205035422235647",  # 3000 steps: 240205035422235647, 1000 steps: 547640067507594003 # dists: 100058640076220878
+        "classical_training_experiment_id": "310042118257145976",
+        "coefficient_id": "452677263305714256",
+        "expr_id": "182562157534908977",
+        "metric": "mse_valid",  # mse_valid, kl_divergence
+        "metric_name": "Mean Squared Error",  # Mean Squared Error, KL Divergence
+        "cutoff_steps": 1e-2,
+        "enabled_plots": ["dist"],
+        "weighted": False,
+    },
 }
 # hm(s): heatmap as collection (single)
 # sce: scatter plots of fcc and expressibility over mse
 # rel: coefficient-parameter relation
 # var: coefficient variance
 # dist: distribution plot (for classical training)
-enabled_plots = ["var"]  # "bp", "sc", "sce", "hm", "hms"
 
 all_metrics = ["mse_valid", "huber_loss_valid", "kl_divergence_valid"]
 
@@ -103,10 +148,13 @@ for scenario, setting in scenarios.items():
     print(f"{'-' * 100}")
     print(f"\nScenario: {scenario}\n")
     print(f"{'-' * 100}")
+    df = None
 
     metric = setting["metric"]
     metric_name = setting["metric_name"]
     cutoff_steps = setting["cutoff_steps"]
+    enabled_plots = setting["enabled_plots"]
+    weighted = setting["weighted"]
 
     # get run_ids
     coefficient_run_ids = get_run_ids(setting["coefficient_id"])
@@ -177,12 +225,12 @@ for scenario, setting in scenarios.items():
                 "corr_max",
                 "corr_min",
                 "corr_var",
+                "coeff_var_abs",
+                "coeff_mean_abs",
                 "coeff_var_real",
                 "coeff_var_imag",
-                "coeff_var_abs",
                 "coeff_mean_real",
                 "coeff_mean_imag",
-                "coeff_mean_abs",
                 "expressibility",
                 "steps",
                 "steps_var",
@@ -243,23 +291,23 @@ for scenario, setting in scenarios.items():
                     df.loc[idx, "coeff_run_id"] = current_dataset.coeff_run_id.unique()[
                         0
                     ]
+                    df.at[idx, "coeff_var_abs"] = (
+                        current_dataset.coeff_var_abs.mean().tolist()
+                    )
+                    df.at[idx, "coeff_mean_abs"] = (
+                        current_dataset.coeff_mean_abs.mean().tolist()
+                    )
                     df.at[idx, "coeff_var_real"] = (
                         current_dataset.coeff_var_real.mean().tolist()
                     )
                     df.at[idx, "coeff_var_imag"] = (
                         current_dataset.coeff_var_imag.mean().tolist()
                     )
-                    df.at[idx, "coeff_var_abs"] = (
-                        current_dataset.coeff_var_abs.mean().tolist()
-                    )
                     df.at[idx, "coeff_mean_real"] = (
                         current_dataset.coeff_mean_real.mean().tolist()
                     )
                     df.at[idx, "coeff_mean_imag"] = (
                         current_dataset.coeff_mean_imag.mean().tolist()
-                    )
-                    df.at[idx, "coeff_mean_abs"] = (
-                        current_dataset.coeff_mean_abs.mean().tolist()
                     )
 
                     if training_df is not None:
@@ -326,12 +374,19 @@ for scenario, setting in scenarios.items():
             fig.update_layout(title=f"{scenario}, {q} Qubits, Metric: {metric})")
             save_fig(
                 fig,
-                f"{scenario}_sc_q{q}_{'w' if weighted else 'uw'}",
+                f"{scenario}_sc_q{q}",
                 cache_id,
                 scenario,
             )
 
         if "sce" in enabled_plots:
+            errors_table = calculate_errors(
+                df[df.qubits == q], ansatz_ids, f"{metric}_min", weighted=weighted
+            )
+            export_pandas_table(
+                errors_table, f"{scenario}_err_q{q}", cache_id, scenario
+            )
+
             # scatter plot
             fig = visualize_expr_scatter(
                 df[df.qubits == q],
@@ -345,7 +400,7 @@ for scenario, setting in scenarios.items():
             fig.update_layout(title=f"")
             save_fig(
                 fig,
-                f"{scenario}_sce_q{q}_{'w' if weighted else 'uw'}",
+                f"{scenario}_sce_q{q}",
                 cache_id,
                 scenario,
                 showlegend=False,
@@ -364,11 +419,10 @@ for scenario, setting in scenarios.items():
             fig.update_layout(title=f"")
             save_fig(
                 fig,
-                f"{scenario}_sce_q{q}_{'w' if weighted else 'uw'}_legend",
+                f"{scenario}_sce_q{q}_legend",
                 cache_id,
                 scenario,
                 showlegend=True,
-                font_size=20,
             )
 
         if scenario == "1dfs_rc":
@@ -380,7 +434,7 @@ for scenario, setting in scenarios.items():
             fig.update_layout(title=f"")
             save_fig(
                 fig,
-                f"{scenario}_hm_q{q}_{'w' if weighted else 'uw'}",
+                f"{scenario}_hm_q{q}",
                 cache_id,
                 scenario,
             )
@@ -389,30 +443,29 @@ for scenario, setting in scenarios.items():
             fig.update_layout(title=f"")
             save_fig(
                 fig,
-                f"{scenario}_hm_q{q}_{'w' if weighted else 'uw'}",
+                f"{scenario}_hm_q{q}",
                 cache_id,
                 scenario,
             )
 
-        if "1dfs" in scenario and "rel" in enabled_plots:
+        if "rel" in enabled_plots:
             fig = visualize_coeff_param_relation(df[df.qubits == q], 1000)
             fig.update_layout(title=f"")
             save_fig(
                 fig,
-                f"{scenario}_rel_q{q}_{'w' if weighted else 'uw'}",
+                f"{scenario}_rel_q{q}",
                 cache_id,
                 scenario,
-                # font_size=20,
             )
 
-        if "1dfs" in scenario and "var" in enabled_plots:
+        if "var" in enabled_plots:
             fig = visualize_coeff_variance(
                 df[df.qubits == q], weighted=False, legendonly=False
             )
             fig.update_layout(title=f"")
             save_fig(
                 fig,
-                f"{scenario}_var_q{q}_{'w' if weighted else 'uw'}",
+                f"{scenario}_var_q{q}",
                 cache_id,
                 scenario,
                 showlegend=False,
@@ -425,11 +478,10 @@ for scenario, setting in scenarios.items():
             fig.update_layout(title=f"")
             save_fig(
                 fig,
-                f"{scenario}_sce_q{q}_{'w' if weighted else 'uw'}_legend",
+                f"{scenario}_var_q{q}_legend",
                 cache_id,
                 scenario,
                 showlegend=True,
-                font_size=20,
             )
 
         if "2dfs" in scenario and "hms" in enabled_plots:
@@ -441,7 +493,7 @@ for scenario, setting in scenarios.items():
             fig.update_layout(title=f"")
             save_fig(
                 fig,
-                f"{scenario}_hms_q{q}_{'w' if weighted else 'uw'}",
+                f"{scenario}_hms_q{q}",
                 cache_id,
                 scenario,
             )
