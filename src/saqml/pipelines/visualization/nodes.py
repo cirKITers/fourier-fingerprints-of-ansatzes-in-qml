@@ -257,6 +257,7 @@ def visualize_coefficients_correlated(
         #     how="all", axis=1
         # )
 
+    # TODO: move before triu?
     mlflow.log_metric("coefficients_correlation_variance", df.abs().var().var())
     mlflow.log_metric("coefficients_correlation_mean", df.abs().mean(axis=None))
     mlflow.log_metric("coefficients_correlation_max", df.abs().max(axis=None))
