@@ -1,14 +1,12 @@
 from saqml.helpers.coefficients import Coefficients
 from qml_essentials.model import Model
-import pennylane.numpy as np
-import numpy as nnp
-from rich.progress import Progress
+import numpy as np
 import itertools
 
 import dcor
 
 import pandas as pd
-from typing import Dict, List
+from typing import Dict
 
 import logging
 

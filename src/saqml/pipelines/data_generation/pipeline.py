@@ -1,14 +1,12 @@
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Pipeline, Node, pipeline
 
 from .nodes import (
-    sample_domain,
     generate_fourier_series,
-    sample_fourier_series,
-    create_model,
+    build_fourier_series_dataloader,
+    generate_model,
     create_classical_model,
     tikz_model,
     print_model,
-    get_fourier_dataset,
     get_hep_dataset,
     calculate_hep_spectrum,
 )
@@ -17,7 +15,7 @@ from .nodes import (
 def draw_model_pipeline() -> Pipeline:
     return pipeline(
         [
-            node(
+            Node(
                 func=tikz_model,
                 inputs={
                     "n_qubits": "params:model.n_qubits",
@@ -35,25 +33,27 @@ def draw_model_pipeline() -> Pipeline:
 def create_model_pipeline() -> Pipeline:
     return pipeline(
         [
-            node(
-                func=create_model,
-                inputs={
-                    "n_qubits": "params:model.n_qubits",
-                    "n_layers": "params:model.n_layers",
-                    "circuit_type": "params:model.circuit_type",
-                    "data_reupload": "params:model.data_reupload",
-                    "encoding": "params:model.encoding",
-                    "initialization": "params:model.initialization",
-                    "initialization_domain": "params:model.initialization_domain",
-                    "mp_threshold": "params:model.mp_threshold",
-                    "output_qubit": "params:model.output_qubit",
-                    "seed": "params:seed",
-                    "layer_multiplier": "params:model.layer_multiplier",
+            Node(
+                generate_model,
+                name="generate_model",
+                tags=["generation"],
+                inputs=[
+                    "params:model.n_qubits",
+                    "params:model.n_layers",
+                    "params:model.circuit_type",
+                    "params:model.data_reupload",
+                    "params:model.encoding_gates",
+                    "params:model.encoding_strategy",
+                    "params:model.initialization",
+                    "params:model.initialization_domain",
+                    "params:model.output_qubit",
+                    "params:model.seed",
+                ],
+                outputs={
+                    "model": "model",
                 },
-                outputs="model",
-                name="create_model",
             ),
-            node(
+            Node(
                 func=print_model,
                 inputs={
                     "model": "model",
@@ -68,7 +68,7 @@ def create_model_pipeline() -> Pipeline:
 def create_classical_model_pipeline() -> Pipeline:
     return pipeline(
         [
-            node(
+            Node(
                 func=create_classical_model,
                 inputs={
                     "width": "params:model.width",
@@ -78,7 +78,7 @@ def create_classical_model_pipeline() -> Pipeline:
                 outputs="model",
                 name="create_model",
             ),
-            node(
+            Node(
                 func=print_model,
                 inputs={
                     "model": "model",
@@ -93,62 +93,37 @@ def create_classical_model_pipeline() -> Pipeline:
 def create_fourier_pipeline() -> Pipeline:
     return pipeline(
         [
-            node(
-                func=sample_domain,
-                inputs={
-                    "model": "model",
-                    "domain": "params:data.fourier.domain",
-                    "omegas": "params:data.fourier.omegas",
-                },
-                outputs="domain_samples",
-                name="sample_domain",
-            ),
-            node(
-                func=generate_fourier_series,
-                inputs={
-                    "model": "model",
-                    "domain_samples": "domain_samples",
-                    "omegas": "params:data.fourier.omegas",
-                    "coefficients_mean": "params:data.fourier.coefficients.mean",
-                    "coefficients_variance": "params:data.fourier.coefficients.variance",
-                    "coefficients_distribution": "params:data.fourier.coefficients.distribution",
-                    "offset": "params:data.fourier.offset",
-                    "seed": "params:data.seed",
-                },
-                outputs={
-                    "fourier_series": "fourier_series",
-                    "target": "coeffs_target",
-                },
+            Node(
+                generate_fourier_series,
                 name="generate_fourier_series",
-            ),
-            # node(
-            #     func=sample_fourier_series,
-            #     inputs={
-            #         "domain_samples": "domain_samples",
-            #         "omegas": "params:data.fourier.omegas",
-            #         "sample_mean": "params:data.fourier.samples.mean",
-            #         "sample_variance": "params:data.fourier.samples.variance",
-            #         "sample_distribution": "params:data.fourier.samples.distribution",
-            #         "seed": "params:data.seed",
-            #     },
-            #     outputs={
-            #         "fourier_series": "fourier_series",
-            #         "target": "coeffs_target",
-            #     },
-            #     name="sample_fourier_series",
-            # ),
-            node(
-                func=get_fourier_dataset,
-                inputs={
-                    "batch_size": "params:training.batch_size",
+                tags=["generation"],
+                inputs=[
+                    "model",
+                    "params:data.coefficients_min",
+                    "params:data.coefficients_max",
+                    "params:data.zero_centered",
+                    "params:data.seed",
+                ],
+                outputs={
                     "domain_samples": "domain_samples",
-                    "fourier_series": "fourier_series",
+                    "fourier_samples": "fourier_samples",
+                    "coefficients": "coefficients",
                 },
+            ),
+            Node(
+                build_fourier_series_dataloader,
+                name="build_fourier_series_dataloader",
+                tags=["generation"],
+                inputs=[
+                    "params:data.batch_size",
+                    "domain_samples",
+                    "fourier_samples",
+                    "coefficients",
+                ],
                 outputs={
                     "train_loader": "train_loader",
                     "valid_loader": "valid_loader",
                 },
-                name="get_fourier_dataset",
             ),
         ]
     )
@@ -157,7 +132,7 @@ def create_fourier_pipeline() -> Pipeline:
 def create_hep_pipeline() -> Pipeline:
     return pipeline(
         [
-            node(
+            Node(
                 func=get_hep_dataset,
                 inputs={
                     "batch_size": "params:training.batch_size",
@@ -174,7 +149,7 @@ def create_hep_pipeline() -> Pipeline:
                 },
                 name="get_hep_dataset",
             ),
-            node(
+            Node(
                 func=calculate_hep_spectrum,
                 inputs={
                     "data_loader": "train_loader",
