@@ -607,7 +607,7 @@ def visualize_expr_scatter(
     main_colors_it, sec_colors_it = get_color_iterator(option=0)
     symbols_iterator = get_symbol_iterator(start=5)
     symbols_iterator = iter(
-        ["circle", "square", "diamond", "cross", "x", "triangle-up", "hexagon", "star"]
+        ["circle", "square", "diamond", "cross", "x", "triangle-up", "hourglass", "star"]
     )
     error_y = False
     error_x = False
