@@ -38,6 +38,14 @@ class design:
     font_size = 22
 
 
+def _coerce_export_number(value):
+    if isinstance(value, np.integer):
+        return int(value)
+    if isinstance(value, np.floating):
+        return float(value)
+    return value
+
+
 def save_fig(
     fig,
     name,
@@ -80,7 +88,12 @@ def save_fig(
         fig.update_layout(
             margin=dict(l=0, r=0, t=0, b=0),
         )
-    fig.write_image(f"{path}{name}.pdf", scale=scale)
+    fig.write_image(
+        f"{path}{name}.pdf",
+        width=_coerce_export_number(fig.layout.width),
+        height=_coerce_export_number(fig.layout.height),
+        scale=_coerce_export_number(scale),
+    )
 
 
 def get_run_ids(experiment_id):
