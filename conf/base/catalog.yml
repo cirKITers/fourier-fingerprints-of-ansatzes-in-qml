@@ -59,9 +59,9 @@ fig_input_data:
   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "fig_input_data.html"
 
-# fig_random_coefficients_correlated:
-#   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
-#   filepath: "random_coefficients_correlated.html"
+fig_random_coefficients_correlated:
+  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  filepath: "random_coefficients_correlated.html"
 
 # fig_parameters_correlated:
 #   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
