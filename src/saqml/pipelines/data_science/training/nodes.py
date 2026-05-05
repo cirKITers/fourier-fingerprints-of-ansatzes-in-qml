@@ -1,5 +1,6 @@
 from qml_essentials.entanglement import Entanglement
 from qml_essentials.model import Model
+from qml_essentials.coefficients import Coefficients
 from torch.utils.data import DataLoader
 import torch
 import jax
@@ -18,8 +19,6 @@ from scipy.stats import wasserstein_distance, anderson_ksamp, energy_distance
 # from torch.nn.functional import huber_loss as huber_loss
 
 import logging
-
-from saqml.helpers.coefficients import Coefficients
 
 log = logging.getLogger(__name__)
 
@@ -357,7 +356,12 @@ def train_model(
 
         if log_coefficients and type(model) == Model:
             # log coefficients
-            coeffs, _ = Coefficients.calculate_coefficients(model, cache=False)
+            coeffs, _ = Coefficients.get_spectrum(
+                model,
+                shift=True,
+                trim=True,
+                cache=False,
+            )
             df_coeffs = pd.concat(
                 [
                     df_coeffs,

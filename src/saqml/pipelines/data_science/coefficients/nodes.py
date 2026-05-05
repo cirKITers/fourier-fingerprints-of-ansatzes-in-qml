@@ -1,9 +1,12 @@
-from saqml.helpers.coefficients import Coefficients
 from qml_essentials.model import Model
+from qml_essentials.coefficients import Coefficients, FCC
+import jax
 import jax.numpy as jnp
 import itertools
 
 import dcor
+import mlflow
+import numpy as np
 
 import pandas as pd
 from typing import Dict
@@ -11,6 +14,52 @@ from typing import Dict
 import logging
 
 log = logging.getLogger(__name__)
+
+
+def _str_sign(num: int):
+    return f"{num}" if num < 0 else f"+{num}"
+
+
+def _coefficient_columns(freqs) -> list[str]:
+    freqs = np.asarray(freqs)
+
+    if freqs.ndim == 1:
+        return [f"c_{_str_sign(int(freq))}" for freq in freqs]
+
+    freq_axes = [freqs[i] for i in range(freqs.shape[0])]
+
+    return [
+        f"c_{'_'.join(_str_sign(int(freq)) for freq in freq_tuple)}"
+        for freq_tuple in itertools.product(*freq_axes)
+    ]
+
+
+def calculate_fingerprint(
+    model: Model,
+    seed: int,
+    n_samples: int,
+    numerical_cap: float,
+):
+    fingerprint, _ = FCC.get_fourier_fingerprint(
+        model=model,
+        n_samples=n_samples,
+        random_key=jax.random.PRNGKey(seed),
+        numerical_cap=numerical_cap,
+    )
+
+    return {
+        "fingerprint": fingerprint,
+    }
+
+
+def calculate_fcc(model: Model, fingerprint: jnp.ndarray):
+    fcc = FCC.calculate_fcc(fourier_fingerprint=fingerprint)
+
+    mlflow.log_metric("fcc", float(fcc))
+
+    return {
+        "fcc": fcc,
+    }
 
 
 def calculate_coefficients(
@@ -38,36 +87,23 @@ def calculate_coefficients(
     jnp.ndarray
         The Fourier coefficients of the model.
     """
-    n_params = model.params.size
-
-    def str_sign(num: int):
-        return f"{num}" if num < 0 else f"+{num}"
-
-    # Build a pandas dataframe with the parameters and coefficients as columns
-    df = pd.DataFrame(
-        columns=[
-            *[f"p_{i}" for i in range(n_params)],
-            *[
-                f"c_{'_'.join(str_sign(v) for v in tup)}"
-                for tup in itertools.product(
-                    *[range(-model.degree, model.degree + 1)] * model.n_input_feat
-                )
-            ],  # symmetric + zero frequency
-        ]
-    )
-
     if n_samples > 0:
         total_samples = int(
             jnp.power(2, model.n_qubits) * n_samples * model.n_input_feat
         )
         log.info(f"Total number of samples: {total_samples}")
-        rng = jnp.random.default_rng(seed)
-        model.initialize_params(rng=rng, repeat=total_samples)
+        model.initialize_params(
+            random_key=jax.random.PRNGKey(seed),
+            repeat=total_samples,
+        )
     else:
         total_samples = 1
 
-    coeffs, freqs = Coefficients.calculate_coefficients(
-        model, noise_params=noise_params
+    coeffs, freqs = Coefficients.get_spectrum(
+        model,
+        shift=True,
+        trim=True,
+        noise_params=noise_params,
     )
 
     normalize = False
@@ -79,13 +115,16 @@ def calculate_coefficients(
     else:
         params = model.params
 
+    params = np.asarray(params).reshape(total_samples, -1)
+    coeffs = np.asarray(coeffs).reshape(-1, total_samples).transpose()
+
+    # Build a pandas dataframe with the parameters and coefficients as columns
+    parameter_columns = [f"p_{i}" for i in range(params.shape[1])]
+    coefficient_columns = _coefficient_columns(freqs)
+
     log.info(f"Aggregating results..")
-    concatenated = jnp.concatenate(
-        [params.reshape(-1, total_samples), coeffs.reshape(-1, total_samples)],
-        axis=0,
-    )
-    for i, c in enumerate(df.columns):
-        df[c] = concatenated[i]
+    df = pd.DataFrame(params, columns=parameter_columns)
+    df[coefficient_columns] = coeffs
 
     # for i in range(total_samples):
     #     # append the parameters and absolute values of coefficients
@@ -95,7 +134,7 @@ def calculate_coefficients(
     #         *coeffs[..., i].flatten(),
     #     ]
 
-    df = df.astype({f"p_{i}": "float64" for i in range(n_params)})
+    df = df.astype({column: "float64" for column in parameter_columns})
 
     return df
 
@@ -115,11 +154,11 @@ def filter_coefficients(df: pd.DataFrame, model: Model) -> pd.DataFrame:
         Filtered dataframe.
     """
     if len(df.index) == len(df.columns) and jnp.all(df.index == df.columns):
-        return df.filter(regex=f"c(_\+\d+){{{model.n_input_feat}}}", axis=0).filter(
-            regex=f"c(_\+\d+){{{model.n_input_feat}}}", axis=1
+        return df.filter(regex=rf"c(_\+\d+){{{model.n_input_feat}}}", axis=0).filter(
+            regex=rf"c(_\+\d+){{{model.n_input_feat}}}", axis=1
         )
     else:
-        return df.filter(regex=f"c(_\+\d+){{{model.n_input_feat}}}", axis=1)
+        return df.filter(regex=rf"c(_\+\d+){{{model.n_input_feat}}}", axis=1)
 
 
 def sample_coefficients(model: Model, n_samples: int, seed: int, mean: float = 0):

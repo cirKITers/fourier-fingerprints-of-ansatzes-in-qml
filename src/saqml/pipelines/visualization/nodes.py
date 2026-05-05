@@ -3,7 +3,6 @@ from torch.utils.data import DataLoader
 import torch
 import plotly.figure_factory as ff
 from plotly.subplots import make_subplots
-import pennylane.numpy as pnp
 import numpy as np
 import plotly.graph_objects as go
 import plotly.colors as pc
@@ -250,8 +249,8 @@ def visualize_coefficients_correlated(
         for i in range(df.shape[0]):
             for j in range(df.shape[1]):
                 if i <= j:
-                    df.iloc[i, j] = pnp.nan
-                    # df_weighted.iloc[i, j] = pnp.nan
+                    df.iloc[i, j] = np.nan
+                    # df_weighted.iloc[i, j] = np.nan
         df = df.dropna(how="all", axis=0).dropna(how="all", axis=1)
         # df_weighted = df_weighted.dropna(how="all", axis=0).dropna(
         #     how="all", axis=1
@@ -303,8 +302,8 @@ def visualize_coefficients_correlated_complex(
         for i in range(df.shape[0]):
             for j in range(df.shape[1]):
                 if i <= j:
-                    df.iloc[i, j] = pnp.nan
-                    # df_weighted.iloc[i, j] = pnp.nan
+                    df.iloc[i, j] = np.nan
+                    # df_weighted.iloc[i, j] = np.nan
         df = df.dropna(how="all", axis=0).dropna(how="all", axis=1)
         # df_weighted = df_weighted.dropna(how="all", axis=0).dropna(
         #     how="all", axis=1
@@ -350,8 +349,8 @@ def visualize_coefficients_correlated_3d(
     #     for i in range(df.shape[0]):
     #         for j in range(df.shape[1]):
     #             if i <= j:
-    #                 df.iloc[i, j] = pnp.nan
-    #                 # df_weighted.iloc[i, j] = pnp.nan
+    #                 df.iloc[i, j] = np.nan
+    #                 # df_weighted.iloc[i, j] = np.nan
     #     df = df.dropna(how="all", axis=0).dropna(how="all", axis=1)
     # df_weighted = df_weighted.dropna(how="all", axis=0).dropna(
     #     how="all", axis=1
@@ -379,8 +378,8 @@ def visualize_coefficients_correlated_3d(
         layer_idx = 0
         for X1 in range(model.degree + 1):
             Y_temp = (
-                df.filter(regex=f"c(_\+{X1}_\+)", axis=0)
-                .filter(regex=f"c(_\+{X1}_\+)", axis=1)
+                df.filter(regex=rf"c(_\+{X1}_\+)", axis=0)
+                .filter(regex=rf"c(_\+{X1}_\+)", axis=1)
                 .to_numpy()
             )
             Y_temp -= np.eye(model.degree + 1) - layer_idx
@@ -388,8 +387,8 @@ def visualize_coefficients_correlated_3d(
             Y.append(Y_temp)
         for X2 in range(model.degree + 1):
             Y_temp = (
-                df.filter(regex=f"c(_\+{X1}_\+)", axis=0)
-                .filter(regex=f"c(_\+{X1}_\+)", axis=1)
+                df.filter(regex=rf"c(_\+{X1}_\+)", axis=0)
+                .filter(regex=rf"c(_\+{X1}_\+)", axis=1)
                 .to_numpy()
             )
             Y_temp -= np.eye(model.degree + 1) - layer_idx
@@ -428,8 +427,8 @@ def visualize_coefficients_correlated_filtered_weighted(
         for i in range(df.shape[0]):
             for j in range(df.shape[1]):
                 if i <= j:
-                    df.iloc[i, j] = pnp.nan
-                    # df_weighted.iloc[i, j] = pnp.nan
+                    df.iloc[i, j] = np.nan
+                    # df_weighted.iloc[i, j] = np.nan
         df = df.dropna(how="all", axis=0).dropna(how="all", axis=1)
         # df_weighted = df_weighted.dropna(how="all", axis=0).dropna(
         #     how="all", axis=1
@@ -468,7 +467,7 @@ def visualize_parameters_correlated(
         for i in range(df.shape[0]):
             for j in range(df.shape[1]):
                 if i <= j:
-                    df.iloc[i, j] = pnp.nan
+                    df.iloc[i, j] = np.nan
         df = df.dropna(how="all", axis=0).dropna(how="all", axis=1)
 
     mlflow.log_metric("parameters_correlation_variance", df.var().var())
@@ -493,8 +492,8 @@ def visualize_parameters_correlated(
 def visualize_parameters_coefficients_correlated(
     df: pd.DataFrame, model: Model, discard_negative=True
 ) -> go.Figure:
-    df_filtered = df.filter(regex="p_\d+", axis=0).filter(
-        regex=f"c(_\+\d+){{{model.n_input_feat}}}", axis=1
+    df_filtered = df.filter(regex=r"p_\d+", axis=0).filter(
+        regex=rf"c(_\+\d+){{{model.n_input_feat}}}", axis=1
     )
 
     mlflow.log_metric(
@@ -527,7 +526,7 @@ def visualize_parameters_coefficients_correlated(
 def visualize_parameters_coefficients_complex(
     df: pd.DataFrame, model: Model, discard_negative=True
 ) -> go.Figure:
-    df_filtered = df.filter(regex=f"(_\+?\d+){{{model.n_input_feat}}}", axis=1)
+    df_filtered = df.filter(regex=rf"(_\+?\d+){{{model.n_input_feat}}}", axis=1)
 
     fig = make_subplots(
         rows=model.params.size,
@@ -601,7 +600,7 @@ def visualize_parameters_coefficients_complex(
 def visualize_parameters_coefficients_dist(
     df: pd.DataFrame, model: Model, discard_negative=True
 ) -> go.Figure:
-    df_filtered = df.filter(regex=f"(_\+?\d+){{{model.n_input_feat}}}", axis=1)
+    df_filtered = df.filter(regex=rf"(_\+?\d+){{{model.n_input_feat}}}", axis=1)
 
     def two_d_gaussian(x, *args):
         # args should contain multiple of a, mu, sigma
