@@ -1,6 +1,6 @@
 from saqml.helpers.coefficients import Coefficients
 from qml_essentials.model import Model
-import numpy as np
+import jax.numpy as jnp
 import itertools
 
 import dcor
@@ -35,7 +35,7 @@ def calculate_coefficients(
 
     Returns
     -------
-    np.ndarray
+    jnp.ndarray
         The Fourier coefficients of the model.
     """
     n_params = model.params.size
@@ -58,10 +58,10 @@ def calculate_coefficients(
 
     if n_samples > 0:
         total_samples = int(
-            np.power(2, model.n_qubits) * n_samples * model.n_input_feat
+            jnp.power(2, model.n_qubits) * n_samples * model.n_input_feat
         )
         log.info(f"Total number of samples: {total_samples}")
-        rng = np.random.default_rng(seed)
+        rng = jnp.random.default_rng(seed)
         model.initialize_params(rng=rng, repeat=total_samples)
     else:
         total_samples = 1
@@ -80,7 +80,7 @@ def calculate_coefficients(
         params = model.params
 
     log.info(f"Aggregating results..")
-    concatenated = np.concatenate(
+    concatenated = jnp.concatenate(
         [params.reshape(-1, total_samples), coeffs.reshape(-1, total_samples)],
         axis=0,
     )
@@ -114,7 +114,7 @@ def filter_coefficients(df: pd.DataFrame, model: Model) -> pd.DataFrame:
     pd.DataFrame
         Filtered dataframe.
     """
-    if len(df.index) == len(df.columns) and np.all(df.index == df.columns):
+    if len(df.index) == len(df.columns) and jnp.all(df.index == df.columns):
         return df.filter(regex=f"c(_\+\d+){{{model.n_input_feat}}}", axis=0).filter(
             regex=f"c(_\+\d+){{{model.n_input_feat}}}", axis=1
         )
@@ -123,8 +123,8 @@ def filter_coefficients(df: pd.DataFrame, model: Model) -> pd.DataFrame:
 
 
 def sample_coefficients(model: Model, n_samples: int, seed: int, mean: float = 0):
-    rng = np.random.default_rng(seed)
-    total_samples = int(np.power(2, model.n_qubits) * n_samples)
+    rng = jnp.random.default_rng(seed)
+    total_samples = int(jnp.power(2, model.n_qubits) * n_samples)
     log.info(f"Total number of samples: {total_samples}")
 
     def pascal_triangle(n):
@@ -135,8 +135,8 @@ def sample_coefficients(model: Model, n_samples: int, seed: int, mean: float = 0
                 row.append(triangle[-1][i - 1] + triangle[-1][i])
             row.append(1)  # last entry
             triangle.append(row)
-        triangle = np.array(triangle[-1])
-        return triangle / np.linalg.norm(triangle)
+        triangle = jnp.array(triangle[-1])
+        return triangle / jnp.linalg.norm(triangle)
 
     # calculate variances using normalised pascal triangle
     variances = pascal_triangle(2 * model.degree + 1)
@@ -144,14 +144,14 @@ def sample_coefficients(model: Model, n_samples: int, seed: int, mean: float = 0
     log.info(f"Using variances {variances[len(variances) // 2 :]}")
 
     # calculate positive coefficients including zero
-    coeffs_pz = np.zeros((model.degree + 1, total_samples))
+    coeffs_pz = jnp.zeros((model.degree + 1, total_samples))
     for i, variance in enumerate(variances[len(variances) // 2 :]):
         coeffs_pz[i] = rng.normal(loc=mean, scale=variance, size=total_samples)
 
     # mirror the coefficients for the negative spectrum and transpose
     # such that we end up with a shape of [n_samples, 2*degree+1]
-    coefficients = np.concatenate(
-        (np.flip(coeffs_pz[1:], axis=0), coeffs_pz), axis=0
+    coefficients = jnp.concatenate(
+        (jnp.flip(coeffs_pz[1:], axis=0), coeffs_pz), axis=0
     ).transpose()
 
     df = pd.DataFrame(
@@ -187,7 +187,7 @@ def calculate_decay(df: pd.DataFrame) -> pd.DataFrame:
         A dictionary containing the decay of the coefficients.
     """
 
-    coefficients_decay = df.abs().apply(np.mean)
+    coefficients_decay = df.abs().apply(jnp.mean)
 
     return coefficients_decay
 
@@ -218,35 +218,35 @@ def weight_coefficients(
     """
     nc = df.shape[0]
     if weighting == "coefficients_add":
-        weights = np.ones((nc, nc))
+        weights = jnp.ones((nc, nc))
         coefficients_decay = coefficients_decay / coefficients_decay.max()
         for i in range(nc):
             for j in range(nc):
                 weights[i, j] = coefficients_decay.iloc[i] + coefficients_decay.iloc[j]
-        np.fill_diagonal(weights, 0)
+        jnp.fill_diagonal(weights, 0)
         weights /= weights.max()
-        np.fill_diagonal(weights, 1)
+        jnp.fill_diagonal(weights, 1)
     if weighting == "coefficients_prod":
-        weights = np.ones((nc, nc))
+        weights = jnp.ones((nc, nc))
         coefficients_decay = coefficients_decay / coefficients_decay.max()
         for i in range(nc):
             for j in range(nc):
-                weights[i, j] = np.sqrt(
+                weights[i, j] = jnp.sqrt(
                     coefficients_decay.iloc[i] * coefficients_decay.iloc[j]
                 )
-        np.fill_diagonal(weights, 0)
+        jnp.fill_diagonal(weights, 0)
         weights /= weights.max()
-        np.fill_diagonal(weights, 1)
+        jnp.fill_diagonal(weights, 1)
     elif weighting == "frequencies":
-        weights = np.ones((nc, nc))
+        weights = jnp.ones((nc, nc))
         for i in range(nc):
             for j in range(nc):
-                weights[i, j] = 1 / np.sqrt((i + 1) * (j + 1))
-        np.fill_diagonal(weights, 0)
+                weights[i, j] = 1 / jnp.sqrt((i + 1) * (j + 1))
+        jnp.fill_diagonal(weights, 0)
         weights /= weights.max()
-        np.fill_diagonal(weights, 1)
+        jnp.fill_diagonal(weights, 1)
     elif weighting == "linear":
-        weights = np.flip(nnp.mgrid[0:nc:1, 0:nc:1].sum(axis=0) / ((nc - 1) * 2))
+        weights = jnp.flip(njnp.mgrid[0:nc:1, 0:nc:1].sum(axis=0) / ((nc - 1) * 2))
     else:
         raise NotImplementedError(f"Weighting {weighting} not implemented.")
 
@@ -285,19 +285,19 @@ def correlate(df: pd.DataFrame, method: str) -> pd.DataFrame:
         )  # TODO: why are we getting real valued numbers only
     elif method == "dcor":
         # only works with non-complex values
-        data = np.abs(df.to_numpy().transpose())  # -> (n_rvs, n_samples)
+        data = jnp.abs(df.to_numpy().transpose())  # -> (n_rvs, n_samples)
 
         # raise NotImplementedError()
         # temporarily disabled because of issues with llvm
         dcor_data = lambda rv: dcor.rowwise(
             dcor.distance_correlation,
             data,
-            np.tile(rv, (data.shape[0], 1)),  # repeat over n_rvs
+            jnp.tile(rv, (data.shape[0], 1)),  # repeat over n_rvs
         )
 
         # TODO: this can get really slow for large n_rvs
         result = pd.DataFrame(
-            np.array([dcor_data(rv) for rv in data]),
+            jnp.array([dcor_data(rv) for rv in data]),
             index=df.columns,
             columns=df.columns,
         )
@@ -332,21 +332,21 @@ def correlate_complex(df: pd.DataFrame, method: str) -> pd.DataFrame:
         If the given method is not supported.
     """
     if method == "pearson" or method == "spearman":
-        result = df.agg([np.real, np.imag]).corr(method=method)
+        result = df.agg([jnp.real, jnp.imag]).corr(method=method)
     elif method == "dcor":
-        data = np.abs(df.to_numpy().transpose())  # -> (n_rvs, n_samples)
+        data = jnp.abs(df.to_numpy().transpose())  # -> (n_rvs, n_samples)
 
         # raise NotImplementedError()
         # temporarily disabled because of issues with llvm
         dcor_data = lambda rv: dcor.rowwise(
             dcor.distance_correlation,
             data,
-            np.tile(rv, (data.shape[0], 1)),  # repeat over n_rvs
+            jnp.tile(rv, (data.shape[0], 1)),  # repeat over n_rvs
         )
 
         # TODO: this can get really slow for large n_rvs
         result = pd.DataFrame(
-            np.array([dcor_data(rv) for rv in data]),
+            jnp.array([dcor_data(rv) for rv in data]),
             index=df.columns,
             columns=df.columns,
         )
@@ -418,7 +418,7 @@ def normalize(df: pd.DataFrame) -> pd.DataFrame:
 #         )
 #         sample_coeff_task = progress.add_task("Sampling...", total=n_samples)
 #         # coefficients_correlated_mean = []
-#         for i, cv in enumerate(np.linspace(0, np.pi, n_control_values, endpoint=True)):
+#         for i, cv in enumerate(jnp.linspace(0, jnp.pi, n_control_values, endpoint=True)):
 
 #             coefficients = Coefficients.numerical(
 #                 model=model,
