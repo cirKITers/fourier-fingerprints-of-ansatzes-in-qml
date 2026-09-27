@@ -1,40 +1,31 @@
+# Everything a run produces or consumes: the engine's store and each study's
+# exported results and figures. Reproducible from the flows plus dev/.
+.fluksio/
+dev/*/data/
+dev/*/results/
+dev/*/figures/
+logs/
+
+# The CSVs behind the paper figures are tracked
+*.csv
+!dev/*/reference/**/*.csv
+
+# Legacy MLflow runs and archives, the HEP dataset
 mlruns
 mlruns_bckp
+results
+*tar.gz
+606678497984501415
+data/
+
 notebooks/dep
+notebooks/datasets
 session_store.db
-*.csv
 model.txt
 stats.json
 *.html
 *.pdf
 info.log.*
-logs/*
-results
-notebooks/datasets
-*tar.gz
-606678497984501415
-##########################
-# KEDRO PROJECT
-
-# ignore all local configuration
-conf/local/**
-!conf/local/.gitkeep
-
-# ignore potentially sensitive credentials files
-conf/**/*credentials*
-
-# ignore everything in the following folders
-data/**
-
-# except their sub-folders
-!data/**/
-
-# also keep all .gitkeep files
-!.gitkeep
-
-# keep also the example dataset
-!data/01_raw/*
-
 
 ##########################
 # Common files
@@ -141,8 +132,6 @@ target/
 # Jupyter Notebook
 .ipynb_checkpoints
 
-# pyenv
-.python-version
 
 # celery beat schedule file
 celerybeat-schedule
