@@ -1,3 +1,6 @@
+AGENTS.md
+docs/NOTEPAD.md
+
 # Everything a run produces or consumes: the engine's store and each study's
 # exported results and figures. Reproducible from the flows plus dev/.
 .fluksio/
