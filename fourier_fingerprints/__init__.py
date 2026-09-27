@@ -1,0 +1,10 @@
+"""fourier_fingerprints
+"""
+
+import jax
+
+# float32 breaks the realness check of Coefficients.get_spectrum and makes the
+# numerically zero Fourier coefficients (which enter the paper FCC) noisier
+jax.config.update("jax_enable_x64", True)
+
+__version__ = "0.1"
