@@ -25,6 +25,7 @@ CSV schema: ``encoding_strategy.csv`` with one row per training run, i.e. per
 - train_mse: training MSE of the run
 - n_support, n_params (optional): size of the numerical support and number of
   trainable parameters of the model
+- var_sum (optional): sum of the coefficient variances over all frequencies
 - fcc_excess (for ``--excess``): fcc minus its null value
 
 Further columns are ignored; the reference file keeps the original export
@@ -123,11 +124,14 @@ def visualize_encoding_scatter(df, fcc="fcc"):
     return fig
 
 
-def correlations(x, y, z):
-    """Pearson correlation of x and y, and of their residuals after regressing on z."""
-    rx = x - z @ np.linalg.lstsq(z, x, rcond=None)[0]
-    ry = y - z @ np.linalg.lstsq(z, y, rcond=None)[0]
-    return np.corrcoef(x, y)[0, 1], np.corrcoef(rx, ry)[0, 1]
+def correlations(x, y, *zs):
+    """Pearson correlation of x and y, and of their residuals after regressing on each z."""
+
+    def residual(a, z):
+        return a - z @ np.linalg.lstsq(z, a, rcond=None)[0]
+
+    partial = [np.corrcoef(residual(x, z), residual(y, z))[0, 1] for z in zs]
+    return np.corrcoef(x, y)[0, 1], *partial
 
 
 def confounds(df, fcc="fcc", min_n=4, n_boot=2000, seed=0):
@@ -135,12 +139,15 @@ def confounds(df, fcc="fcc", min_n=4, n_boot=2000, seed=0):
 
     Per encoding strategy over the seed-averaged ansaetze: the Pearson $r$ of
     $\\log_{10}$ FCC (fcc_excess as is) and MSE as in the figure, and their
-    partial correlation controlling for n_support and n_params, each with the
-    2.5 and 97.5 percentiles over `n_boot` bootstrap resamples of the ansaetze.
-    Computed for all ansaetze, for those with full support (the largest
-    n_support of the encoding) and per support size, if at least `min_n`.
+    partial correlation controlling for n_support and n_params and, if every
+    row has var_sum, the one controlling for var_sum ($\\log_{10}$ like the FCC)
+    and n_support (partial_r_var), each with the 2.5 and 97.5 percentiles over
+    `n_boot` bootstrap resamples of the ansaetze. Computed for all ansaetze,
+    for those with full support (the largest n_support of the encoding) and
+    per support size, if at least `min_n`.
     """
-    cols = [fcc, "train_mse", "n_support", "n_params"]
+    var = "var_sum" in df and bool(df.var_sum.notna().all())
+    cols = [fcc, "train_mse", "n_support", "n_params", *["var_sum"] * var]
     means = df.groupby(["ansatz", "encoding_strategy"], as_index=False)[cols].mean()
     rng = np.random.default_rng(seed)
 
@@ -154,29 +161,25 @@ def confounds(df, fcc="fcc", min_n=4, n_boot=2000, seed=0):
                 continue
             x = np.log10(s[fcc].to_numpy()) if fcc == "fcc" else s[fcc].to_numpy()
             y = s.train_mse.to_numpy()
-            z = np.column_stack([np.ones(len(s)), s.n_support, s.n_params])
+            zs = [np.column_stack([np.ones(len(s)), s.n_support, s.n_params])]
+            if var:
+                v = np.log10(s.var_sum) if fcc == "fcc" else s.var_sum
+                zs.append(np.column_stack([np.ones(len(s)), s.n_support, v]))
 
             # resamples with a constant column yield nan, skipped by the percentiles
             with np.errstate(invalid="ignore", divide="ignore"):
                 boot = [
-                    correlations(x[i], y[i], z[i])
+                    correlations(x[i], y[i], *(z[i] for z in zs))
                     for i in rng.integers(len(s), size=(n_boot, len(s)))
                 ]
                 lo, hi = np.nanpercentile(boot, [2.5, 97.5], axis=0)
-            r, partial_r = correlations(x, y, z)
-            rows.append(
-                {
-                    "encoding_strategy": strategy,
-                    "subset": subset,
-                    "n": len(s),
-                    "r": r,
-                    "r_lo": lo[0],
-                    "r_hi": hi[0],
-                    "partial_r": partial_r,
-                    "partial_r_lo": lo[1],
-                    "partial_r_hi": hi[1],
-                }
-            )
+            row = {"encoding_strategy": strategy, "subset": subset, "n": len(s)}
+            names = ["r", "partial_r", "partial_r_var"]
+            for k, value in enumerate(correlations(x, y, *zs)):
+                row.update(
+                    {names[k]: value, f"{names[k]}_lo": lo[k], f"{names[k]}_hi": hi[k]}
+                )
+            rows.append(row)
     return pd.DataFrame(rows)
 
 

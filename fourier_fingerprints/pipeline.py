@@ -245,7 +245,7 @@ def encoding(
     and the training on a Fourier series with the spectrum of the model (offset
     kept, restricted to the numerical support with `prune`), `seed` seeds the
     model, the FCC samples and the series. `results` holds the FCC variants,
-    n_support, n_params and, unless `steps` is 0, the final train_mse,
+    var_sum, n_support, n_params and, unless `steps` is 0, the final train_mse,
     train_fmse and train_nmse (train_mse over the variance of the target).
     """
     model = create_model(**circuit)

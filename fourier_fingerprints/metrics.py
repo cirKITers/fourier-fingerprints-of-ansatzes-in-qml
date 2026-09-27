@@ -258,9 +258,12 @@ def fcc_variants(
     fcc_pearson is the support-restricted real-part Pearson FCC
     (corr_mean_signal of `correlation_stats`). The null values repeat each
     computation after permuting the samples independently per frequency,
-    which removes the correlations and leaves the floor of the estimator. The
-    spectra are evaluated in chunks of `chunk_size` parameter sets to bound the
-    memory.
+    which removes the correlations and leaves the floor of the estimator.
+    var_sum is $\\sum_{\\omega} \\mathrm{Var}(c_{\\omega})$ over all frequencies,
+    including the negative ones, i.e. the separable term of the expected MSE
+    over the parameters; frequencies outside the numerical support add
+    numerically zero, so it is also the sum over the support. The spectra are
+    evaluated in chunks of `chunk_size` parameter sets to bound the memory.
 
     Parameters
     ----------
@@ -285,8 +288,8 @@ def fcc_variants(
     -------
     Dict[str, float]
         fcc_unpruned, fcc_pruned, fcc_pearson, their null values with suffix
-        _null, and n_support, the number of non-negative frequencies in the
-        numerical support.
+        _null, var_sum, and n_support, the number of non-negative frequencies
+        in the numerical support.
     """
     params = model.params
     model.initialize_params(jax.random.PRNGKey(seed), repeat=n_samples)
@@ -303,9 +306,11 @@ def fcc_variants(
         coeffs.append(np.asarray(c))
     model.params = params
 
+    coeffs = np.concatenate(coeffs, axis=-1).reshape(-1, n_samples)
+    var_sum = float(coeffs.var(axis=1, ddof=1).sum())
     # the non-negative frequencies in the order of `fcc`
     pos = FCC._calculate_mask(freqs)
-    coeffs = np.concatenate(coeffs, axis=-1).reshape(-1, n_samples)[pos]
+    coeffs = coeffs[pos]
     freqs = np.asarray(FCC._flat_frequencies(freqs))[pos].reshape(len(coeffs), -1)
     support = np.abs(coeffs).max(axis=1) > tol
     lower = np.tri(len(coeffs), k=-1, dtype=bool)
@@ -326,6 +331,7 @@ def fcc_variants(
     return {
         **variants(coeffs),
         **{f"{k}_null": v for k, v in variants(null).items()},
+        "var_sum": var_sum,
         "n_support": int(support.sum()),
     }
 
