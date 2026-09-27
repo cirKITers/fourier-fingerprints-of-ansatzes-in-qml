@@ -1,22 +1,37 @@
-# Spectral Ansatzes for Quantum Machine Learning (SAQML)
+# Fourier Fingerprints of Ansaetze in Quantum Machine Learning
 
+Code of the paper studies on the Fourier coefficient correlation (FCC) of
+variational ansaetze: the fingerprints themselves, and whether they predict the
+training error on Fourier series and on a high energy physics regression task.
+Models are built with [qml-essentials](https://github.com/cirKITers/qml-essentials)
+on the [jaqsi](https://github.com/cirKITers/jaqsi) simulator, experiments run as
+versioned [Fluksio](https://docs.fluksio.com) runs.
 
-## Getting Started :rocket:
+## Layout
 
-This repository uses [Kedro](https://kedro.org/). To get started, follow these steps:
-1. Clone this repository
-2. Run `poetry install` or `pip install -r requirements.in`
-3. Run the experiment: `kedro run`
+- `fourier_fingerprints/`: the library (models and custom ansaetze, FCC and
+  expressibility, datasets, training loops) and `pipeline.py`, the Fluksio flows
+  fingerprint, surrogate, expressibility, train and encoding
+- `dev/`: one folder per study with its driver (`run.py`), export (`export.py`),
+  figures (`figures.py`), README and the reference CSVs of the paper figures;
+  `dev/serve.sh` starts the engine
+  - `s1-fingerprints`: FCC, expressibility and the random-coefficient surrogate
+  - `s2-fourier-series`: training on 1D and 2D Fourier series
+  - `s3-hep`: training on the $pp \to Z \to$ jets dataset, QFM and MLP
+  - `s4-encodings`: FCC and training error of the encoding strategies
+- `tests/`: unit tests, `uv run pytest`
+- `data/`: the HEP datasets (not tracked), `docs/`: circuit drawings
 
-Experiments are automatically recorded using [MlFlow](https://mlflow.org/). You can view the experiments by
-1. Running `poetry run kedro mlflow ui`
-2. Navigating to [http://127.0.0.1:5000](http://127.0.0.1:5000)
+## Getting started
 
-To visualize the nodes and pipeline
-1. Run `poetry run kedro viz`
-2. 2. Navigating to [http://127.0.0.1:4141](http://127.0.0.1:4141)
+```sh
+uv sync                                               # Python 3.12 environment
+RUNS=4 DEVICES=4 dev/serve.sh                         # the engine, store in ./.fluksio
+uv run fluksio sync fourier_fingerprints/pipeline.py  # upload the flows
+uv run fluksio run fingerprint --no-sync --defaults --wait  # one run
+```
 
-## Tweaking :wrench:
-
-- To specify a pipeline: `kedro run --pipeline NAME`
- - Parameters can be adjusted in `conf\base\parameters.yml` or as command line arguments `--params=<key1>=<value1>`
+Each study README lists its cells and how to run, export and plot it. The drivers
+submit to the running engine and skip cells that already ran, so an interrupted
+grid resumes on the next call. Restart the engine after `uv sync`, and keep
+`RUNS` $\times$ `DEVICES` near the number of cores.
