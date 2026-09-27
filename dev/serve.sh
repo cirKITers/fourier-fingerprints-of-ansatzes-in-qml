@@ -8,6 +8,6 @@
 #     RUNS=2 DEVICES=4 dev/serve.sh
 set -u
 cd "$(dirname "$0")/.."
-exec env JAX_PLATFORMS=cpu JAX_NUM_CPU_DEVICES="${DEVICES:-1}" uv run fluksio serve --port "${PORT:-8765}" \
+exec env JAX_PLATFORMS=cpu JAX_NUM_CPU_DEVICES="${DEVICES:-1}" uv run fluksio serve --port "${PORT:-8766}" \
   --max-runs "${RUNS:-10}" --max-cascades "${RUNS:-10}" --max-workers "${RUNS:-10}" \
   --worker-max-rss "${MAX_RSS:-0}"
