@@ -51,6 +51,11 @@ otherwise), and further
 - train_nmse: train_mse divided by the variance of the target
 - n_support: number of non-negative frequencies in the numerical support
   ($\vert \Omega_s \vert$), n_params: number of trainable parameters
+- var_sum: $\sum_{\omega \in \Omega} \mathrm{Var}(c_{\omega})$ over all
+  frequencies (outside the support the terms are numerically zero), from the
+  same samples as the FCC. With zero-mean coefficients the expected MSE over
+  the parameters is var_sum plus the squared norm of the target coefficients,
+  i.e. it contains no correlations
 - fcc_unpruned, fcc_pruned: covariance FCC over all non-negative frequencies and
   over the support
 - fcc_pearson: mean absolute Pearson correlation of the real parts over the
@@ -69,10 +74,14 @@ figures.py plots the seed-averaged FCC against the seed-averaged MSE and writes
 `figures/encoding_strategy_confounds.csv`: per encoding the Pearson $r$ of
 $\log_{10}$ FCC and MSE, as in the figure, and their partial correlation
 controlling for n_support and n_params, with 95 % bootstrap intervals over the
-ansaetze. Each is computed for all ansaetze (subset all), for those with full
-support (full, the largest n_support of the encoding) and per support size
-(n_support=k), for subsets of at least 4 ansaetze; within a support size the
-partial correlation controls for n_params only. `--excess` does the same for
+ansaetze. If every run has var_sum (runs from before it was added do not),
+partial_r_var is the partial correlation controlling for $\log_{10}$ var_sum
+(var_sum with `--excess`) and n_support, i.e. whether the FCC relates to the
+MSE beyond the coefficient variances. Each is computed for all ansaetze (subset
+all), for those with full support (full, the largest n_support of the
+encoding) and per support size (n_support=k), for subsets of at least 4
+ansaetze; within a support size partial_r controls for n_params only and
+partial_r_var for var_sum only. `--excess` does the same for
 fcc_excess on a linear axis (encoding_strategy_excess_*), for rerun.
 
 ## Reproduction of 1-18

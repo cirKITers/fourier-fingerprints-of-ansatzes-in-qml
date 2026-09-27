@@ -51,3 +51,11 @@ def test_fcc_variants():
     )
     support = numerical_support(model, 1000)[model.frequencies[0] >= 0]
     assert variants["n_support"] == support.sum()
+
+    # by Parseval, var_sum is the output variance averaged over the FFT grid
+    import jax
+
+    model.initialize_params(jax.random.PRNGKey(1000), repeat=50)
+    x = 2 * np.pi * np.arange(model.degree[0])[:, None] / model.degree[0]
+    y = np.asarray(model(params=model.params, inputs=x, force_mean=True))
+    assert np.isclose(variants["var_sum"], y.var(axis=1, ddof=1).mean(), rtol=1e-10)

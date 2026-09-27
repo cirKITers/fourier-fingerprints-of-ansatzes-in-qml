@@ -39,6 +39,7 @@ COLUMNS = [
     "train_nmse",
     "n_support",
     "n_params",
+    "var_sum",
     *(f"fcc_{k}{s}" for k in ("unpruned", "pruned", "pearson") for s in ("", "_null")),
     "n_qubits",
     "n_layers",
