@@ -224,6 +224,7 @@ def train(
         Port("learning_rate", "float"),
         Port("unnormalized_target", "bool"),
         Port("target_power", "float"),
+        Port("n_trainable", "int"),
     ],
     provides=[Port("train_mse", "float", stream=True), Port("results", "json")],
     timeout=3600,
@@ -240,6 +241,7 @@ def encoding(
     learning_rate,
     unnormalized_target,
     target_power,
+    n_trainable,
     **circuit,
 ):
     """
@@ -247,15 +249,22 @@ def encoding(
     and the training on a Fourier series with the spectrum of the model (offset
     kept, restricted to the numerical support with `prune`, rescaled to the
     power `target_power` unless 0), `seed` seeds the model, the FCC samples and
-    the series. `results` holds the FCC variants, var_sum, n_support, n_params
-    and, unless `steps` is 0, the final train_mse, train_fmse, train_nmse
-    (train_mse over the variance of the target) and target_power_actual (the
-    mean of the squared target).
+    the series. Unless `n_trainable` is 0, only a random subset of
+    `n_trainable` parameters (seeded with `seed`) is sampled for the FCC and
+    trained, the others keep their initial values. `results` holds the FCC
+    variants, var_sum, n_support, n_params and, unless `steps` is 0, the final
+    train_mse, train_fmse, train_nmse (train_mse over the variance of the
+    target) and target_power_actual (the mean of the squared target).
     """
     model = create_model(**circuit)
     seed = circuit["seed"]
+    mask = None
+    if n_trainable:
+        mask = np.zeros(model.params.size, dtype=bool)
+        mask[np.random.default_rng(seed).choice(mask.size, n_trainable, False)] = True
+        mask = mask.reshape(model.params.shape)
     results = metrics.fcc_variants(
-        model, n_samples, seed, method, weight, numerical_cap, tol
+        model, n_samples, seed, method, weight, numerical_cap, tol, mask=mask
     )
     results["n_params"] = model.params.size
     if steps:
@@ -264,7 +273,14 @@ def encoding(
         )
         _, final = yield from _finite_steps(
             train_fourier_series(
-                model, x, y, coefficients, steps, learning_rate, unnormalized_target
+                model,
+                x,
+                y,
+                coefficients,
+                steps,
+                learning_rate,
+                unnormalized_target,
+                mask,
             ),
             ("train_mse",),
         )
@@ -350,6 +366,7 @@ encoding_flow = Flow(
         Port("learning_rate", "float", initial=1e-4),
         Port("unnormalized_target", "bool", initial=False),
         Port("target_power", "float", initial=0.0),
+        Port("n_trainable", "int", initial=0),
     ],
     outputs=["results"],
 )

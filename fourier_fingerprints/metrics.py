@@ -2,7 +2,7 @@
 
 import math
 import warnings
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 import jax
 import numpy as np
@@ -250,6 +250,7 @@ def fcc_variants(
     numerical_cap: float = -1,
     tol: float = 1e-12,
     chunk_size: int = 1000,
+    mask: Optional[np.ndarray] = None,
 ) -> Dict[str, float]:
     """
     Computes FCC variants and their null values from one parameter sampling.
@@ -264,6 +265,8 @@ def fcc_variants(
     over the parameters; frequencies outside the numerical support add
     numerically zero, so it is also the sum over the support. The spectra are
     evaluated in chunks of `chunk_size` parameter sets to bound the memory.
+    With `mask`, only the masked parameters are sampled and the others keep
+    their current values.
 
     Parameters
     ----------
@@ -283,6 +286,9 @@ def fcc_variants(
         Magnitude below which a coefficient counts as numerically zero.
     chunk_size : int, optional
         Number of parameter sets evaluated at once.
+    mask : Optional[np.ndarray], optional
+        Boolean mask of the shape of `model.params`, True for the sampled
+        parameters; None samples all.
 
     Returns
     -------
@@ -294,6 +300,8 @@ def fcc_variants(
     params = model.params
     model.initialize_params(jax.random.PRNGKey(seed), repeat=n_samples)
     samples = model.params
+    if mask is not None:
+        samples = jax.numpy.where(mask, samples, params)
     coeffs = []
     for chunk in np.array_split(np.arange(n_samples), -(-n_samples // chunk_size)):
         c, freqs = Coefficients.get_spectrum(
@@ -365,6 +373,105 @@ def numerical_support(
     coeffs, _ = Coefficients.get_spectrum(model, shift=True, params=model.params)
     model.params = params
     return np.abs(np.asarray(coeffs)).max(axis=-1) > tol
+
+
+def local_fcc(
+    model: Model,
+    n_samples: int = 5,
+    seed: int = 1000,
+    tol: float = 1e-12,
+    rtol: float = 1e-9,
+    mask: Optional[np.ndarray] = None,
+) -> Dict:
+    """
+    Computes the local FCC from the Jacobian of the Fourier coefficients.
+
+    For a model with one input feature, $J = \\partial u / \\partial \\theta$ is
+    evaluated at `n_samples` random parameter sets, where $u$ are the
+    coordinates of the output in the orthonormal real Fourier basis of the
+    numerical support (see `numerical_support`, seeded with `seed`), i.e. the
+    normalized cosines of the non-negative and sines of the positive support
+    frequencies on the grid. $J J^\\top$ is the covariance of $u$ under small isotropic parameter
+    perturbations and $R_{loc}$ its Pearson matrix. The numerical rank $m$ of
+    $J$ is the dimension of the coefficients reachable around $\\theta$, and
+    $\\mathrm{PR}(R_{loc}) = D_s^2 / \\lVert R_{loc} \\rVert_F^2 \\le m$ for the
+    support dimension $D_s$. Coordinates without local variation (Jacobian row
+    norm below `rtol` times the largest) yield nan correlations, which are
+    skipped. With `mask`, only the masked parameters are sampled and
+    differentiated, the others keep their current values.
+
+    Parameters
+    ----------
+    model : Model
+        The quantum Fourier model, its parameters are restored afterwards.
+    n_samples : int, optional
+        Number of random parameter sets.
+    seed : int, optional
+        Seed of the parameter samples and of the numerical support.
+    tol : float, optional
+        Magnitude below which a coefficient counts as numerically zero.
+    rtol : float, optional
+        Singular values below `rtol` times the largest do not count to the rank.
+    mask : Optional[np.ndarray], optional
+        Boolean mask of the shape of `model.params`, True for the sampled
+        parameters; None samples all.
+
+    Returns
+    -------
+    Dict
+        n_dims ($D_s$), rank ($m$), fcc_local (mean $|r|$ of $R_{loc}$ over
+        the strict lower triangle), r2_local (mean $r^2$ over the same pairs)
+        and pr_local ($\\mathrm{PR}(R_{loc}) / D_s$) as means over the samples,
+        their standard deviations over the samples with suffix _std, and
+        fingerprint_local, the mean of $|R_{loc}|$ over the samples, with the
+        cosines of the ascending frequencies first and then the sines.
+    """
+    params = model.params
+    freqs = model.frequencies[0][numerical_support(model, seed, tol=tol)]
+    model.initialize_params(jax.random.PRNGKey(seed), repeat=n_samples)
+    samples = model.params
+    if mask is not None:
+        samples = jax.numpy.where(mask, samples, params)
+    model.params = params
+
+    x = 2 * np.pi * np.arange(model.degree[0]) / model.degree[0]
+    basis = np.hstack(
+        [np.cos(np.outer(x, freqs[freqs >= 0])), np.sin(np.outer(x, freqs[freqs > 0]))]
+    )
+    basis /= np.linalg.norm(basis, axis=0)
+    jac = jax.jit(
+        jax.jacfwd(lambda p: model.apply(params=p, inputs=x[:, None], force_mean=True))
+    )
+
+    stats, fingerprints = [], []
+    for p in samples:
+        J = basis.T @ np.asarray(jac(p[None])).reshape(len(x), -1)
+        if mask is not None:
+            J = J[:, np.ravel(mask)]
+        s = np.linalg.svd(J, compute_uv=False)
+        norm = np.linalg.norm(J, axis=1)
+        norm = np.where(norm > rtol * norm.max(), norm, np.nan)
+        r = J @ J.T / np.outer(norm, norm)
+        a = r[np.tri(len(r), k=-1, dtype=bool)]
+        n = np.isfinite(norm).sum()
+        stats.append(
+            [
+                (s > rtol * s[0]).sum(),
+                np.nanmean(np.abs(a)),
+                np.nanmean(a**2),
+                n**2 / np.nansum(r**2) / len(r),
+            ]
+        )
+        fingerprints.append(np.abs(r))
+    model.params = params
+
+    keys = ["rank", "fcc_local", "r2_local", "pr_local"]
+    return {
+        "n_dims": len(r),
+        **{k: float(v) for k, v in zip(keys, np.mean(stats, axis=0))},
+        **{f"{k}_std": float(v) for k, v in zip(keys, np.std(stats, axis=0))},
+        "fingerprint_local": np.mean(fingerprints, axis=0),
+    }
 
 
 def expressibility(

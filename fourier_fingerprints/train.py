@@ -1,6 +1,6 @@
 """Training loops as generators yielding per-step metrics and final results."""
 
-from typing import Dict, Generator, Sequence, Tuple
+from typing import Dict, Generator, Optional, Sequence, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -141,14 +141,16 @@ def train_fourier_series(
     steps: int = 3000,
     learning_rate: float = 1e-4,
     unnormalized_target: bool = False,
+    mask: Optional[np.ndarray] = None,
 ) -> Generator[Dict[str, float], None, Tuple[jnp.ndarray, Dict[str, float]]]:
     """
     Full-batch MSE training of the encoding study.
 
     Uses Adam with the optax defaults, starting from the current model
-    parameters. train_fmse is the mean absolute difference between the model
-    spectrum and the spectrum of the target, i.e. `coefficients` divided by
-    their number.
+    parameters. With `mask`, the gradients of the other parameters are zero,
+    so Adam keeps them at their current values. train_fmse is the mean
+    absolute difference between the model spectrum and the spectrum of the
+    target, i.e. `coefficients` divided by their number.
 
     Parameters
     ----------
@@ -165,6 +167,9 @@ def train_fourier_series(
     unnormalized_target : bool, optional
         Compare against the unnormalized `coefficients` as in the encoding
         study of the thesis.
+    mask : Optional[np.ndarray], optional
+        Boolean mask of the shape of the model parameters, True for the
+        trained parameters; None trains all.
 
     Yields
     ------
@@ -187,7 +192,10 @@ def train_fourier_series(
     params = model.params
     state = opt.init(params)
     for step in range(steps):
-        updates, state = opt.update(grad_fn(params), state, params)
+        grads = grad_fn(params)
+        if mask is not None:
+            grads = grads * mask
+        updates, state = opt.update(grads, state, params)
         params = optax.apply_updates(params, updates)
         model.params = params
         spectrum, _ = Coefficients.get_spectrum(model, shift=True, params=params)
