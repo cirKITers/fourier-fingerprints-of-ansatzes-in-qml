@@ -59,3 +59,24 @@ def test_fcc_variants():
     x = 2 * np.pi * np.arange(model.degree[0])[:, None] / model.degree[0]
     y = np.asarray(model(params=model.params, inputs=x, force_mean=True))
     assert np.isclose(variants["var_sum"], y.var(axis=1, ddof=1).mean(), rtol=1e-10)
+
+
+def test_local_fcc():
+    from fourier_fingerprints.metrics import local_fcc, numerical_support
+    from fourier_fingerprints.model import create_model
+
+    model = create_model(3, 1, "Hardware_Efficient", encoding=["RY"])
+    params = model.params
+    stats = local_fcc(model, 3, 1000)
+    support = numerical_support(model, 1000)[model.frequencies[0] >= 0]
+    assert stats["n_dims"] == 2 * support.sum() - 1
+    assert stats["rank"] == stats["n_dims"]  # 18 parameters saturate the 7 dimensions
+    assert (model.params == params).all()
+
+    # a single parameter moves all coefficients along one direction
+    mask = np.zeros(params.shape, dtype=bool)
+    mask.flat[0] = True
+    stats = local_fcc(model, 3, 1000, mask=mask)
+    assert stats["rank"] == 1
+    assert np.isclose(stats["fcc_local"], 1.0)
+    assert np.isclose(stats["pr_local"], 1 / stats["n_dims"])
