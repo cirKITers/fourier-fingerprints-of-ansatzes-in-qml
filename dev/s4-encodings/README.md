@@ -13,6 +13,7 @@ random Fourier series with the spectrum of the encoding.
 | convergence | 4 ansaetze $\times$ 3 encodings $\times$ 2 seeds $\times$ 3 sample sizes | FCC of rerun with 500, 2000 and 8000 samples, no training |
 | lr | 4 ansaetze $\times$ 3 encodings $\times$ 4 learning rates | rerun with learning rates $10^{-3}$, $3 \cdot 10^{-3}$, $10^{-2}$ and $3 \cdot 10^{-2}$, seed 1000 |
 | power | 17 ansaetze $\times$ 3 encodings $\times$ 10 seeds | rerun on targets of power $P = 0.01$ |
+| matched | 5 ansaetze $\times$ 3 encodings $\times$ 10 seeds | power at 5 qubits and 2 layers with 30 trainable parameters |
 
 All variants run the encoding flow. Ansaetze: Circuit_2, 3, 4, 7, 8, 9, 10, 13,
 14, 15, 16, 17, 18, 19, 20, Strongly_Entangling and Hardware_Efficient as defined
@@ -56,6 +57,16 @@ qubits and 2 layers.
 `--n-qubits` and `--n-layers` set the size (6 and 1 by default),
 `--target-power` sets $P$.
 
+matched separates the FCC from the number of parameters. At 5 qubits and 2
+layers Strongly_Entangling, Circuit_14, Circuit_19, Circuit_4 and Circuit_2
+(90, 60, 45, 42 and 30 parameters) have the full support under every encoding,
+and power orders their fcc_pearson and train_pnmse as their parameter count.
+matched trains only a random subset of 30 parameters (`n_trainable`, the
+subset seeded with the seed), the others keep their initial values, and samples
+only this subset for the FCC, so that the FCC describes the trained model.
+Circuit, support and target are those of power; matching by the number of
+layers would change the spectrum. For Circuit_2 the cells equal those of power.
+
 ## Results
 
 Per run the export writes the thesis columns (run_id, ansatz, encoding_strategy,
@@ -74,7 +85,7 @@ otherwise), and further
   target (mean of its square, $P$ for power; empty for runs from before it was
   added)
 - n_support: number of non-negative frequencies in the numerical support
-  ($\vert \Omega_s \vert$), n_params: number of trainable parameters
+  ($\vert \Omega_s \vert$), n_params: number of parameters of the model
 - var_sum: $\sum_{\omega \in \Omega} \mathrm{Var}(c_{\omega})$ over all
   frequencies (outside the support the terms are numerically zero), from the
   same samples as the FCC. With zero-mean coefficients the expected MSE over
@@ -85,8 +96,8 @@ otherwise), and further
 - fcc_pearson: mean absolute Pearson correlation of the real parts over the
   support (corr_mean_signal of s1)
 - the null value of each FCC with suffix _null, and the settings n_qubits,
-  n_layers, n_samples, learning_rate, prune, unnormalized_target and
-  target_power
+  n_layers, n_samples, learning_rate, prune, unnormalized_target,
+  target_power and n_trainable (the number of trained parameters, 0 for all)
 
 All FCC variants come from the same parameter samples. The null values repeat
 each computation after permuting the samples independently per frequency, i.e.
@@ -180,6 +191,78 @@ $10^{-2}$. $3 \cdot 10^{-2}$ has the lowest median over all runs, but 7 of its
 12 runs oscillate. Circuit_9 (support 2 or 4) stays above a train_nmse of 0.93
 at every learning rate.
 
+## Parameter matching
+
+The matched cells (all 10 seeds, run in-process with the encoding node; four
+power cells rerun this way match the engine to $6 \cdot 10^{-16}$) keep the full
+support in every cell. Pearson $r$ of $\log_{10}$ fcc_pearson and train_pnmse
+over the seed-averaged 5 ansaetze, with the 95 % interval over 2000 bootstrap
+resamples of the seeds, the median and range of $r$ per seed, and the partial
+correlation controlling for $\log_{10}$ var_sum:
+
+| encoding | power $r$ | matched $r$ | matched $r$ per seed | matched partial $r$ |
+| --- | --- | --- | --- | --- |
+| hamming | 0.96 $[0.89, 0.99]$ | 0.74 $[0.48, 0.86]$ | 0.44 $[0.16, 0.95]$ | -0.29 |
+| binary | 0.97 $[0.95, 0.98]$ | 0.91 $[0.78, 0.97]$ | 0.82 $[0.36, 0.99]$ | 0.90 |
+| ternary | 0.93 $[0.91, 0.94]$ | -0.57 $[-0.80, -0.32]$ | -0.52 $[-0.85, 0.19]$ | -0.23 |
+
+The FCC keeps its order Strongly_Entangling < Circuit_14 < Circuit_19 <
+Circuit_4 < Circuit_2 under matching (Circuit_4 and Circuit_2 swap under
+Hamming encoding), but train_pnmse no longer follows it: Strongly_Entangling
+and Circuit_14 stay lowest under Hamming and binary encoding, Circuit_19 and
+Circuit_4 are highest, and under ternary encoding train_pnmse is between 0.89
+and 0.96 for every ansatz, i.e. 30 parameters barely fit the target. Under
+matching, $\log_{10}$ fcc_pearson correlates with $\log_{10}$ var_sum at
+$r = 0.89$, $0.64$ and $0.71$. The FCC predicts the error beyond the number of
+parameters and var_sum only under binary encoding.
+
+## Local FCC
+
+The FCC correlates the coefficients over the whole parameter space, where they
+are nearly uncorrelated for every ansatz, while a trained model can only move
+within the coefficients reachable around its parameters. `metrics.local_fcc`
+evaluates, without training, the Jacobian $J = \partial u / \partial \theta$
+of the output coordinates $u$ in the orthonormal real Fourier basis of the
+numerical support ($D_s$ dimensions, $2 \vert \Omega_s \vert - 1$ with the
+offset) at 5 random parameter sets. $J J^\top$ is the covariance of the
+coefficients under small parameter perturbations and its Pearson matrix
+$R_{loc}$ the local fingerprint: fcc_local is the mean $|r|$ over its strict
+lower triangle, r2_local the mean $r^2$, pr_local
+$\mathrm{PR}(R_{loc}) / D_s = D_s / \lVert R_{loc} \rVert_F^2$ and rank the
+numerical rank $m$ of $J$ (singular values above $10^{-9}$ times the largest),
+with $\mathrm{PR}(R_{loc}) \le m \le$ n_params. For a linearized model the best
+fit of an isotropic target of power $P$ leaves $P (1 - m / D_s)$ on average.
+
+```python
+from fourier_fingerprints.metrics import local_fcc
+from fourier_fingerprints.model import create_model
+
+model = create_model(5, 2, "Circuit_19", encoding_strategy="binary", seed=1000)
+local_fcc(model, n_samples=5, seed=1000)  # mask as in fcc_variants for matched
+```
+
+local_fcc is not part of the encoding flow. local.py computes it in-process for
+every ansatz, encoding and seed (1000 to 1002 by default, 5 draws each) and
+writes results/local_fcc_<n_qubits>q<n_layers>l.csv, one row per cell with the
+columns of local_fcc except fingerprint_local; with `--jobs 4` a grid of 153
+cells takes about 7 min. Pearson $r$ with the seed-averaged train_pnmse of
+power (5 qubits, 2 layers) and of the same grid at 4 qubits and 3 layers, with
+the seed means of local_fcc_5q2l.csv and local_fcc_4q3l.csv:
+
+| cells | fcc_local | pr_local | $m / D_s$ | $\log_{10}$ fcc_pearson | $\log_{10}$ var_sum |
+| --- | --- | --- | --- | --- | --- |
+| all (102) | 0.10 | -0.87 | -0.95 | -0.11 | -0.12 |
+| $m < D_s$ (72) | 0.28 | -0.83 | -0.92 | -0.06 | -0.13 |
+| $m = D_s$ (30, Hamming) | 0.49 | -0.44 | | -0.09 | -0.10 |
+| per size and encoding (17 each) | 0.45 to 0.86 | -0.53 to -0.84 | -0.60 to -0.97 | -0.31 to 0.40 | -0.35 to 0.10 |
+
+$m / D_s$ explains most of the variation ($R^2 = 0.90$ over all cells, 0.93
+with fcc_local). fcc_local orders the ansaetze within a size and encoding, but
+tracks $1 / m$ rather than $m / D_s$ (mean $r^2 \ge (D_s / m - 1) / (D_s - 1)$),
+so it does not carry the differences between the encodings. Given $m / D_s$ its
+partial $r$ is 0.53 $[0.29, 0.71]$ (95 % bootstrap interval over the cells) for
+$m < D_s$; for $m = D_s$ given n_params / $D_s$ it is 0.33 $[-0.11, 0.66]$.
+
 ## Cost
 
 Median seconds per cell on the engine with `RUNS=4 DEVICES=4` (16 cores):
@@ -205,11 +288,15 @@ uv run python dev/s4-encodings/run.py --variant rerun            # submit, resum
 uv run python dev/s4-encodings/export.py --variant rerun         # results/encoding_strategy.csv
 uv run python dev/s4-encodings/run.py --variant power --n-qubits 5 --n-layers 2  # 6 and 1 without the options
 uv run python dev/s4-encodings/export.py --variant power --n-qubits 5 --n-layers 2
+uv run python dev/s4-encodings/run.py --variant matched     # 5 qubits and 2 layers by default
+uv run python dev/s4-encodings/export.py --variant matched
 uv run python dev/s4-encodings/figures.py --excess    # figures/, --reference for the thesis CSV
+JAX_PLATFORMS=cpu uv run python dev/s4-encodings/local.py --n-qubits 5 --n-layers 2 --jobs 4  # no engine
+JAX_PLATFORMS=cpu uv run python dev/s4-encodings/local.py --n-qubits 4 --n-layers 3 --jobs 4
 ```
 
-`--variant 1-18`, `--variant rerun` and `--variant power` export to
-`results/encoding_strategy.csv` (the last export wins), `--variant convergence`
+`--variant 1-18`, `--variant rerun`, `--variant power` and `--variant matched`
+export to `results/encoding_strategy.csv` (the last export wins), `--variant convergence`
 to `results/convergence.csv` and `--variant lr` to `results/learning_rate.csv`.
 `--ansaetze`, `--encodings` and `--seeds` restrict the grid, `--n-qubits`,
 `--n-layers` and `--target-power` override the settings of the variant (pass

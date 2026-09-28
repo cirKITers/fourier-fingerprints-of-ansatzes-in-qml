@@ -51,6 +51,7 @@ COLUMNS = [
     "prune",
     "unnormalized_target",
     "target_power",
+    "n_trainable",
 ]
 
 

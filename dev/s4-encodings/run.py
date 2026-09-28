@@ -10,9 +10,10 @@ run:
 
 Cells: ansatz x encoding strategy x seed (model, FCC samples and series), see
 VARIANTS for the settings that differ from the flow defaults and GRIDS for the
-subsets of convergence (the rerun FCC at each sample size, without training)
-and lr (the rerun at each learning rate). --n-qubits, --n-layers and
---target-power override the settings of the variant.
+subsets of convergence (the rerun FCC at each sample size, without training),
+lr (the rerun at each learning rate) and matched (the ansaetze with full
+support). --n-qubits, --n-layers and --target-power override the settings of
+the variant.
 """
 
 import argparse
@@ -53,6 +54,15 @@ VARIANTS = {
     "lr": RERUN,
     # rerun on targets of a fixed power instead of one falling as 1 / K
     "power": {**RERUN, "target_power": TARGET_POWER},
+    # power at 5 qubits and 2 layers with 30 trainable parameters, the fewest of
+    # the ansaetze with full support
+    "matched": {
+        **RERUN,
+        "n_qubits": 5,
+        "n_layers": 2,
+        "target_power": TARGET_POWER,
+        "n_trainable": 30,
+    },
 }
 OVERRIDES = ["n_qubits", "n_layers", "target_power"]
 # ansaetze, seeds and the swept input of the subset variants
@@ -77,6 +87,16 @@ GRIDS = {
         ],
         "seeds": [1000],
         "learning_rate": [1e-3, 3e-3, 1e-2, 3e-2],
+    },
+    # full support at 5 qubits and 2 layers under every encoding
+    "matched": {
+        "ansaetze": [
+            "Strongly_Entangling",
+            "Circuit_14",
+            "Circuit_19",
+            "Circuit_4",
+            "Circuit_2",
+        ],
     },
 }
 
