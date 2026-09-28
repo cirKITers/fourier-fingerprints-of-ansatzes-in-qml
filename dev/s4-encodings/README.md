@@ -12,6 +12,7 @@ random Fourier series with the spectrum of the encoding.
 | rerun | 17 ansaetze $\times$ 3 encodings $\times$ 10 seeds | 6 qubits, 1 layer, FCC and target on the numerical support, 8000 samples, learning rate $0.01$ |
 | convergence | 4 ansaetze $\times$ 3 encodings $\times$ 2 seeds $\times$ 3 sample sizes | FCC of rerun with 500, 2000 and 8000 samples, no training |
 | lr | 4 ansaetze $\times$ 3 encodings $\times$ 4 learning rates | rerun with learning rates $10^{-3}$, $3 \cdot 10^{-3}$, $10^{-2}$ and $3 \cdot 10^{-2}$, seed 1000 |
+| power | 17 ansaetze $\times$ 3 encodings $\times$ 10 seeds | rerun on targets of power $P = 0.01$ |
 
 All variants run the encoding flow. Ansaetze: Circuit_2, 3, 4, 7, 8, 9, 10, 13,
 14, 15, 16, 17, 18, 19, 20, Strongly_Entangling and Hardware_Efficient as defined
@@ -37,6 +38,24 @@ FCC and set to zero in the target. At 500 samples its FCC is at the floor of
 the estimator (see Convergence), hence 8000 samples and fcc_excess as the
 primary measure. The learning rate is chosen by lr (see Learning rate).
 
+power fixes the scale of the target. The series is
+$\sum_\omega c_\omega e^{i \omega x} / K$ with $K$ the size of the frequency
+grid (13, 127 and 729 for Hamming, binary and ternary encoding at 6 qubits and
+1 layer; `Datasets.calculate_values` divides by the number of coefficients, see
+item 4 of docs/NOTEPAD.md), so its power $\sum_\omega |c_\omega / K|^2$, the
+mean of $y^2$ over the grid, falls as $1 / K$. In rerun the median target power
+is 0.021, 0.0017 and 0.00014, while the output power of the models at random
+parameters (var_sum) has a median of 0.026 under every encoding. Under binary
+and ternary encoding the training therefore mostly suppresses the model output,
+and train_mse follows the output power of the model rather than the fit.
+power rescales the pruned coefficients of every target to
+$\sum_\omega |c_\omega / K|^2 = P$ (`target_power`). $P = 0.01$ is the lower
+quartile of the rerun Hamming targets and below var_sum for 11 of the 17
+ansaetze at 6 qubits and 1 layer (12 under Hamming encoding) and for 13 at 5
+qubits and 2 layers.
+`--n-qubits` and `--n-layers` set the size (6 and 1 by default),
+`--target-power` sets $P$.
+
 ## Results
 
 Per run the export writes the thesis columns (run_id, ansatz, encoding_strategy,
@@ -48,7 +67,12 @@ otherwise), and further
 - fcc_excess: fcc minus fcc_null, the primary measure of rerun
 - at_floor: whether fcc / fcc_null is below 1.1
 - fcc_pearson_excess: fcc_pearson minus its null value
-- train_nmse: train_mse divided by the variance of the target
+- train_nmse: train_mse divided by the variance of the target. The variance
+  excludes the offset, so train_nmse can exceed 1 for a target with a large
+  offset (Circuit_9 under Hamming encoding)
+- train_pnmse: train_mse divided by target_power_actual, the power of the
+  target (mean of its square, $P$ for power; empty for runs from before it was
+  added)
 - n_support: number of non-negative frequencies in the numerical support
   ($\vert \Omega_s \vert$), n_params: number of trainable parameters
 - var_sum: $\sum_{\omega \in \Omega} \mathrm{Var}(c_{\omega})$ over all
@@ -61,7 +85,8 @@ otherwise), and further
 - fcc_pearson: mean absolute Pearson correlation of the real parts over the
   support (corr_mean_signal of s1)
 - the null value of each FCC with suffix _null, and the settings n_qubits,
-  n_layers, n_samples, learning_rate, prune and unnormalized_target
+  n_layers, n_samples, learning_rate, prune, unnormalized_target and
+  target_power
 
 All FCC variants come from the same parameter samples. The null values repeat
 each computation after permuting the samples independently per frequency, i.e.
@@ -178,12 +203,18 @@ uv run fluksio sync fourier_fingerprints/pipeline.py  # after every code change
 uv run python dev/s4-encodings/run.py --variant rerun --dry-run  # list the cells
 uv run python dev/s4-encodings/run.py --variant rerun            # submit, resumable
 uv run python dev/s4-encodings/export.py --variant rerun         # results/encoding_strategy.csv
+uv run python dev/s4-encodings/run.py --variant power --n-qubits 5 --n-layers 2  # 6 and 1 without the options
+uv run python dev/s4-encodings/export.py --variant power --n-qubits 5 --n-layers 2
 uv run python dev/s4-encodings/figures.py --excess    # figures/, --reference for the thesis CSV
 ```
 
-`--variant 1-18` and `--variant rerun` export to `results/encoding_strategy.csv`
-(the last export wins), `--variant convergence` to `results/convergence.csv` and
-`--variant lr` to `results/learning_rate.csv`.
-`--ansaetze`, `--encodings` and `--seeds` restrict the grid (pass the same to the
-export), `--jobs` bounds the runs in flight. `reference/encoding_strategy.csv`
+`--variant 1-18`, `--variant rerun` and `--variant power` export to
+`results/encoding_strategy.csv` (the last export wins), `--variant convergence`
+to `results/convergence.csv` and `--variant lr` to `results/learning_rate.csv`.
+`--ansaetze`, `--encodings` and `--seeds` restrict the grid, `--n-qubits`,
+`--n-layers` and `--target-power` override the settings of the variant (pass
+the same to the export), `--jobs` bounds the runs in flight. figures.py plots
+train_mse, which is $P$ times train_pnmse for power, so its correlations are
+those of train_pnmse. A run from before `target_power` was added counts as
+`target_power` 0, the behaviour it had. `reference/encoding_strategy.csv`
 is the thesis file of 1-18.

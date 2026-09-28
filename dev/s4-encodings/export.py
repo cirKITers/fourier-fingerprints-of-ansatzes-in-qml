@@ -1,14 +1,15 @@
 """Exports the s4 encoding runs of a variant to the CSVs of figures.py.
 
-    uv run python dev/s4-encodings/export.py [--variant 1-18|rerun|convergence]
+    uv run python dev/s4-encodings/export.py [--variant 1-18|rerun|convergence|power]
 
-Writes results/encoding_strategy.csv (1-18 and rerun), results/convergence.csv or
-results/learning_rate.csv (lr), one row per run in the schema of the thesis file
-(run_id, ansatz, encoding_strategy, data.seed, model.seed, fcc.seed, train.steps,
-fcc, train_mse, train_fmse) followed by the further results and settings of the
-run. fcc is the covariance FCC of the variant, restricted to the numerical
+Writes results/encoding_strategy.csv (1-18, rerun and power), results/convergence.csv
+or results/learning_rate.csv (lr), one row per run in the schema of the thesis
+file (run_id, ansatz, encoding_strategy, data.seed, model.seed, fcc.seed,
+train.steps, fcc, train_mse, train_fmse) followed by the further results and
+settings of the run. fcc is the covariance FCC of the variant, restricted to the numerical
 support with prune, fcc_excess its excess over the null value and at_floor
-whether it is below 1.1 times the null value.
+whether it is below 1.1 times the null value. train_pnmse is train_mse over
+the power of the target (target_power_actual, the mean of its square).
 """
 
 import sys
@@ -37,6 +38,8 @@ COLUMNS = [
     "at_floor",
     "fcc_pearson_excess",
     "train_nmse",
+    "train_pnmse",
+    "target_power_actual",
     "n_support",
     "n_params",
     "var_sum",
@@ -47,6 +50,7 @@ COLUMNS = [
     "learning_rate",
     "prune",
     "unnormalized_target",
+    "target_power",
 ]
 
 
@@ -69,6 +73,7 @@ def main(args):
     df = df.reindex(columns=COLUMNS).sort_values(
         ["ansatz", "encoding_strategy", "model.seed", "n_samples", "learning_rate"]
     )
+    df["train_pnmse"] = df.train_mse / df.target_power_actual
 
     out = STUDY / "results"
     out.mkdir(parents=True, exist_ok=True)

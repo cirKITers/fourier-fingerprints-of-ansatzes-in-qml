@@ -223,6 +223,7 @@ def train(
         Port("steps", "int"),
         Port("learning_rate", "float"),
         Port("unnormalized_target", "bool"),
+        Port("target_power", "float"),
     ],
     provides=[Port("train_mse", "float", stream=True), Port("results", "json")],
     timeout=3600,
@@ -238,15 +239,18 @@ def encoding(
     steps,
     learning_rate,
     unnormalized_target,
+    target_power,
     **circuit,
 ):
     """
     One cell of the encoding study: the FCC variants of `metrics.fcc_variants`
     and the training on a Fourier series with the spectrum of the model (offset
-    kept, restricted to the numerical support with `prune`), `seed` seeds the
-    model, the FCC samples and the series. `results` holds the FCC variants,
-    var_sum, n_support, n_params and, unless `steps` is 0, the final train_mse,
-    train_fmse and train_nmse (train_mse over the variance of the target).
+    kept, restricted to the numerical support with `prune`, rescaled to the
+    power `target_power` unless 0), `seed` seeds the model, the FCC samples and
+    the series. `results` holds the FCC variants, var_sum, n_support, n_params
+    and, unless `steps` is 0, the final train_mse, train_fmse, train_nmse
+    (train_mse over the variance of the target) and target_power_actual (the
+    mean of the squared target).
     """
     model = create_model(**circuit)
     seed = circuit["seed"]
@@ -256,7 +260,7 @@ def encoding(
     results["n_params"] = model.params.size
     if steps:
         x, y, coefficients = fourier_series(
-            model, seed, zero_centered=False, prune=prune
+            model, seed, zero_centered=False, prune=prune, target_power=target_power
         )
         _, final = yield from _finite_steps(
             train_fourier_series(
@@ -264,7 +268,11 @@ def encoding(
             ),
             ("train_mse",),
         )
-        results.update(final, train_nmse=final["train_mse"] / np.var(y))
+        results.update(
+            final,
+            train_nmse=final["train_mse"] / np.var(y),
+            target_power_actual=np.mean(y**2),
+        )
     return {"results": jsonable(results)}
 
 
@@ -341,6 +349,7 @@ encoding_flow = Flow(
         Port("steps", "int", initial=3000),
         Port("learning_rate", "float", initial=1e-4),
         Port("unnormalized_target", "bool", initial=False),
+        Port("target_power", "float", initial=0.0),
     ],
     outputs=["results"],
 )

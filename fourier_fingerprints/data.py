@@ -20,6 +20,7 @@ def fourier_series(
     coefficients_max: float = 1.0,
     zero_centered: bool = True,
     prune: bool = False,
+    target_power: float = 0.0,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Generates a random Fourier series matching the spectrum of `model`.
@@ -29,7 +30,10 @@ def fourier_series(
     equidistant grid that resolves the highest frequency of the model. With
     `prune`, coefficients outside the numerical support of the model (see
     `numerical_support`, seeded with `seed`) are set to zero, which preserves
-    the conjugate symmetry as the support is symmetric.
+    the conjugate symmetry as the support is symmetric. The series is
+    $\\sum_\\omega c_\\omega e^{i \\omega x} / K$ for $K$ coefficients, so its
+    power $\\sum_\\omega |c_\\omega / K|^2$ (the mean of $y^2$ on the grid) falls
+    as $1 / K$; `target_power` rescales the coefficients to a fixed power.
 
     Parameters
     ----------
@@ -45,6 +49,9 @@ def fourier_series(
         Whether to set the zero frequency coefficient (offset) to zero.
     prune : bool, optional
         Whether to restrict the series to the frequencies the model can express.
+    target_power : float, optional
+        Power $\\sum_\\omega |c_\\omega / K|^2$ of the series, including the
+        offset, after pruning; 0 keeps the drawn coefficients.
 
     Returns
     -------
@@ -66,6 +73,11 @@ def fourier_series(
             Datasets.construct_frequencies(model),
             coefficients.flatten(),
         )
+    if target_power > 0:
+        # the series is linear in the coefficients
+        power = np.sum(np.abs(coefficients / coefficients.size) ** 2)
+        scale = np.sqrt(target_power / power)
+        coefficients, y = scale * coefficients, scale * y
     return (
         np.asarray(x).reshape(-1, model.n_input_feat),
         np.asarray(y).reshape(-1),

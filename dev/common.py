@@ -2,8 +2,10 @@
 
 A cell holds the flow inputs that differ from the flow defaults; runs are
 matched on all inputs, so a cell is only ever answered by a run of exactly its
-configuration. The engine is found as by the fluksio CLI: FLUKSIO_URL and
-FLUKSIO_TOKEN, or the client.json of the nearest .fluksio/ (see dev/serve.sh).
+configuration. An input a run did not record (added to the flow later) counts
+as its default, which therefore has to keep the previous behaviour. The engine
+is found as by the fluksio CLI: FLUKSIO_URL and FLUKSIO_TOKEN, or the
+client.json of the nearest .fluksio/ (see dev/serve.sh).
 """
 
 from __future__ import annotations
@@ -104,11 +106,19 @@ def _complete(flow: str, cells: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [{**defaults, **cell} for cell in cells]
 
 
+def _inputs(row: dict[str, Any], defaults: dict[str, Any]) -> dict[str, Any]:
+    return {
+        k: default if (v := row.get(f"param.{k}")) is None else v
+        for k, default in defaults.items()
+    }
+
+
 def runs(flow: str, cells: list[dict[str, Any]]) -> pd.DataFrame:
     """The newest ok run of each cell: its inputs, run (the id) and the outputs."""
     from fluksio.sdk.client import Client
 
     cells = _complete(flow, cells)
+    defaults = _complete(flow, [{}])[0]
     wanted = {_key(c) for c in cells}
     keys = sorted(cells[0])
     found = {}
@@ -116,7 +126,7 @@ def runs(flow: str, cells: list[dict[str, Any]]) -> pd.DataFrame:
     for row in Client().export_runs(
         flow=flow, status="ok", metrics=",".join(OUTPUTS[flow])
     ):
-        cell = {k: row.get(f"param.{k}") for k in keys}
+        cell = _inputs(row, defaults)
         if _key(cell) in wanted and _key(cell) not in found:
             outputs = {k: row[f"metric.{k}"] for k in OUTPUTS[flow]}
             found[_key(cell)] = {**cell, "run": row["id"], **outputs}
@@ -135,9 +145,9 @@ def submit(flow: str, cells: list[dict[str, Any]], jobs: int, dry_run: bool) -> 
 
     client = Client()
     cells = _complete(flow, cells)
-    keys = sorted(cells[0])
+    defaults = _complete(flow, [{}])[0]
     seen = {
-        _key({k: row.get(f"param.{k}") for k in keys})
+        _key(_inputs(row, defaults))
         for row in client.export_runs(flow=flow)
         if row["status"] in ("ok", "queued", "running")
     }
