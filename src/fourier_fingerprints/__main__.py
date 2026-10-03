@@ -1,5 +1,5 @@
-"""saqml file for ensuring the package is executable
-as `saqml` and `python -m saqml`
+"""fourier_fingerprints file for ensuring the package is executable
+as `fourier_fingerprints` and `python -m fourier_fingerprints`
 """
 
 import importlib

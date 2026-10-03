@@ -1,20 +1,18 @@
 from qml_essentials.model import Model
 from qml_essentials.ansaetze import Ansaetze, Circuit
-from qml_essentials.coefficients import Datasets
-import qml_essentials.operations as op
+from qml_essentials.coefficients import Coefficients
 
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 
-import jax
-import jax.numpy as jnp
-
 from typing import List, Optional, Union, Callable
+import pennylane as qml
+import pennylane.numpy as np
 import pandas as pd
 import itertools
 
-from saqml.helpers.hep_dataset import get_data, get_loaders
-from saqml.helpers.classical_model import HEPRegressor, set_torch_seed
+from fourier_fingerprints.helpers.hep_dataset import get_data, get_loaders
+from fourier_fingerprints.helpers.classical_model import HEPRegressor, set_torch_seed
 
 import logging
 
@@ -32,14 +30,14 @@ class OurAnsaetze(Ansaetze):
                 return 3
 
         @staticmethod
-        def get_control_indices(n_qubits: int) -> Optional[jnp.ndarray]:
+        def get_control_indices(n_qubits: int) -> Optional[np.ndarray]:
             if n_qubits > 1:
                 return [-n_qubits, None, None]
             else:
                 return None
 
         @staticmethod
-        def build(w: jnp.ndarray, n_qubits: int, noise_params=None):
+        def build(w: np.ndarray, n_qubits: int, noise_params=None):
             """
             Creates a Circuit19 ansatz.
 
@@ -47,23 +45,23 @@ class OurAnsaetze(Ansaetze):
             because for >1 qubits there are three gates
 
             Args:
-                w (jnp.ndarray): weight vector of size n_layers*(n_qubits*3-1)
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*3-1)
                 n_qubits (int): number of qubits
             """
             w_idx = 0
             for q in range(n_qubits):
-                op.RY(w[w_idx], wires=q)
+                qml.RY(w[w_idx], wires=q)
                 w_idx += 1
-                op.RZ(w[w_idx], wires=q)
+                qml.RZ(w[w_idx], wires=q)
                 w_idx += 1
 
             if n_qubits > 1:
                 for q in range(n_qubits // 2):
-                    op.CRX(w[w_idx], wires=[(2 * q), (2 * q + 1)])
+                    qml.CRX(w[w_idx], wires=[(2 * q), (2 * q + 1)])
                     w_idx += 1
 
                 for q in range((n_qubits - 1) // 2):
-                    op.CRX(w[w_idx], wires=[(2 * q + 1), (2 * q + 2)])
+                    qml.CRX(w[w_idx], wires=[(2 * q + 1), (2 * q + 2)])
                     w_idx += 1
 
     class Circuit_YZY(Circuit):
@@ -72,27 +70,27 @@ class OurAnsaetze(Ansaetze):
             return n_qubits * 3
 
         @staticmethod
-        def get_control_indices(n_qubits: int) -> Optional[jnp.ndarray]:
+        def get_control_indices(n_qubits: int) -> Optional[np.ndarray]:
             return None
 
         @staticmethod
-        def build(w: jnp.ndarray, n_qubits: int, noise_params=None):
+        def build(w: np.ndarray, n_qubits: int, noise_params=None):
             """
             Creates a YZY ansatz.
 
             Length of flattened vector must be n_qubits*2
 
             Args:
-                w (jnp.ndarray): weight vector of size n_layers*(n_qubits*2)
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*2)
                 n_qubits (int): number of qubits
             """
             w_idx = 0
             for q in range(n_qubits):
-                op.RY(w[w_idx], wires=q)
+                qml.RY(w[w_idx], wires=q)
                 w_idx += 1
-                op.RZ(w[w_idx], wires=q)
+                qml.RZ(w[w_idx], wires=q)
                 w_idx += 1
-                op.RY(w[w_idx], wires=q)
+                qml.RY(w[w_idx], wires=q)
                 w_idx += 1
 
     class Circuit_YZY_Entangling(Circuit):
@@ -101,33 +99,33 @@ class OurAnsaetze(Ansaetze):
             return n_qubits * 3
 
         @staticmethod
-        def get_control_indices(n_qubits: int) -> Optional[jnp.ndarray]:
+        def get_control_indices(n_qubits: int) -> Optional[np.ndarray]:
             return None
 
         @staticmethod
-        def build(w: jnp.ndarray, n_qubits: int, noise_params=None):
+        def build(w: np.ndarray, n_qubits: int, noise_params=None):
             """
             Creates a YZY ansatz.
 
             Length of flattened vector must be n_qubits*2
 
             Args:
-                w (jnp.ndarray): weight vector of size n_layers*(n_qubits*2)
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*2)
                 n_qubits (int): number of qubits
             """
             w_idx = 0
             for q in range(n_qubits):
-                op.RY(w[w_idx], wires=q)
+                qml.RY(w[w_idx], wires=q)
                 w_idx += 1
-                op.RZ(w[w_idx], wires=q)
+                qml.RZ(w[w_idx], wires=q)
                 w_idx += 1
-                op.RY(w[w_idx], wires=q)
+                qml.RY(w[w_idx], wires=q)
                 w_idx += 1
 
             if n_qubits > 1:
                 for q1 in range(n_qubits - 1):  # 0..n_qubits-2
                     for q2 in range(q1 + 1, n_qubits):  # q1..n_qubits-1
-                        op.CNOT(wires=[q1, q2])
+                        qml.CNOT(wires=[q1, q2])
 
     class Circuit_19_N(Ansaetze.Circuit_19):
         @staticmethod
@@ -139,7 +137,7 @@ class OurAnsaetze(Ansaetze):
                 return 2
 
         @staticmethod
-        def build(w: jnp.ndarray, n_qubits: int, noise_params=None):
+        def build(w: np.ndarray, n_qubits: int, noise_params=None):
             """
             Creates a Circuit19 ansatz.
 
@@ -147,7 +145,7 @@ class OurAnsaetze(Ansaetze):
             because for >1 qubits there are three gates
 
             Args:
-                w (jnp.ndarray): weight vector of size n_layers*(n_qubits*3-1)
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*3-1)
                 n_qubits (int): number of qubits
             """
             n_params_per_layer = Ansaetze.Circuit_19.n_params_per_layer(n_qubits)
@@ -157,7 +155,7 @@ class OurAnsaetze(Ansaetze):
                     n_qubits,
                     noise_params,
                 )
-                op.Barrier(wires=range(n_qubits))
+                qml.Barrier(wires=range(n_qubits))
 
     class Circuit_YZY_N(Circuit_YZY):
         @staticmethod
@@ -165,14 +163,14 @@ class OurAnsaetze(Ansaetze):
             return n_qubits * 6
 
         @staticmethod
-        def build(w: jnp.ndarray, n_qubits: int, noise_params=None):
+        def build(w: np.ndarray, n_qubits: int, noise_params=None):
             """
             Creates a YZY ansatz.
 
             Length of flattened vector must be n_qubits*2
 
             Args:
-                w (jnp.ndarray): weight vector of size n_layers*(n_qubits*2)
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*2)
                 n_qubits (int): number of qubits
             """
             n_params_per_layer = OurAnsaetze.Circuit_YZY.n_params_per_layer(n_qubits)
@@ -182,7 +180,7 @@ class OurAnsaetze(Ansaetze):
                     n_qubits,
                     noise_params,
                 )
-                op.Barrier(wires=range(n_qubits))
+                qml.Barrier(wires=range(n_qubits))
 
     class Bansatz_N(Bansatz):
         @staticmethod
@@ -190,14 +188,14 @@ class OurAnsaetze(Ansaetze):
             return n_qubits * 6
 
         @staticmethod
-        def build(w: jnp.ndarray, n_qubits: int, noise_params=None):
+        def build(w: np.ndarray, n_qubits: int, noise_params=None):
             """
             Creates a Bansatz ansatz.
 
             Length of flattened vector must be n_qubits*2
 
             Args:
-                w (jnp.ndarray): weight vector of size n_layers*(n_qubits*2)
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*2)
                 n_qubits (int): number of qubits
             """
             n_params_per_layer = OurAnsaetze.Bansatz.n_params_per_layer(n_qubits)
@@ -207,7 +205,7 @@ class OurAnsaetze(Ansaetze):
                     n_qubits,
                     noise_params,
                 )
-                op.Barrier(wires=range(n_qubits))
+                qml.Barrier(wires=range(n_qubits))
 
     class Hardware_Efficient_N(Ansaetze.Hardware_Efficient):
         @staticmethod
@@ -215,7 +213,7 @@ class OurAnsaetze(Ansaetze):
             return n_qubits * 6
 
         @staticmethod
-        def build(w: jnp.ndarray, n_qubits: int, noise_params=None):
+        def build(w: np.ndarray, n_qubits: int, noise_params=None):
             """
             Creates a Hardware-Efficient ansatz, as proposed in
             https://arxiv.org/pdf/2309.03279
@@ -223,7 +221,7 @@ class OurAnsaetze(Ansaetze):
             Length of flattened vector must be n_qubits*3
 
             Args:
-                w (jnp.ndarray): weight vector of size n_layers*(n_qubits*3)
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*3)
                 n_qubits (int): number of qubits
             """
             n_params_per_layer = Ansaetze.Hardware_Efficient.n_params_per_layer(
@@ -235,7 +233,7 @@ class OurAnsaetze(Ansaetze):
                     n_qubits,
                     noise_params,
                 )
-                op.Barrier(wires=range(n_qubits))
+                qml.Barrier(wires=range(n_qubits))
 
     class Circuit_2(Circuit):
         @staticmethod
@@ -247,28 +245,28 @@ class OurAnsaetze(Ansaetze):
             return None
 
         @staticmethod
-        def build(w: jnp.ndarray, n_qubits: int, noise_params=None):
+        def build(w: np.ndarray, n_qubits: int, noise_params=None):
             """
             Creates a multi-layered Circuit19 ansatz.
 
             Length of flattened vector must be n_qubits*2
 
             Args:
-                w (jnp.ndarray): weight vector of size n_layers*(n_qubits*2)
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*2)
                 n_qubits (int): number of qubits
             """
             n_params_per_layer = OurAnsaetze.Circuit_2.n_params_per_layer(n_qubits)
 
             w_idx = 0
             for i in range(n_qubits):
-                op.RX(w[w_idx], wires=i)
+                qml.RX(w[w_idx], wires=i)
                 w_idx += 1
-                op.RZ(w[w_idx], wires=i)
+                qml.RZ(w[w_idx], wires=i)
                 w_idx += 1
 
             if n_qubits > 1:
                 for q in range(n_qubits - 1):
-                    op.CNOT(wires=[n_qubits - q - 2, n_qubits - q - 1])
+                    qml.CNOT(wires=[n_qubits - q - 2, n_qubits - q - 1])
 
     class Circuit_9_N(Ansaetze.Circuit_9):
         @staticmethod
@@ -276,14 +274,14 @@ class OurAnsaetze(Ansaetze):
             return n_qubits * 6
 
         @staticmethod
-        def build(w: jnp.ndarray, n_qubits: int, noise_params=None):
+        def build(w: np.ndarray, n_qubits: int, noise_params=None):
             """
             Creates a multi-layered Circuit19 ansatz.
 
             Length of flattened vector must be n_qubits*3*layer_multiplier
 
             Args:
-                w (jnp.ndarray): weight vector of size n_layers*(n_qubits*3*layer_multiplier)
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*3*layer_multiplier)
                 n_qubits (int): number of qubits
             """
             n_params_per_layer = Ansaetze.Circuit_9.n_params_per_layer(n_qubits)
@@ -294,7 +292,7 @@ class OurAnsaetze(Ansaetze):
                     n_qubits,
                     noise_params,
                 )
-                op.Barrier(wires=range(n_qubits))
+                qml.Barrier(wires=range(n_qubits))
 
     class ML_Bansatz(Bansatz):
         layer_multiplier = 1
@@ -304,14 +302,14 @@ class OurAnsaetze(Ansaetze):
             return n_qubits * 3 * OurAnsaetze.ML_Bansatz.layer_multiplier
 
         @staticmethod
-        def build(w: jnp.ndarray, n_qubits: int, layer_multiplier=1, noise_params=None):
+        def build(w: np.ndarray, n_qubits: int, layer_multiplier=1, noise_params=None):
             """
             Creates a multi-layered Bansatz ansatz.
 
             Length of flattened vector must be n_qubits*3*layer_multiplier
 
             Args:
-                w (jnp.ndarray): weight vector of size n_layers*(n_qubits*3*layer_multiplier)
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*3*layer_multiplier)
                 n_qubits (int): number of qubits
             """
             n_params_per_layer = OurAnsaetze.Bansatz.n_params_per_layer(n_qubits)
@@ -322,7 +320,7 @@ class OurAnsaetze(Ansaetze):
                     n_qubits,
                     noise_params,
                 )
-                op.Barrier(wires=range(n_qubits))
+                qml.Barrier(wires=range(n_qubits))
 
     class ML_Hardware_Efficient(Ansaetze.Hardware_Efficient):
         layer_multiplier = 1
@@ -332,14 +330,14 @@ class OurAnsaetze(Ansaetze):
             return n_qubits * 3 * OurAnsaetze.ML_Hardware_Efficient.layer_multiplier
 
         @staticmethod
-        def build(w: jnp.ndarray, n_qubits: int, noise_params=None):
+        def build(w: np.ndarray, n_qubits: int, noise_params=None):
             """
             Creates a multi-layered Hardware-Efficient ansatz
 
             Length of flattened vector must be n_qubits*3*layer_multiplier
 
             Args:
-                w (jnp.ndarray): weight vector of size n_layers*(n_qubits*3*layer_multiplier)
+                w (np.ndarray): weight vector of size n_layers*(n_qubits*3*layer_multiplier)
                 n_qubits (int): number of qubits
             """
             n_params_per_layer = Ansaetze.Hardware_Efficient.n_params_per_layer(
@@ -352,10 +350,10 @@ class OurAnsaetze(Ansaetze):
                     n_qubits,
                     noise_params,
                 )
-                op.Barrier(wires=range(n_qubits))
+                qml.Barrier(wires=range(n_qubits))
 
 
-def generate_model(
+def create_model(
     n_qubits: int,
     n_layers: int,
     circuit_type: str,
@@ -443,55 +441,279 @@ def print_model(model: Model):
     return str(model)
 
 
+def sample_domain(
+    model: Model, domain: List[float], omegas: List[List[float]]
+) -> np.ndarray:
+    """
+    Generates a flattened grid of (x,y,...) coordinates in a range of -1 to 1.
+
+    Parameters
+    ----------
+    sidelen : int
+        Side length of the grid
+    dim : int, optional
+        Dimensionality of the grid, by default 2
+
+    Returns
+    -------
+    np.Tensor
+        Grid tensor of shape (sidelen^dim, dim)
+    """
+    n_freqs: int = 2 * omegas + 1
+
+    start, stop, step = domain[0], domain[1], 2 * np.pi / n_freqs
+    # Stretch according to the number of frequencies
+    inputs: np.ndarray = np.arange(start, stop, step)
+
+    # permute with input dimensionality
+    nd_inputs = np.array(np.meshgrid(*[inputs] * model.n_input_feat)).T.reshape(
+        -1, model.n_input_feat
+    )
+
+    return nd_inputs
+
+
 def generate_fourier_series(
     model: Model,
-    coefficients_min: float,
-    coefficients_max: float,
-    zero_centered: bool,
-    seed: int,
-) -> jnp.ndarray:
+    domain_samples: np.ndarray,
+    omegas: List[List[float]],
+    coefficients_mean: float = 0.5,
+    coefficients_variance: float = 0.0,
+    coefficients_distribution: Optional[str] = None,
+    offset: bool = True,
+    seed: Optional[int] = 1000,
+) -> np.ndarray:
     """
     Generates the Fourier series representation of a function.
 
     Parameters
     ----------
-    domain_samples : jnp.ndarray
+    domain_samples : np.ndarray
         Grid of domain samples.
     omega : List[List[float]]
         List of frequencies for each dimension.
 
     Returns
     -------
-    jnp.ndarray
+    np.ndarray
         Fourier series representation of the function.
     """
-    random_key = jax.random.PRNGKey(seed)
+    mts = 1
+    mfs = 1
+    rng = np.random.default_rng(seed)
 
-    domain_samples, fourier_samples, coefficients = Datasets.generate_fourier_series(
-        random_key=random_key,
-        model=model,
-        coefficients_min=coefficients_min,
-        coefficients_max=coefficients_max,
-        zero_centered=zero_centered,
+    def uniform_circle(low=0.0, high=1.0, size=None, density_correct=True):
+        """Random number generator for complex numbers sampled inside the unit circle
+
+        Args:
+            low (float, optional): Minimum Radius. Defaults to 0.0.
+            high (float, optional): Maximum Radius. Defaults to 1.0.
+            size (int, optional): Number of samples. Defaults to None.
+        """
+
+        if density_correct:
+            return np.sqrt(rng.uniform(low, high, size)) * np.exp(
+                2j * np.pi * rng.uniform(low=0, high=1, size=size)
+            )
+        else:
+            return rng.uniform(low, high, size) * np.exp(
+                2j * np.pi * rng.uniform(low=0, high=1, size=size)
+            )
+
+    def normal_circle(loc=0.0, scale=1.0, size=None):
+        """Random number generator for complex numbers sampled inside the unit circle
+
+        Args:
+            loc (float, optional): Mean. Defaults to 0.0.
+            scale (float, optional): Standard Deviation. Defaults to 1.0.
+            size (int, optional): Number of samples. Defaults to None.
+        """
+
+        return np.sqrt(rng.normal(loc, scale, size)) * np.exp(
+            2j * np.pi * rng.uniform(low=0, high=1, size=size)
+        )
+
+    frequencies = np.stack(
+        np.meshgrid(
+            *[
+                np.linspace(-omegas, omegas, 2 * omegas + 1)
+                for _ in range(model.n_input_feat)
+            ]
+        )
+    ).T.reshape(-1, model.n_input_feat)
+
+    n_freqs: int = int(2 * mfs * omegas + 1)
+
+    if coefficients_distribution is None:
+        if isinstance(coefficients_mean, float):
+            coefficients = np.array([coefficients for _ in range(model.n_input_feat)])
+        elif isinstance(coefficients_mean, list):
+            coefficients = np.array(coefficients_mean)
+        else:
+            raise ValueError(
+                "coefficients_distribution must be specified if coefficients_mean is not a list or float"
+            )
+    elif coefficients_distribution == "uniform":
+        coefficients = uniform_circle(
+            coefficients_mean - coefficients_variance,
+            coefficients_mean + coefficients_variance,
+            int(np.ceil(frequencies.shape[0] / 2)),
+        )
+        # coefficients = 1.0 * rng.uniform(
+        #     coefficients_mean - coefficients_variance,
+        #     coefficients_mean + coefficients_variance,
+        #     int(np.ceil(frequencies.shape[0] / 2)),
+        # ) + 1.0j * rng.uniform(
+        #     coefficients_mean - coefficients_variance,
+        #     coefficients_mean + coefficients_variance,
+        #     int(np.ceil(frequencies.shape[0] / 2)),
+        # )
+    elif coefficients_distribution == "normal":
+        coefficients = normal_circle(
+            coefficients_mean - coefficients_variance,
+            coefficients_mean + coefficients_variance,
+            int(np.ceil(frequencies.shape[0] / 2)),
+        )
+    # TODO: ensure uniform circle on the coefficients!
+
+    coefficients = coefficients.flatten()
+
+    # import matplotlib.pyplot as plt
+
+    # plt.figure(figsize=(4, 4))
+    # plt.scatter(np.real(coefficients), np.imag(coefficients), s=1, alpha=0.3)
+    # plt.gca().set_aspect("equal")
+    # plt.xlim(-1, 1)
+    # plt.ylim(-1, 1)
+    # plt.title("Uniform points in unit disk")
+    # plt.show()
+
+    # ensure the first coefficient is real
+    if not offset:
+        coefficients[0] = 0.0
+    else:
+        coefficients[0] = coefficients[0].real
+
+    # ensure symmetry
+    coefficients = np.concat(
+        [np.flip(coefficients[1:]).conjugate(), coefficients],
     )
 
-    return {
-        "domain_samples": domain_samples,
-        "fourier_samples": fourier_samples.flatten(),
-        "coefficients": coefficients,
-    }
+    # assert (
+    #     omegas == coefficients.shape
+    # ), "Number of frequencies and coefficients must match"
+
+    def y(x: np.ndarray) -> float:
+        """
+        Calculates the Fourier series representation of a function at a given point.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            Point at which to evaluate the function.
+
+        Returns
+        -------
+        float
+
+            Value of the Fourier series representation at the given point.
+        """
+        return (
+            np.real_if_close(np.sum(coefficients * np.exp(1j * frequencies.dot(x))))
+            / coefficients.size
+        )
+
+    values = np.stack([y(x) for x in domain_samples])
+    coefficients_hat = np.fft.fftshift(
+        np.fft.fftn(
+            values.reshape([n_freqs] * model.n_input_feat),
+            axes=list(range(model.n_input_feat)),
+        )
+    )
+    freqs = np.fft.fftshift(np.fft.fftfreq(mts * n_freqs, 1 / n_freqs))
+
+    assert np.allclose(
+        coefficients, coefficients_hat.flatten(), atol=1e-6
+    ), "Frequencies don't match"
+
+    def str_sign(num: int):
+        return f"{num:.2f}" if num < 0 else f"+{num:.2f}"
+
+    # Build a pandas dataframe with the parameters and coefficients as columns
+    df = pd.DataFrame(
+        columns=[
+            *[
+                f"c_{'_'.join(str_sign(v) for v in tup)}"
+                for tup in itertools.product(*[freqs] * model.n_input_feat)
+            ],  # symmetric + zero frequency
+        ]
+    )
+    df.loc[0] = coefficients.flatten()
+
+    return {"fourier_series": values.flatten(), "target": df}
 
 
-def build_fourier_series_dataloader(
-    batch_size: int, domain_samples, fourier_samples, coefficients: jnp.ndarray
+def sample_fourier_series(
+    model: Model,
+    domain_samples: np.ndarray,
+    omegas: List[List[float]],
+    sample_mean: float = 0.5,
+    sample_variance: float = 0.0,
+    sample_distribution: Optional[str] = None,
+    seed: Optional[int] = 1000,
 ):
+    rng = np.random.default_rng(seed)
+
+    dims = model.n_input_feat
+
+    mfs = 1
+    mts = 1
+
+    n_freqs: int = 2 * mfs * omegas + 1
+
+    if sample_distribution == "uniform":
+        values = rng.uniform(
+            sample_mean - sample_variance,
+            sample_mean + sample_variance,
+            (n_freqs,) * dims,
+        )
+    elif sample_distribution == "normal":
+        values = rng.normal(
+            sample_mean,
+            sample_variance,
+            (n_freqs,) * dims,
+        )
+    else:
+        raise ValueError(
+            "sample_distribution must be specified if sample_mean is not a list or float"
+        )
+    Y = np.fft.fftshift(np.fft.fftn(values, axes=list(range(dims))))
+    freqs = np.fft.fftshift(np.fft.fftfreq(mts * n_freqs, 1 / n_freqs))
+
+    def str_sign(num: int):
+        return f"{num:.2f}" if num < 0 else f"+{num:.2f}"
+
+    # Build a pandas dataframe with the parameters and coefficients as columns
+    df = pd.DataFrame(
+        columns=[
+            *[
+                f"c_{'_'.join(str_sign(v) for v in tup)}"
+                for tup in itertools.product(*[freqs] * dims)
+            ],  # symmetric + zero frequency
+        ]
+    )
+    df.loc[0] = Y.flatten()
+
+    return {"fourier_series": values.flatten(), "target": df}
+
+
+def get_fourier_dataset(batch_size: int, domain_samples, fourier_series):
     if batch_size < 1:
         batch_size = domain_samples.shape[0]
     train_loader = DataLoader(
         TensorDataset(
-            torch.from_numpy(jnp.array(domain_samples)),
-            torch.from_numpy(jnp.array(fourier_samples).squeeze()),
-            torch.from_numpy(jnp.array(coefficients).squeeze()),
+            torch.from_numpy(domain_samples),
+            torch.from_numpy(fourier_series),
         ),
         batch_size=batch_size,
         shuffle=False,
@@ -501,6 +723,7 @@ def build_fourier_series_dataloader(
         "train_loader": train_loader,
         "valid_loader": train_loader,
     }
+
 
 def get_hep_dataset(
     batch_size: int,
@@ -535,19 +758,19 @@ def calculate_hep_spectrum(data_loader, scalers, model, mts, mfs):
 
     def closest_x(x1, x2):
         # find index of pair (x1, x2) that is closest to a tuple in x
-        idx = jnp.argmin(jnp.linalg.norm(x - jnp.array([x1, x2]), axis=1))
-        eps = jnp.linalg.norm(x[idx] - jnp.array([x1, x2]))
+        idx = np.argmin(np.linalg.norm(x - np.array([x1, x2]), axis=1))
+        eps = np.linalg.norm(x[idx] - np.array([x1, x2]))
         return idx, eps
 
     n_samples = x.shape[0]
     n_freqs: int = 2 * mfs * model.degree + 1
-    start, stop, step = 0, 2 * mts * jnp.pi, 2 * jnp.pi / n_freqs
+    start, stop, step = 0, 2 * mts * np.pi, 2 * np.pi / n_freqs
     # Stretch according to the number of frequencies
-    bins: jnp.ndarray = jnp.arange(start, stop, step)
+    bins: np.ndarray = np.arange(start, stop, step)
     x = x * mts
 
     N = len(bins)
-    y_hat = jnp.zeros([N, N])
+    y_hat = np.zeros([N, N])
 
     for i in range(N):
         for j in range(N):
@@ -557,13 +780,13 @@ def calculate_hep_spectrum(data_loader, scalers, model, mts, mfs):
 
     log.info(f"Discretization error: {discretization_error}")
 
-    Y = jnp.fft.fftn(y_hat)
-    Y = jnp.fft.fftshift(Y)
+    Y = np.fft.fftn(y_hat)
+    Y = np.fft.fftshift(Y)
 
     def str_sign(num: int):
         return f"{num:.2f}" if num < 0 else f"+{num:.2f}"
 
-    freqs = jnp.fft.fftshift(jnp.fft.fftfreq(mts * n_freqs, 1 / n_freqs))
+    freqs = np.fft.fftshift(np.fft.fftfreq(mts * n_freqs, 1 / n_freqs))
 
     # Build a pandas dataframe with the parameters and coefficients as columns
     df = pd.DataFrame(

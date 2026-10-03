@@ -76,7 +76,7 @@ fig.add_trace(
         name="# of Unique Gaps",
         marker=dict(
             size=10,
-            color="#002D4C",
+            color="#009682",
         ),
     )
 )
@@ -90,22 +90,22 @@ fig.add_trace(
         name="# of Unique Eigenvalues",
         marker=dict(
             size=10,
-            color="#009682",
+            color="#4664AA",
         ),
     )
 )
 
 fig.update_layout(
     xaxis=dict(title="# of qubits (n)", dtick=1),
-    # yaxis=dict(
-    #     # title="Unique Eigenvalues",
-    #     type="log",
-    #     tickmode="array",
-    #     tickvals=[1, 10, 100, 1000],
-    #     ticktext=[1, 10, 100, 1000],
-    # ),
+    yaxis=dict(
+        # title="Unique Eigenvalues",
+        type="log",
+        tickmode="array",
+        tickvals=[1, 10, 100, 1000],
+        ticktext=[1, 10, 100, 1000],
+    ),
     template="simple_white",
     legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
 )
 
-fig.write_image("unique_freqs.pdf", width=450, height=350, scale=1)
+fig.write_image("unique_freqs.svg", width=450, height=350, scale=1)

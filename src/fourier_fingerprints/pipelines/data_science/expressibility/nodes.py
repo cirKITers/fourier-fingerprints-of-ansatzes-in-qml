@@ -1,7 +1,7 @@
 from qml_essentials.model import Model
 from qml_essentials.expressibility import Expressibility
+import pennylane.numpy as np
 import mlflow
-import jax.numpy as jnp
 
 from typing import Dict, List
 
@@ -40,6 +40,6 @@ def expressibility(
         vqc_prob_dist=z_model, haar_dist=y_haar
     )
 
-    mlflow.log_metric("expressibility", jnp.mean(divergence))
+    mlflow.log_metric("expressibility", np.mean(divergence))
 
     return {"divergence": divergence}

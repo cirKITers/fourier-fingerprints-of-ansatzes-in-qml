@@ -1,1 +1,0 @@
-find mlruns -maxdepth 2 -type f -name 'meta.yaml' -exec sed -n -e 3p -e 6p {} \;    

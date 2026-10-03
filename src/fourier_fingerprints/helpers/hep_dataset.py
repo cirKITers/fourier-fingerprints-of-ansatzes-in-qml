@@ -18,7 +18,7 @@ import vector
 import warnings
 import copy
 
-from saqml.helpers.classical_model import set_torch_seed
+from fourier_fingerprints.helpers.classical_model import set_torch_seed
 import logging
 
 log = logging.getLogger(__name__)

@@ -5,38 +5,38 @@ from typing import Dict
 from kedro.framework.project import find_pipelines
 from kedro.pipeline import Pipeline
 
-from saqml.pipelines.data_generation.pipeline import (
+from fourier_fingerprints.pipelines.data_generation.pipeline import (
     draw_model_pipeline,
     create_model_pipeline,
     create_classical_model_pipeline,
     create_fourier_pipeline,
     create_hep_pipeline,
 )
-from saqml.pipelines.data_science.coefficients.pipeline import (
+from fourier_fingerprints.pipelines.data_science.coefficients.pipeline import (
     create_pipeline as create_coefficients_pipeline,
 )
-from saqml.pipelines.data_science.coefficients.pipeline import (
+from fourier_fingerprints.pipelines.data_science.coefficients.pipeline import (
     create_randcoeffs_pipeline as create_randcoeffs_pipeline,
 )
-from saqml.pipelines.data_science.expressibility.pipeline import (
+from fourier_fingerprints.pipelines.data_science.expressibility.pipeline import (
     create_pipeline as create_expressibility_pipeline,
 )
-from saqml.pipelines.data_science.training.pipeline import (
+from fourier_fingerprints.pipelines.data_science.training.pipeline import (
     create_pipeline as create_training_pipeline,
 )
 
-from saqml.pipelines.visualization.pipeline import (
+from fourier_fingerprints.pipelines.visualization.pipeline import (
     create_pipeline as create_visualization_pipeline,
 )
 
-from saqml.pipelines.visualization.pipeline import (
+from fourier_fingerprints.pipelines.visualization.pipeline import (
     create_model_pipeline as create_model_visualization_pipeline,
 )
-from saqml.pipelines.visualization.pipeline import (
+from fourier_fingerprints.pipelines.visualization.pipeline import (
     create_hep_pipeline as create_hep_visualization_pipeline,
 )
 
-from saqml.pipelines.visualization.pipeline import (
+from fourier_fingerprints.pipelines.visualization.pipeline import (
     create_randcoeffs_pipeline as create_randcoeffs_viz_pipeline,
 )
 

@@ -9,7 +9,7 @@ model_str:
     filepath: "model.txt"
 
 coeffs_target:
-  type: saqml.helpers.dataset.MlFlowPandasComplexDataset
+  type: fourier_fingerprints.helpers.dataset.MlFlowPandasComplexDataset
   filepath: "coeffs_target.csv"
 
 trained_coefficients:
@@ -32,61 +32,61 @@ trained_coefficients:
 
 coefficients_filtered:
   # type: kedro_mlflow.io.artifacts.MlflowArtifactDataset
-  type: saqml.helpers.dataset.MlFlowPandasComplexDataset
+  type: fourier_fingerprints.helpers.dataset.MlFlowPandasComplexDataset
   filepath: "coefficients_filtered.csv"
 
 fig_coefficients_correlated:
-  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  type: fourier_fingerprints.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "coefficients_correlated.html"
 
 fig_coefficients_correlated_weighted:
-  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  type: fourier_fingerprints.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "coefficients_correlated_weighted.html"
 
 fig_spectrum:
-  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  type: fourier_fingerprints.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "spectrum.html"
 
 fig_data_spectrum:
-  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  type: fourier_fingerprints.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "data_spectrum.html"
 
 fig_spectrum_trained:
-  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  type: fourier_fingerprints.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "fig_spectrum_trained.html"
 
 fig_input_data:
-  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  type: fourier_fingerprints.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "fig_input_data.html"
 
 fig_random_coefficients_correlated:
-  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  type: fourier_fingerprints.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "random_coefficients_correlated.html"
 
 # fig_parameters_correlated:
-#   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+#   type: fourier_fingerprints.helpers.dataset.MlFlowPlotlyArtifact
 #   filepath: "parameters_correlated.html"
 
 fig_parameters_coefficients_correlated:
-  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  type: fourier_fingerprints.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "parameters_coefficients_correlated.html"
 
 fig_parameters_coefficients_complex:
-  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  type: fourier_fingerprints.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "parameters_coefficients_complex.html"
 
 # fig_model_initial:
-#   type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+#   type: fourier_fingerprints.helpers.dataset.MlFlowPlotlyArtifact
 #   filepath: "model_initial.html"
 
 fig_domain_trained:
-  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  type: fourier_fingerprints.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "fig_domain_trained.html"
 
 fig_distribution_train:
-  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  type: fourier_fingerprints.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "fig_distribution_train.html"
 
 fig_distribution_valid:
-  type: saqml.helpers.dataset.MlFlowPlotlyArtifact
+  type: fourier_fingerprints.helpers.dataset.MlFlowPlotlyArtifact
   filepath: "fig_distribution_valid.html"

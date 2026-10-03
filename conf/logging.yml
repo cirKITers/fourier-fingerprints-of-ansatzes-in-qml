@@ -36,7 +36,7 @@ loggers:
   kedro:
     level: INFO
 
-  saqml:
+  fourier_fingerprints:
     level: INFO
 
 root:

@@ -1,13 +1,10 @@
 from qml_essentials.entanglement import Entanglement
 from qml_essentials.model import Model
-from qml_essentials.coefficients import Coefficients
 from torch.utils.data import DataLoader
 import torch
-import jax
-import jax.numpy as jnp
+import pennylane as qml
+import pennylane.numpy as np
 import mlflow
-import numpy as np
-import optax
 from typing import Dict
 from rich.progress import track
 import pandas as pd
@@ -19,6 +16,8 @@ from scipy.stats import wasserstein_distance, anderson_ksamp, energy_distance
 # from torch.nn.functional import huber_loss as huber_loss
 
 import logging
+
+from fourier_fingerprints.helpers.coefficients import Coefficients
 
 log = logging.getLogger(__name__)
 
@@ -107,37 +106,6 @@ class Losses:
         return energy_distance(prediction, target)
 
 
-class JaxLosses:
-    @staticmethod
-    def mse(prediction, target):
-        return jnp.mean((prediction - target) ** 2)
-
-    @staticmethod
-    def null_loss(prediction, target):
-        return jnp.array(0.0)
-
-    @staticmethod
-    def kl_divergence(prediction, target):
-        var_pred = prediction.var()
-        var_target = target.var()
-        mean_pred = prediction.mean()
-        mean_target = target.mean()
-
-        return 0.5 * jnp.sum(
-            jnp.log(var_target / var_pred)
-            + (var_pred + (mean_pred - mean_target) ** 2) / var_target
-            - 1
-        )
-
-    @staticmethod
-    def huber_loss(prediction, target, delta=1.0):
-        a = prediction - target
-        abs_a = jnp.abs(a)
-        return jnp.mean(
-            jnp.where(abs_a <= delta, 0.5 * a**2, delta * (abs_a - 0.5 * delta))
-        )
-
-
 def train_model(
     model: Model,
     train_loader: DataLoader,
@@ -168,8 +136,7 @@ def train_model(
             [range(model.degree + 1)], names=df_coeffs_index_names
         )
 
-        opt = optax.adam(learning_rate=learning_rate)
-        opt_state = opt.init(model.params)
+        opt = qml.AdamOptimizer(stepsize=learning_rate)
 
         def cost(params, targets, **kwargs):
             prediction = model(params=params, **kwargs)
@@ -193,96 +160,99 @@ def train_model(
     df_grads = pd.DataFrame()
     df_coeffs = pd.DataFrame()
 
-    loss_backend = JaxLosses if type(model) == Model else Losses
-    loss_1 = getattr(loss_backend, loss_function[0])
-    loss_2 = getattr(loss_backend, loss_function[1])
+    loss_1 = getattr(Losses, loss_function[0])
+    loss_2 = getattr(Losses, loss_function[1])
     lambda_1 = loss_scaler[0]
     lambda_2 = loss_scaler[1]
-    cost_and_grad = jax.value_and_grad(cost) if type(model) == Model else None
 
     def log_metrics(model, step):
-        def log_metric(name, value):
-            mlflow.log_metric(name, float(value), step=step)
-
         domain_samples = train_loader.dataset.tensors[0].numpy()
         fourier_series = train_loader.dataset.tensors[1].numpy().flatten()
         if type(model) == Model:
-            prediction = np.asarray(
-                model(
-                    params=model.params,
-                    inputs=domain_samples,
-                    noise_params=noise_params,
-                    execution_type="expval",
-                    force_mean=True,
-                )
+            prediction = model(
+                params=model.params,
+                inputs=domain_samples,
+                noise_params=noise_params,
+                execution_type="expval",
+                force_mean=True,
             )
         else:
             prediction = model(torch.Tensor(domain_samples)).detach().numpy()
 
         # scaler 1 is for jets
-        log_metric(
+        mlflow.log_metric(
             "wasserstein_train",
             Losses.wasserstein_distance(prediction, fourier_series),
+            step=step,
         )
-        log_metric(
+        mlflow.log_metric(
             "anderson_ksamp_train",
             Losses.anderson_ksamp(prediction, fourier_series),
+            step=step,
         )
-        log_metric(
+        mlflow.log_metric(
             "energy_distance_train",
             Losses.energy_distance(prediction, fourier_series),
+            step=step,
         )
-        log_metric(
+        mlflow.log_metric(
             "kl_divergence_train",
             Losses.kl_divergence(prediction, fourier_series),
+            step=step,
         )
-        log_metric(
+        mlflow.log_metric(
             "huber_loss_train",
             Losses.huber_loss(prediction, fourier_series),
+            step=step,
         )
-        log_metric(
+        mlflow.log_metric(
             "mse_train",
             Losses.mse(prediction, fourier_series),
+            step=step,
         )
 
         domain_samples = valid_loader.dataset.tensors[0].numpy()
         fourier_series = valid_loader.dataset.tensors[1].numpy().flatten()
         if type(model) == Model:
-            prediction = np.asarray(
-                model(
-                    params=model.params,
-                    inputs=domain_samples,
-                    noise_params=noise_params,
-                    execution_type="expval",
-                    force_mean=True,
-                )
+            prediction = model(
+                params=model.params,
+                inputs=domain_samples,
+                noise_params=noise_params,
+                execution_type="expval",
+                force_mean=True,
             )
         else:
             prediction = model(torch.Tensor(domain_samples)).detach().numpy()
 
-        log_metric(
+        mlflow.log_metric(
             "wasserstein_valid",
             Losses.wasserstein_distance(prediction, fourier_series),
+            step=step,
         )
-        log_metric(
+        mlflow.log_metric(
             "anderson_ksamp_valid",
             Losses.anderson_ksamp(prediction, fourier_series),
+            step=step,
         )
-        log_metric(
+        mlflow.log_metric(
             "energy_distance_valid",
             Losses.energy_distance(prediction, fourier_series),
+            step=step,
         )
-        log_metric(
+        mlflow.log_metric(
             "kl_divergence_valid",
             Losses.kl_divergence(prediction, fourier_series),
+            step=step,
         )
-        log_metric(
+        mlflow.log_metric(
             "huber_loss_valid",
             Losses.huber_loss(prediction, fourier_series),
+            step=step,
         )
-        log_metric(
+        mlflow.log_metric(
             "mse_valid",
             Losses.mse(prediction, fourier_series),
+            step=step,
         )
 
     log.info(f"Training model for {steps} steps")
@@ -326,13 +296,14 @@ def train_model(
         cost_val = 0
         for domain_samples, fourier_series in train_loader:
             if isinstance(domain_samples, torch.Tensor) and type(model) == Model:
-                domain_samples = jnp.asarray(domain_samples.numpy())
+                domain_samples = domain_samples.numpy()
             if isinstance(fourier_series, torch.Tensor) and type(model) == Model:
-                fourier_series = jnp.asarray(fourier_series.numpy().flatten())
+                fourier_series = fourier_series.numpy().flatten()
 
             if type(model) == Model:
                 # optimization step
-                step_cost_val, grads = cost_and_grad(
+                model.params, step_cost_val = opt.step_and_cost(
+                    cost,
                     model.params,
                     inputs=domain_samples,
                     targets=fourier_series,
@@ -340,28 +311,24 @@ def train_model(
                     execution_type="expval",
                     force_mean=True,
                 )
-                updates, opt_state = opt.update(grads, opt_state, model.params)
-                model.params = optax.apply_updates(model.params, updates)
             else:
                 step_cost_val = cost(domain_samples, fourier_series)
                 opt.zero_grad()
                 step_cost_val.backward()
                 opt.step()
 
-            cost_val += float(step_cost_val)
+            cost_val += step_cost_val
         cost_val /= len(train_loader)
 
         if type(model) != Model and step % epochs_before_decay == 0:
             sched.step(cost_val)
 
+        if type(cost_val) == torch.Tensor:
+            cost_val = cost_val.item()
+
         if log_coefficients and type(model) == Model:
             # log coefficients
-            coeffs, _ = Coefficients.get_spectrum(
-                model,
-                shift=True,
-                trim=True,
-                cache=False,
-            )
+            coeffs, _ = Coefficients.calculate_coefficients(model, cache=False)
             df_coeffs = pd.concat(
                 [
                     df_coeffs,
