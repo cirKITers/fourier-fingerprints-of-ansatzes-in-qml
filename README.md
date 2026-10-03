@@ -1,8 +1,8 @@
 # Fourier Fingerprints of Ansaetze in Quantum Machine Learning
 
-Code of the paper studies on the Fourier coefficient correlation (FCC) of
-variational ansaetze: the fingerprints themselves, and whether they predict the
-training error on Fourier series and on a high energy physics regression task.
+Experiments on the Fourier coefficient correlation (FCC) of variational
+ansaetze: their fingerprints and their relation to training error on Fourier
+series and a high energy physics regression task.
 Models are built with [qml-essentials](https://github.com/cirKITers/qml-essentials)
 on the [jaqsi](https://github.com/cirKITers/jaqsi) simulator, experiments run as
 versioned [Fluksio](https://docs.fluksio.com) runs.
@@ -13,14 +13,14 @@ versioned [Fluksio](https://docs.fluksio.com) runs.
   expressibility, datasets, training loops) and `pipeline.py`, the Fluksio flows
   fingerprint, surrogate, expressibility, train and encoding
 - `dev/`: one folder per study with its driver (`run.py`), export (`export.py`),
-  figures (`figures.py`), README and the reference CSVs of the paper figures;
+  figures (`figures.py`), README, and reference CSVs;
   `dev/serve.sh` starts the engine
   - `s1-fingerprints`: FCC, expressibility and the random-coefficient surrogate
   - `s2-fourier-series`: training on 1D and 2D Fourier series
   - `s3-hep`: training on the $pp \to Z \to$ jets dataset, QFM and MLP
   - `s4-encodings`: FCC and training error of the encoding strategies
 - `tests/`: unit tests, `uv run pytest`
-- `data/`: the HEP datasets (not tracked), `docs/`: circuit drawings
+- `data/`: the HEP datasets (not tracked)
 
 ## Getting started
 

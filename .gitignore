@@ -1,5 +1,4 @@
 AGENTS.md
-docs/NOTEPAD.md
 .codegraph
 
 # Everything a run produces or consumes: the engine's store and each study's
@@ -10,7 +9,7 @@ dev/*/results/
 dev/*/figures/
 logs/
 
-# The CSVs behind the paper figures are tracked
+# Bundled reference CSVs are tracked.
 *.csv
 !dev/*/reference/**/*.csv
 
@@ -126,9 +125,6 @@ instance/
 
 # Scrapy stuff:
 .scrapy
-
-# Sphinx documentation
-docs/_build/
 
 # PyBuilder
 target/
