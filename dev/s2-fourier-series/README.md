@@ -1,10 +1,15 @@
-# s2 Fourier-series training
+# s2 — Fourier-series training
+
+## Question
 
 Does the FCC (or the expressibility) of an ansatz predict how well a quantum
-Fourier model (QFM) with it fits a random Fourier series of matching spectrum? Each
-QFM is trained on a series whose coefficients are drawn uniformly from the unit
-disc, on the equidistant grid resolving its highest frequency, and validated on the
-same grid.
+Fourier model (QFM) with it fits a random Fourier series of matching spectrum?
+
+## Method
+
+Each QFM is trained on a series whose coefficients are drawn uniformly from the
+unit disc, on the equidistant grid resolving its highest frequency, and
+validated on the same grid.
 
 | flow | cells | settings |
 | --- | --- | --- |
@@ -17,7 +22,7 @@ the same series, ansatz and seed, so s1 has to run for the same ansaetze and see
 The FCC columns are those of s1 (series-specific corr_mean, corr_tril_mean, the
 signal-only corr_mean_signal and corr_w_mean_signal).
 
-## How to re-run it
+## Reproduce
 
 ```sh
 RUNS=4 DEVICES=4 dev/serve.sh                          # the engine, on ./.fluksio

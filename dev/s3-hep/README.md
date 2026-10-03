@@ -1,6 +1,12 @@
-# s3 HEP regression
+# s3 — HEP regression
 
-Does the FCC ranking carry over to real data? QFMs with two inputs regress the
+## Question
+
+Does the FCC ranking carry over to real data?
+
+## Method
+
+QFMs with two inputs regress the
 transverse momentum $p_T$ of the leading jet in $pp \to Z \to$ jets events from the
 center of mass energy and the parton energy difference, compared to a small
 classical MLP. The dataset is data/pp-z-to-jets-500K-57246.h5 (40000 events,
@@ -24,7 +30,7 @@ broadcast targets (the Huber term compares all prediction-target pairs of a
 batch); `--variant revised` runs the current Circuit_15 and the elementwise Huber
 loss.
 
-## How to re-run it
+## Reproduce
 
 ```sh
 RUNS=4 DEVICES=4 dev/serve.sh                          # the engine, on ./.fluksio

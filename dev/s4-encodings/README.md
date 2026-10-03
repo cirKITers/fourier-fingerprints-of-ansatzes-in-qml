@@ -1,6 +1,11 @@
-# s4 Encoding strategies
+# s4 — Encoding strategies
+
+## Question
 
 Does the relation between FCC and training error extend beyond Hamming encoding?
+
+## Method
+
 Every qml-essentials ansatz is combined with the Hamming, binary and ternary
 encoding strategy of an RY encoding. The FCC is computed from random parameter
 samples and a quantum Fourier model (QFM) with the same encoding is trained on a
@@ -66,7 +71,7 @@ only this subset for the FCC, so that the FCC describes the trained model.
 Circuit, support and target are those of power; matching by the number of
 layers would change the spectrum. For Circuit_2 the cells equal those of power.
 
-## Results
+### Measures and exports
 
 Per run the export writes run_id, ansatz, encoding_strategy, data.seed,
 model.seed, fcc.seed, train.steps, fcc, train_mse and train_fmse. The fcc
@@ -118,7 +123,9 @@ ansaetze; within a support size partial_r controls for n_params only and
 partial_r_var for var_sum only. `--excess` does the same for
 fcc_excess on a linear axis (encoding_strategy_excess_*), for rerun.
 
-## 1-18 validation
+## Findings
+
+### 1-18 validation
 
 The recomputed FCC of all 510 cells matches the reference to a relative
 $3.4 \cdot 10^{-15}$, except for the 30 Circuit_9 cells ($1.0 \cdot 10^{-6}$):
@@ -142,7 +149,7 @@ fcc / fcc_null is 1.23, 1.05 and 1.03, and 37 %, 66 % and 72 % of the cells
 are below 1.1. Under binary encoding the null value alone correlates with the
 MSE at $r = 0.62$, i.e. the relation follows mostly the coefficient variances.
 
-## Convergence
+### Convergence
 
 The convergence cells at the rerun configuration, ratios averaged over the
 ansaetze and seeds, and the median of fcc / fcc_null:
@@ -165,7 +172,7 @@ At 6 qubits and 1 layer the support sizes range from 2 to 7 (Hamming), 4 to 64
 (binary) and 4 to 365 (ternary), the parameter counts from 12 (Circuit_9) to 72
 (Strongly_Entangling).
 
-## Learning rate
+### Learning rate
 
 The lr cells (rerun at 8000 samples, seed 1000), median final train_nmse per
 encoding over the 4 ansaetze, their mean, the median over all 12 runs and the
@@ -189,7 +196,7 @@ $10^{-2}$. $3 \cdot 10^{-2}$ has the lowest median over all runs, but 7 of its
 12 runs oscillate. Circuit_9 (support 2 or 4) stays above a train_nmse of 0.93
 at every learning rate.
 
-## Parameter matching
+### Parameter matching
 
 The matched cells (all 10 seeds, run in-process with the encoding node; four
 power cells rerun this way match the engine to $6 \cdot 10^{-16}$) keep the full
@@ -214,7 +221,7 @@ matching, $\log_{10}$ fcc_pearson correlates with $\log_{10}$ var_sum at
 $r = 0.89$, $0.64$ and $0.71$. The FCC predicts the error beyond the number of
 parameters and var_sum only under binary encoding.
 
-## Local FCC
+### Local FCC
 
 The FCC correlates the coefficients over the whole parameter space, where they
 are nearly uncorrelated for every ansatz, while a trained model can only move
@@ -261,22 +268,7 @@ so it does not carry the differences between the encodings. Given $m / D_s$ its
 partial $r$ is 0.53 $[0.29, 0.71]$ (95 % bootstrap interval over the cells) for
 $m < D_s$; for $m = D_s$ given n_params / $D_s$ it is 0.33 $[-0.11, 0.66]$.
 
-## Cost
-
-Median seconds per cell on the engine with `RUNS=4 DEVICES=4` (16 cores):
-
-| cells | hamming | binary | ternary |
-| --- | --- | --- | --- |
-| 1-18 | 27 | 40 | 79 |
-| rerun, 500 samples | 26 | 38 | 94 |
-| rerun, 8000 samples | 26 | 41 | 158 |
-| convergence, 8000 samples | 3 | 6 | 64 |
-
-A grid of 510 cells takes about 2 h with 4 runs at once, the rerun at 8000
-samples about 2.7 h. The FCC evaluates the
-spectra in chunks of 1000 parameter sets, a ternary run needs about 2.5 GB.
-
-## How to re-run it
+## Reproduce
 
 ```sh
 RUNS=4 DEVICES=4 dev/serve.sh                         # the engine, on ./.fluksio
@@ -303,3 +295,18 @@ train_mse, which is $P$ times train_pnmse for power, so its correlations are
 those of train_pnmse. A run from before `target_power` was added counts as
 `target_power` 0, the behaviour it had. `reference/encoding_strategy.csv`
 contains the bundled 1-18 results.
+
+### Cost
+
+Median seconds per cell on the engine with `RUNS=4 DEVICES=4` (16 cores):
+
+| cells | hamming | binary | ternary |
+| --- | --- | --- | --- |
+| 1-18 | 27 | 40 | 79 |
+| rerun, 500 samples | 26 | 38 | 94 |
+| rerun, 8000 samples | 26 | 41 | 158 |
+| convergence, 8000 samples | 3 | 6 | 64 |
+
+A grid of 510 cells takes about 2 h with 4 runs at once, the rerun at 8000
+samples about 2.7 h. The FCC evaluates the
+spectra in chunks of 1000 parameter sets, a ternary run needs about 2.5 GB.

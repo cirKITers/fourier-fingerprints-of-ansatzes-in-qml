@@ -35,3 +35,12 @@ Each study README lists its cells and how to run, export and plot it. The driver
 submit to the running engine and skip cells that already ran, so an interrupted
 grid resumes on the next call. Restart the engine after `uv sync`, and keep
 `RUNS` $\times$ `DEVICES` near the number of cores.
+
+## Architecture
+
+The library defines the QFMs, ansaetze, FCC and expressibility measurements, and
+training flows. The s1 fingerprints and expressibility runs characterize
+untrained models; s2 and s3 test their relation to fitting Fourier series and
+HEP data. s4 varies the encoding strategy and tests how its spectrum affects
+the FCC and training error. Each `dev/` driver supplies a study's cells to the
+shared flows.

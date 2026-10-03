@@ -1,10 +1,16 @@
-# s1 Fourier fingerprints
+# s1 — Fourier fingerprints
 
-How strongly are the Fourier coefficients of an ansatz correlated? The fingerprint
-is the Pearson correlation matrix of the real parts of the non-negative Fourier
-coefficients over random parameter samples, the Fourier coefficient correlation
-(FCC) its mean absolute value. The expressibility (KL divergence to the Haar
-distribution) and a random-coefficient surrogate serve as references.
+## Question
+
+How strongly are the Fourier coefficients of an ansatz correlated?
+
+## Method
+
+The fingerprint is the Pearson correlation matrix of the real parts of the
+non-negative Fourier coefficients over random parameter samples; the Fourier
+coefficient correlation (FCC) is its mean absolute value. Expressibility (KL
+divergence to the Haar distribution) and a random-coefficient surrogate serve
+as references.
 
 | flow | cells | settings |
 | --- | --- | --- |
@@ -17,7 +23,7 @@ two inputs, 250 samples per input). Ansaetze: Hardware_Efficient,
 Circuit_YZY_Entangling, Circuit_YZY, Circuit_19, Circuit_18, Circuit_17,
 Circuit_16, Circuit_15. Seeds 1000 to 1009; the heatmaps show seed 1000.
 
-## FCC definitions
+### FCC definitions
 
 The baseline FCC uses the strict lower-triangle mean (corr_mean) for 1dfs_ry,
 and the full-matrix mean including the diagonal (corr_full_mean) for 1dfs_rx
@@ -37,7 +43,7 @@ tolerance tol.
 qml-essentials 0.1.35; `--variant revised` runs the current Circuit_15.
 Exports label both as Circuit_15.
 
-## How to re-run it
+## Reproduce
 
 ```sh
 RUNS=4 DEVICES=4 dev/serve.sh                         # the engine, on ./.fluksio
