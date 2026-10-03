@@ -13,6 +13,8 @@ results
 notebooks/datasets
 *tar.gz
 606678497984501415
+.telemetry
+.vscode/
 ##########################
 # KEDRO PROJECT
 
