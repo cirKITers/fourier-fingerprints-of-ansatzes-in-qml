@@ -1,0 +1,1 @@
+wc -l `find logs/slurm -type f -name '*.out'`
