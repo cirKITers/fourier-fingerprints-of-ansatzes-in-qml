@@ -1,7 +1,7 @@
 """Fingerprint heatmaps of the Fourier coefficient correlations (s1).
 
 Reads CSVs only, from ``results/`` or, with ``--reference``, from
-``reference/`` (the CSVs behind the paper and thesis figures), and writes
+``reference/`` (bundled CSVs), and writes
 ``.pgf`` and ``.pdf`` to ``figures/``:
 
     uv run --no-project --with matplotlib --with pandas --with numpy \\
@@ -29,7 +29,7 @@ correlation matrix of seed 1000, i.e. per (qubits, ansatz, yi, xi):
 Scenario suffixes: ``_uw`` holds the unweighted, ``_w`` the weighted
 correlation; ``rx``/``ry`` the RX/RY encoding. The 1dfs files hold all eight
 ansatzes; single-panel files hold one ansatz (Hardware_Efficient for 2dfs).
-The file names match the ``heatmaps/`` files the thesis plot.py reads.
+File names match the heatmap CSV scenarios.
 """
 
 import argparse
@@ -126,7 +126,7 @@ def visualize_heatmap(hdf):
     )
     axes = np.atleast_2d(axes)
 
-    # First pass: pull the raw matrices so we can share one colour scale.
+    # First pass: collect raw matrices to share one colour scale.
     panels = []
     for it, ansatz in enumerate(ansaetze):
         row_idx = 0 if it < cols else 1

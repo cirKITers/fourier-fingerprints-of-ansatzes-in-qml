@@ -50,7 +50,7 @@ VALID_METRICS = ("mse", "kl_divergence", "huber_loss")
 
 
 def _cost(losses: Sequence[str], scalers: Sequence[float], prediction, target):
-    # target and prediction are swapped as in the paper (matters for kl_divergence)
+    # KL divergence treats the target as its first distribution argument.
     return sum(s * LOSSES[f](target, prediction) for f, s in zip(losses, scalers))
 
 
@@ -70,7 +70,7 @@ def train_qfm(
     loss_scaler: Sequence[float] = (1.0, 0.001),
 ) -> Generator[Dict[str, float], None, Tuple[jnp.ndarray, Dict[str, float]]]:
     """
-    Full-batch training of a quantum Fourier model as in the paper.
+    Train a quantum Fourier model on full batches.
 
     Uses Adam with the PennyLane defaults ($\\beta_2 = 0.99$) on the weighted sum
     of `loss_function`, starting from the current model parameters. The
@@ -144,7 +144,7 @@ def train_fourier_series(
     mask: Optional[np.ndarray] = None,
 ) -> Generator[Dict[str, float], None, Tuple[jnp.ndarray, Dict[str, float]]]:
     """
-    Full-batch MSE training of the encoding study.
+    Train a quantum Fourier model on a Fourier-series target with full-batch MSE.
 
     Uses Adam with the optax defaults, starting from the current model
     parameters. With `mask`, the gradients of the other parameters are zero,
@@ -165,8 +165,7 @@ def train_fourier_series(
     learning_rate : float, optional
         Adam learning rate.
     unnormalized_target : bool, optional
-        Compare against the unnormalized `coefficients` as in the encoding
-        study of the thesis.
+        Compare the model spectrum with unnormalized `coefficients`.
     mask : Optional[np.ndarray], optional
         Boolean mask of the shape of the model parameters, True for the
         trained parameters; None trains all.
@@ -239,7 +238,7 @@ def train_mlp(
     broadcast_targets: bool = False,
 ) -> Generator[Dict[str, float], None, Tuple[HEPRegressor, Dict[str, float]]]:
     """
-    Mini-batch training of the classical baseline as in the paper.
+    Train the classical MLP on mini-batches.
 
     Uses Adam with weight decay $10^{-5}$ and a plateau scheduler (factor 0.75,
     patience 6) stepped every 4th epoch on the mean batch cost.
@@ -267,8 +266,8 @@ def train_mlp(
     loss_scaler : Sequence[float], optional
         Scale of each loss.
     broadcast_targets : bool, optional
-        Keep a trailing target axis as in the paper, so the Huber loss in the
-        cost compares all prediction-target pairs of a batch.
+        Keep a trailing target axis so the Huber loss compares every
+        prediction-target pair in the batch.
 
     Yields
     ------

@@ -91,7 +91,7 @@ def hep_dataset(
     path: str = "data/pp-z-to-jets-500K-57246.h5",
 ) -> Dict[str, np.ndarray]:
     """
-    Loads the $pp \\to Z \\to$ jets dataset of the paper.
+    Load and preprocess a $pp \\to Z \\to$ jets dataset.
 
     The features are the center of mass energy $E_{CM}$ and the energy difference
     $|E^{(1)} - E^{(2)}|$ of the partons, transformed by a uniform quantile
@@ -105,7 +105,7 @@ def hep_dataset(
     n_events : int, optional
         Number of events read from the file.
     seed : int, optional
-        Seed of the quantile subsampling and of the split (unseeded in the paper).
+        Seed of the quantile subsampling and train/validation split.
     path : str, optional
         Path to the HDF5 file.
 

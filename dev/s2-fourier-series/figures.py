@@ -1,7 +1,7 @@
 """FCC and expressibility against the Fourier-series training error (s2).
 
 Reads CSVs only, from ``results/`` or, with ``--reference``, from
-``reference/`` (the CSVs behind the paper and thesis figures), and writes
+``reference/`` (bundled CSVs), and writes
 ``.pgf`` and ``.pdf`` plus the error tables (``.csv``, ``.tex``) to
 ``figures/``:
 
@@ -34,15 +34,13 @@ FCC run of the same encoding and the s1 expressibility run on
 - coeff_var_abs, coeff_var_real, coeff_var_imag: per-frequency variance of
   $|c_\\omega|$, $\\Re(c_\\omega)$ and $\\Im(c_\\omega)$ over parameter samples,
   as a list string ``[v_0, v_1, ...]`` (used by ``var``)
-- coeff_mean_abs: per-frequency mean of $|c_\\omega|$, same format (read by
-  the thesis plot.py only)
+- coeff_mean_abs: per-frequency mean of $|c_\\omega|$, same format
 
 ``1dfs_{rx,ry}`` is the 1D series with RX/RY encoding, ``2dfs`` the 2D series.
 The ``_uw`` and ``_w`` files of one series carry the same rows; ``_w`` selects
 ``corr_w_mean``. Further columns are ignored; the reference files keep the
 original export (MLflow run ids, ``corr_min``, ``corr_max``, ``corr_var``,
-``steps``, empty ``*_var`` columns). The file names match those the thesis
-plot.py reads.
+``steps``, empty ``*_var`` columns).
 """
 
 import argparse

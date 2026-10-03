@@ -1,15 +1,13 @@
 """Exports the s4 encoding runs of a variant to the CSVs of figures.py.
 
-    uv run python dev/s4-encodings/export.py [--variant 1-18|rerun|convergence|power]
+    uv run python dev/s4-encodings/export.py [--variant 1-18|rerun|convergence|lr|power|matched]
 
-Writes results/encoding_strategy.csv (1-18, rerun and power), results/convergence.csv
-or results/learning_rate.csv (lr), one row per run in the schema of the thesis
-file (run_id, ansatz, encoding_strategy, data.seed, model.seed, fcc.seed,
-train.steps, fcc, train_mse, train_fmse) followed by the further results and
-settings of the run. fcc is the covariance FCC of the variant, restricted to the numerical
-support with prune, fcc_excess its excess over the null value and at_floor
-whether it is below 1.1 times the null value. train_pnmse is train_mse over
-the power of the target (target_power_actual, the mean of its square).
+Writes results/encoding_strategy.csv (1-18, rerun, power, matched),
+results/convergence.csv, or results/learning_rate.csv (lr), with one row per
+run. The export includes run IDs, settings, FCC variants, and training metrics.
+``fcc`` selects the pruned or unpruned covariance FCC; ``fcc_excess`` subtracts
+its null value, and ``at_floor`` marks values below 1.1 times that null value.
+``train_pnmse`` divides training MSE by mean squared target power.
 """
 
 import sys

@@ -14,7 +14,7 @@ Series, ansaetze and seeds as in s1; seed is the model (initialization) seed,
 data_seed the seed of the series. The export averages the minimal validation
 metrics over the data seeds and joins the s1 fingerprint and expressibility runs of
 the same series, ansatz and seed, so s1 has to run for the same ansaetze and seeds.
-The FCC columns are those of s1 (published corr_mean, corr_tril_mean, the
+The FCC columns are those of s1 (series-specific corr_mean, corr_tril_mean, the
 signal-only corr_mean_signal and corr_w_mean_signal).
 
 ## How to re-run it
@@ -26,7 +26,7 @@ uv run python dev/s1-fingerprints/run.py               # FCC and expressibility
 uv run python dev/s2-fourier-series/run.py --dry-run   # list the cells
 uv run python dev/s2-fourier-series/run.py             # submit, resumable
 uv run python dev/s2-fourier-series/export.py          # results/<series>_mse_{uw,w}.csv
-uv run python dev/s2-fourier-series/figures.py         # figures/, --reference for the paper CSVs
+uv run python dev/s2-fourier-series/figures.py         # figures/, --reference for bundled CSVs
 ```
 
 `--ansaetze`, `--seeds` and `--data-seeds` restrict the grid (pass the same to

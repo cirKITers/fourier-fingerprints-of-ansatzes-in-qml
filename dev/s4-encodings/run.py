@@ -23,7 +23,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # dev/common.py
 from common import SEEDS, submit  # noqa: E402
 
-# the qml-essentials ansaetze of the thesis figure
+# qml-essentials ansaetze in the encoding grid
 ANSAETZE = [
     *(f"Circuit_{i}" for i in (2, 3, 4, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 19, 20)),
     "Strongly_Entangling",
@@ -41,7 +41,7 @@ RERUN = {
 # (median 0.021) and below the output power of most models (median var_sum 0.026)
 TARGET_POWER = 0.01
 VARIANTS = {
-    # thesis figure as of study-1-18, train_fmse against the unnormalized target
+    # Initial 1-18 configuration: train_fmse uses the unnormalized target.
     "1-18": {
         "n_qubits": 5,
         "n_layers": 2,

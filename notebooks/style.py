@@ -1,8 +1,7 @@
 """Shared figure style for benchmark plots.
 
-Mirrors the ggplot2 ``theme_bw`` look used by the paper's R figures: a white
-panel with a full grey border, solid light-grey major/minor gridlines, a serif
-(Computer Modern) font, a horizontal top legend, and a fixed colour palette.
+Uses a ggplot2 ``theme_bw`` style with a white panel, grey border and grid,
+serif font, top legend, and fixed palette.
 """
 
 from __future__ import annotations
@@ -11,7 +10,7 @@ from typing import Dict
 
 import matplotlib.pyplot as plt
 
-# Paper colour palette (mirrors ``COLOURS.LIST`` in the R ``layout.r``).
+# Fixed figure palette.
 COLOURS = [
     "#000000",  # black
     "#E69F00",  # orange
@@ -23,13 +22,12 @@ COLOURS = [
     "#002D4C",  # navy
 ]
 
-# Physical figure widths in inches. PGF text renders at ``font.size`` in the
-# document, so each figure must be generated at the width it occupies there.
-COLWIDTH = 6.3  # paper single-column layout, ~\textwidth
-FIGWIDTH = 3.67  # thesis \figurewidth = 0.90\textwidth (strobl.cls, 294.77pt)
+# Physical figure widths in inches; PGF text renders at ``font.size``.
+COLWIDTH = 6.3
+FIGWIDTH = 3.67
 
 # theme_bw rcParams: serif fonts, white panel with a full grey border, solid
-# light-grey grid, top legend, and a PGF backend for the pdflatex paper build.
+# light-grey grid, top legend, and a PGF backend for pdflatex.
 PLOT_RC = {
     "font.family": "serif",
     "font.serif": ["Times", "DejaVu Serif"],

@@ -15,7 +15,7 @@ def paper_coefficients(
     model: Model, n_samples: int, seed: int, chunk_size: int = 1000
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Samples the non-negative Fourier coefficients as in the paper.
+    Sample non-negative Fourier coefficients over random model parameters.
 
     Uses $2^n \\cdot$ `n_samples` $\\cdot D$ parameter sets for $n$ qubits and $D$
     input features, evaluated in chunks of `chunk_size` to bound the memory.
@@ -64,7 +64,7 @@ def random_coefficients(
     model: Model, n_samples: int, seed: int, mean: float = 0.0
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Samples the random-coefficient surrogate of the paper.
+    Sample a random-coefficient surrogate with binomial frequency scales.
 
     Real coefficients are drawn from normal distributions whose scales follow
     the L2 normalized binomial coefficients $\\binom{2L}{L + k}$ for $k = 0 \\dots L$,
@@ -86,8 +86,7 @@ def random_coefficients(
     -------
     Tuple[np.ndarray, np.ndarray]
         Coefficients of shape (L, samples) and frequencies of shape (L, 1) for
-        $k = 1 \\dots L$. The zero frequency is sampled but dropped, as the paper's
-        column filter did not match it.
+        $k = 1 \\dots L$. The sampled zero frequency is excluded.
     """
     degree = int(np.max(model.frequencies[0]))
     rng = np.random.default_rng(seed)
@@ -105,12 +104,11 @@ def correlation_stats(
     coeffs: np.ndarray, freqs: np.ndarray, tol: float = 1e-12
 ) -> Dict:
     """
-    Computes the paper FCC and related statistics of sampled coefficients.
+    Compute FCC statistics and fingerprints from sampled coefficients.
 
-    Reproduces the paper pipeline: Pearson correlation of the real parts only
-    (pandas `DataFrame.corr` silently dropped the imaginary part of complex
-    columns), restricted to the strict lower triangle. The weighted variant
-    uses the linear weights $w_{ij} = 1 - \\frac{i + j}{2 (K - 1)}$ over the
+    Uses Pearson correlations of the real parts, restricted to the strict lower
+    triangle. The weighted variant uses the linear weights
+    $w_{ij} = 1 - \\frac{i + j}{2 (K - 1)}$ over the
     flat frequency index.
 
     The signal-only variants keep only pairs of frequencies within the
@@ -129,10 +127,10 @@ def correlation_stats(
     Returns
     -------
     Dict
-        corr_mean (the FCC), corr_max, corr_min and corr_var (variance over the
-        columns of the column-wise variances) of $|r|$, corr_w_mean of the
+        corr_mean (strict lower-triangle FCC), corr_max, corr_min, and corr_var
+        (variance over the column-wise variances) of $|r|$; corr_w_mean of the
         weighted $|r|$, corr_full_mean of $|r|$ over the full matrix including
-        the diagonal (reported as FCC for 1D RX and 2D in the paper),
+        the diagonal, used as FCC for 1D RX and 2D series,
         corr_mean_signal and corr_w_mean_signal restricted to the support
         (nan for less than two frequencies), the support frequencies support,
         per-frequency coefficient statistics
@@ -480,8 +478,8 @@ def expressibility(
     """
     Computes the expressibility as KL divergence to the Haar distribution.
 
-    As in the paper, $2^n \\cdot$ `n_samples` parameter pairs and $n \\cdot$ `n_bins`
-    histogram bins are used for $n$ qubits and the inputs are zero. The
+    Uses $2^n \\cdot$ `n_samples` parameter pairs and $n \\cdot$ `n_bins`
+    histogram bins for $n$ qubits, with zero inputs. The
     fidelities $|\\langle \\psi | \\phi \\rangle|^2$ are computed from state vectors,
     which equals the density matrix fidelity of `Expressibility.state_fidelities`
     for noiseless models at a fraction of the memory.

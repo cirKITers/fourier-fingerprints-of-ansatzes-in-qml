@@ -1,11 +1,10 @@
 """Shared grid constants, engine helpers and tables of the study drivers.
 
-A cell holds the flow inputs that differ from the flow defaults; runs are
-matched on all inputs, so a cell is only ever answered by a run of exactly its
-configuration. An input a run did not record (added to the flow later) counts
-as its default, which therefore has to keep the previous behaviour. The engine
-is found as by the fluksio CLI: FLUKSIO_URL and FLUKSIO_TOKEN, or the
-client.json of the nearest .fluksio/ (see dev/serve.sh).
+A cell holds flow inputs that differ from the defaults. Runs match on all
+inputs; an input missing from an older run uses its default, so defaults must
+preserve earlier behavior. Engine discovery follows the Fluksio CLI:
+FLUKSIO_URL and FLUKSIO_TOKEN, or client.json in the nearest .fluksio/
+(see dev/serve.sh).
 """
 
 from __future__ import annotations
@@ -18,7 +17,7 @@ from typing import Any
 import pandas as pd
 
 QUBITS = 6
-# order of the paper panels and ansatz ids (descending names)
+# Display order and ansatz IDs (descending names).
 ANSAETZE = [
     "Hardware_Efficient",
     "Circuit_YZY_Entangling",
@@ -31,13 +30,13 @@ ANSAETZE = [
 ]
 SEEDS = list(range(1000, 1010))
 ENCODINGS = {"1dfs_ry": ["RY"], "1dfs_rx": ["RX"], "2dfs": ["RX", "RY"]}
-# FCC definition the paper reported per series, see the s1 README
+# FCC definition used in exported scenario tables; see the s1 README.
 PUBLISHED_FCC = {
     "1dfs_ry": "corr_mean",
     "1dfs_rx": "corr_full_mean",
     "2dfs": "corr_full_mean",
 }
-# the published variant ran the Circuit_15 of qml-essentials 0.1.35
+# The "paper" variant uses Circuit_15 wiring from qml-essentials 0.1.35.
 PAPER_CIRCUITS = {"Circuit_15": "Circuit_15_Paper"}
 OUTPUTS = {
     "fingerprint": ["stats"],
@@ -72,7 +71,7 @@ def circuit(ansatz: str, variant: str) -> str:
 
 
 def ansatz_of(circuit_type: str) -> str:
-    """The paper name of a circuit_type."""
+    """Map a circuit type to its display name."""
     return {v: k for k, v in PAPER_CIRCUITS.items()}.get(circuit_type, circuit_type)
 
 
@@ -134,7 +133,7 @@ def runs(flow: str, cells: list[dict[str, Any]]) -> pd.DataFrame:
 
 
 def submit(flow: str, cells: list[dict[str, Any]], jobs: int, dry_run: bool) -> None:
-    """Runs every cell not yet ok, queued or running, `jobs` at a time."""
+    """Submit cells without successful or active runs, up to `jobs` at a time."""
     from fluksio.sdk.client import Client
 
     if dry_run:
@@ -176,7 +175,7 @@ def fcc_table(series: str, circuits: list[str], seeds: list[int]) -> pd.DataFram
     """
     The s1 statistics of `series` and the expressibility per (circuit_type, seed).
 
-    corr_mean holds the FCC as published for the series (PUBLISHED_FCC),
+    corr_mean holds the selected FCC for the series (PUBLISHED_FCC),
     corr_tril_mean the mean over the strict lower triangle.
     """
     cells = [fingerprint_cell(c, series, s) for c in circuits for s in seeds]

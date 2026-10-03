@@ -9,8 +9,8 @@ run s1 for them as well:
     uv run python dev/s3-hep/run.py --ansaetze Circuit_15 --seeds 1000 --data-seeds 1000
 
 Cells: QFM per ansatz x seed (model) x data seed (3000 steps), MLP per seed x
-data seed (150 epochs). The paper variant runs Circuit_15_Paper and the MLP
-with the broadcast targets of the paper.
+data seed (150 epochs). The ``paper`` variant uses Circuit_15_Paper and
+broadcast targets for the MLP Huber loss.
 """
 
 import sys

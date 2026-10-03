@@ -1,4 +1,4 @@
-"""Quantum Fourier model construction and the custom ansaetze of the paper."""
+"""Quantum Fourier model construction and custom ansaetze."""
 
 from typing import List, Sequence, Union
 
@@ -30,7 +30,7 @@ class Circuit_YZY_Entangling(DeclarativeCircuit):
 
 class Circuit_15_Paper(DeclarativeCircuit):
     """
-    Circuit_15 as in qml-essentials 0.1.35, used in the paper.
+    Circuit_15 wiring from qml-essentials 0.1.35.
 
     The second CX layer couples qubit $q - 1$ to $q - 2$, while qml-essentials'
     Circuit_15 couples $q - 1$ to $q + 2$ (identical only for 4 qubits).

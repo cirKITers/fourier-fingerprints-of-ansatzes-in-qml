@@ -30,20 +30,19 @@ grid of the spectrum. Training is full-batch Adam (optax defaults) on the MSE fo
 3000 steps; the final step is reported. The Golomb encoding is left out, as its
 spectrum is too expensive at these sizes.
 
-1-18 reproduces the thesis figure (run study-1-18 of spectral-bias-x-fcc on
-qml-essentials a2eee507); its train_fmse compares the model spectrum with the
-unnormalized target coefficients as the original did (`unnormalized_target`).
-rerun is the configuration the thesis text describes: coefficients outside the
-numerical support (below tol $= 10^{-12}$ in every sample) are dropped from the
-FCC and set to zero in the target. At 500 samples its FCC is at the floor of
-the estimator (see Convergence), hence 8000 samples and fcc_excess as the
-primary measure. The learning rate is chosen by lr (see Learning rate).
+1-18 uses 5 qubits and 2 layers and compares the model spectrum with
+unnormalized target coefficients for train_fmse (`unnormalized_target`).
+rerun drops coefficients outside the numerical support (below tol $= 10^{-12}$
+in every sample) from the FCC and sets them to zero in the target. At 500
+samples, its FCC reaches the estimator's noise floor (see Convergence). The
+rerun therefore uses 8000 samples and fcc_excess as the primary measure. The
+learning rate is chosen by lr (see Learning rate).
 
 power fixes the scale of the target. The series is
 $\sum_\omega c_\omega e^{i \omega x} / K$ with $K$ the size of the frequency
 grid (13, 127 and 729 for Hamming, binary and ternary encoding at 6 qubits and
-1 layer; `Datasets.calculate_values` divides by the number of coefficients, see
-item 4 of docs/NOTEPAD.md), so its power $\sum_\omega |c_\omega / K|^2$, the
+1 layer; `Datasets.calculate_values` divides by the number of coefficients),
+so its power $\sum_\omega |c_\omega / K|^2$, the
 mean of $y^2$ over the grid, falls as $1 / K$. In rerun the median target power
 is 0.021, 0.0017 and 0.00014, while the output power of the models at random
 parameters (var_sum) has a median of 0.026 under every encoding. Under binary
@@ -69,10 +68,9 @@ layers would change the spectrum. For Circuit_2 the cells equal those of power.
 
 ## Results
 
-Per run the export writes the thesis columns (run_id, ansatz, encoding_strategy,
-data.seed, model.seed, fcc.seed, train.steps, fcc, train_mse, train_fmse),
-where fcc is the FCC of the variant (fcc_pruned for rerun, fcc_unpruned
-otherwise), and further
+Per run the export writes run_id, ansatz, encoding_strategy, data.seed,
+model.seed, fcc.seed, train.steps, fcc, train_mse and train_fmse. The fcc
+column selects fcc_pruned for rerun and fcc_unpruned otherwise. It also writes:
 
 - fcc_null: the null value of fcc
 - fcc_excess: fcc minus fcc_null, the primary measure of rerun
@@ -120,7 +118,7 @@ ansaetze; within a support size partial_r controls for n_params only and
 partial_r_var for var_sum only. `--excess` does the same for
 fcc_excess on a linear axis (encoding_strategy_excess_*), for rerun.
 
-## Reproduction of 1-18
+## 1-18 validation
 
 The recomputed FCC of all 510 cells matches the reference to a relative
 $3.4 \cdot 10^{-15}$, except for the 30 Circuit_9 cells ($1.0 \cdot 10^{-6}$):
@@ -131,7 +129,7 @@ Hadamard gates. train_mse and train_fmse of 19 cells trained on the engine
 Hardware_Efficient with Hamming encoding and seed 1000) match to
 $2 \cdot 10^{-16}$, for Circuit_9 to $8 \cdot 10^{-7}$.
 
-figures.py reproduces the thesis values $r = 0.84$, $0.73$ and $0.09$. With
+For 1-18, figures.py gives $r = 0.84$, $0.73$ and $0.09$. With
 n_support and n_params of the recomputation the partial correlations are
 $0.68$ $[0.34, 0.90]$ (Hamming), $0.71$ $[0.26, 0.91]$ (binary) and $0.59$
 $[-0.14, 0.91]$ (ternary). Restricted to the 5 ansaetze with full support, $r$
@@ -290,7 +288,7 @@ uv run python dev/s4-encodings/run.py --variant power --n-qubits 5 --n-layers 2 
 uv run python dev/s4-encodings/export.py --variant power --n-qubits 5 --n-layers 2
 uv run python dev/s4-encodings/run.py --variant matched     # 5 qubits and 2 layers by default
 uv run python dev/s4-encodings/export.py --variant matched
-uv run python dev/s4-encodings/figures.py --excess    # figures/, --reference for the thesis CSV
+uv run python dev/s4-encodings/figures.py --excess    # figures/, --reference for bundled CSV
 JAX_PLATFORMS=cpu uv run python dev/s4-encodings/local.py --n-qubits 5 --n-layers 2 --jobs 4  # no engine
 JAX_PLATFORMS=cpu uv run python dev/s4-encodings/local.py --n-qubits 4 --n-layers 3 --jobs 4
 ```
@@ -304,4 +302,4 @@ the same to the export), `--jobs` bounds the runs in flight. figures.py plots
 train_mse, which is $P$ times train_pnmse for power, so its correlations are
 those of train_pnmse. A run from before `target_power` was added counts as
 `target_power` 0, the behaviour it had. `reference/encoding_strategy.csv`
-is the thesis file of 1-18.
+contains the bundled 1-18 results.

@@ -1,20 +1,19 @@
-"""Fluksio flows, one per kind of measurement.
+"""Fluksio flows for measurements and training.
 
-Every study cell is one run of one flow, the nodes are thin wrappers around the
-plain functions of the library:
+Each cell runs one flow. Nodes wrap the library functions:
 
     dev/serve.sh                                    # the engine, once
     fluksio sync fourier_fingerprints/pipeline.py   # upload the flows
     fluksio run fingerprint --no-sync --defaults --circuit_type Circuit_19 --wait
 
-- fingerprint: paper FCC statistics and fingerprint matrices of an ansatz
+- fingerprint: FCC statistics and fingerprint matrices of an ansatz
 - surrogate: the same statistics for the random-coefficient surrogate
 - expressibility: KL divergence to the Haar distribution
 - train: QFM or MLP training on a Fourier series or the HEP dataset
 - encoding: FCC variants and Fourier-series training of the encoding study
 
-Inputs default to the parameters of the paper runs (6 qubits, one layer, the
-1D Fourier-series training), the study drivers in dev/ set everything else.
+Inputs default to 6 qubits, one layer, and 1D Fourier-series training. The
+study drivers in dev/ set other inputs.
 """
 
 import io
@@ -36,7 +35,7 @@ STREAMS = ("cost", "mse_valid", "kl_divergence_valid", "huber_loss_valid")
 
 
 def jsonable(value):
-    """Converts numpy values to JSON types, non-finite floats become None."""
+    """Convert NumPy values to JSON types and non-finite floats to None."""
     if isinstance(value, dict):
         return {k: jsonable(v) for k, v in value.items()}
     if isinstance(value, (np.ndarray, list, tuple)):
@@ -49,7 +48,7 @@ def jsonable(value):
 
 
 def _finite_steps(loop, streams=STREAMS):
-    """Yields the finite stream values of each step, returns the loop result."""
+    """Yield finite stream metrics per step and return the loop result."""
     while True:
         try:
             step = next(loop)
@@ -75,7 +74,7 @@ MODEL_INPUTS = [
     timeout=3600,
 )
 def fingerprint(*, n_samples, tol, **circuit):
-    """Paper FCC statistics of sampled Fourier coefficients."""
+    """Compute FCC statistics from sampled Fourier coefficients."""
     model = create_model(**circuit)
     coeffs, freqs = metrics.paper_coefficients(model, n_samples, circuit["seed"])
     return {"stats": jsonable(metrics.correlation_stats(coeffs, freqs, tol))}
@@ -87,7 +86,7 @@ def fingerprint(*, n_samples, tol, **circuit):
     timeout=3600,
 )
 def surrogate(*, n_samples, tol, **circuit):
-    """Paper FCC statistics of the random-coefficient surrogate."""
+    """Compute FCC statistics for the random-coefficient surrogate."""
     model = create_model(**circuit)
     coeffs, freqs = metrics.random_coefficients(model, n_samples, circuit["seed"])
     return {"stats": jsonable(metrics.correlation_stats(coeffs, freqs, tol))}
@@ -146,12 +145,11 @@ def train(
     **circuit,
 ):
     """
-    Trains a QFM (`model` qfm) or an MLP (`model` mlp) on the Fourier series
-    (`dataset` fourier, validated on the training data as in the paper) or on
-    the HEP dataset (`dataset` hep). The MLP ignores the circuit inputs and
-    only supports the HEP dataset. Returns the minimal validation metrics and
-    the differences between prediction and target on the training and
-    validation data (in GeV for HEP) as npz artifact.
+    Train a QFM (`model` qfm) or MLP (`model` mlp) on a Fourier series
+    (`dataset` fourier) or the HEP dataset (`dataset` hep). Fourier-series
+    training uses the same data for validation. The MLP supports only HEP data
+    and ignores circuit inputs. Returns the best validation metrics and an NPZ
+    artifact of prediction errors for both splits (in GeV for HEP).
     """
     qfm = create_model(**circuit)
     if dataset == "fourier":
@@ -245,16 +243,15 @@ def encoding(
     **circuit,
 ):
     """
-    One cell of the encoding study: the FCC variants of `metrics.fcc_variants`
-    and the training on a Fourier series with the spectrum of the model (offset
-    kept, restricted to the numerical support with `prune`, rescaled to the
-    power `target_power` unless 0), `seed` seeds the model, the FCC samples and
-    the series. Unless `n_trainable` is 0, only a random subset of
-    `n_trainable` parameters (seeded with `seed`) is sampled for the FCC and
-    trained, the others keep their initial values. `results` holds the FCC
-    variants, var_sum, n_support, n_params and, unless `steps` is 0, the final
-    train_mse, train_fmse, train_nmse (train_mse over the variance of the
-    target) and target_power_actual (the mean of the squared target).
+    Measure FCC variants and optionally train on a matching random Fourier series.
+
+    The target keeps its offset; `prune` restricts it to numerical support, and
+    positive `target_power` rescales its power. `seed` controls the model, FCC
+    samples, and series. Positive `n_trainable` selects that many parameters
+    for both sampling and training; the rest remain fixed. `results` contains
+    FCC variants, var_sum, n_support, and n_params. With nonzero `steps`, it
+    also contains train_mse, train_fmse, train_nmse (MSE divided by target
+    variance), and target_power_actual (mean squared target).
     """
     model = create_model(**circuit)
     seed = circuit["seed"]

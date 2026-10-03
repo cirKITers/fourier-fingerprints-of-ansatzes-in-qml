@@ -31,7 +31,7 @@ SEED = 1000
 
 
 def label(freq):
-    """Coefficient label as in the paper figures, e.g. c_+1 or c_+0_+2."""
+    """Format a coefficient label, such as c_+1 or c_+0_+2."""
     return "c_" + "_".join(f"+{f}" for f in freq)
 
 

@@ -1,7 +1,7 @@
 """FCC and expressibility against the HEP training error, QFM against MLP (s3).
 
 Reads CSVs only, from ``results/`` or, with ``--reference``, from
-``reference/`` (the CSVs behind the paper and thesis figures), and writes
+``reference/`` (bundled CSVs), and writes
 ``.pgf`` and ``.pdf`` plus the error tables (``.csv``, ``.tex``) to
 ``figures/``:
 
@@ -29,10 +29,10 @@ reference files keep the original export, where each file fills only its own
 ``dist_hist.csv`` with one row per histogram bin, i.e. per (definition,
 identifier, qubits, ansatz, series, left):
 
-- scenario: constant ``2dhepc``, kept for the thesis plot.py
-- definition: paper (differences averaged elementwise over the training runs)
-  or pooled (differences of all runs pooled); rows without the column (the
-  reference files) count as paper
+- scenario: constant ``2dhepc`` for the HEP distribution
+- definition: ``paper`` (differences averaged elementwise over runs) or
+  ``pooled`` (all differences pooled); reference rows without this column use
+  ``paper``
 - identifier: fig_distribution_train or fig_distribution_valid
 - qubits, ansatz: QFM configuration
 - series: QFM or MLP
@@ -145,7 +145,7 @@ def main(data: Path, definition: str) -> None:
     kde = pd.read_csv(data / "dist_kde.csv")
     for d in (hist, kde):
         if "definition" not in d:
-            d["definition"] = "paper"  # the reference files predate the column
+            d["definition"] = "paper"  # reference files predate the column
     hist = hist[hist.definition == definition]
     kde = kde[kde.definition == definition]
     for (identifier, q), h in hist.groupby(["identifier", "qubits"]):

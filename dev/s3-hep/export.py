@@ -4,9 +4,9 @@
 
 Writes results/2dhep_{mse,kl,hl}_uw.csv, one row per (qubits, ansatz, seed)
 with the QFM metrics averaged over the data seeds and the s1 2D FCC, and
-results/dist_{hist,kde}.csv from the $p_T$ differences of the Circuit_15 QFM
-and of the MLP runs, averaged elementwise over the runs (definition paper) and
-pooled across the runs (definition pooled).
+results/dist_{hist,kde}.csv from the $p_T$ differences of Circuit_15 QFM and
+MLP runs. Definition ``paper`` averages runs elementwise; ``pooled`` combines
+all differences.
 """
 
 import io
@@ -32,8 +32,7 @@ from run import cells  # noqa: E402
 
 
 def differences(train):
-    """Differences of `train` per definition and split: paper, the elementwise
-    mean over the runs, and pooled, all differences of all runs."""
+    """Return elementwise-mean and pooled prediction errors for each split."""
     loaded = [
         np.load(io.BytesIO(Client().download(ref["digest"])))
         for ref in train.differences

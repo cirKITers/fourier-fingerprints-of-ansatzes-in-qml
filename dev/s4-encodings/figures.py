@@ -1,7 +1,7 @@
 """FCC against training MSE for the encoding strategies (s4).
 
 Reads CSVs only, from ``results/`` or, with ``--reference``, from
-``reference/`` (the CSV behind the thesis figure), and writes ``.pgf`` and
+``reference/`` (a bundled CSV), and writes ``.pgf`` and
 ``.pdf`` to ``figures/``:
 
     uv run --no-project --with matplotlib --with pandas --with numpy \\
@@ -28,9 +28,8 @@ CSV schema: ``encoding_strategy.csv`` with one row per training run, i.e. per
 - var_sum (optional): sum of the coefficient variances over all frequencies
 - fcc_excess (for ``--excess``): fcc minus its null value
 
-Further columns are ignored; the reference file keeps the original export
-(run_id, data.seed, model.seed, fcc.seed, train.steps, train_fmse), which is
-the file the thesis plot.py reads.
+Further columns are ignored. The reference CSV also includes run IDs, seeds,
+training steps, and train_fmse.
 """
 
 import argparse
