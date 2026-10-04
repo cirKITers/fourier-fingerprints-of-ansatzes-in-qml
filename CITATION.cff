@@ -8,8 +8,8 @@ authors:
     given-names: "Lucas"
     orcid: "https://orcid.org/0009-0003-0609-9582"
 title: "Reproduction Package for 'Fourier fingerprints of ansatzes in quantum machine learning'"
-version: 0.1.0
-date-released: 2025-09-02
+version: 0.2.0
+date-released: 2026-10-03
 repository-code: "https://github.com/cirKITers/fourier-fingerprints-of-ansatzes-in-qml"
 license: MIT
 identifiers:
