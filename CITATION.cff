@@ -7,7 +7,7 @@ authors:
   - family-names: "van der Horst"
     given-names: "Lucas"
     orcid: "https://orcid.org/0009-0003-0609-9582"
-title: "Reproduction Package for 'Fourier fingerprints of ansatzes in quantum machine learning'"
+title: "Fourier fingerprints of ansatzes in QML"
 version: 0.2.0
 date-released: 2026-10-03
 repository-code: "https://github.com/cirKITers/fourier-fingerprints-of-ansatzes-in-qml"
