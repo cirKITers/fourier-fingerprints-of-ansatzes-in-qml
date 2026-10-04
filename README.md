@@ -1,24 +1,46 @@
-# Fourier Fingerprints of Ansatzes in QML
+# Fourier Fingerprints of Ansaetze in Quantum Machine Learning
 
+Experiments on the Fourier coefficient correlation (FCC) of variational
+ansaetze: their fingerprints and their relation to training error on Fourier
+series and a high energy physics regression task.
+Models are built with [qml-essentials](https://github.com/cirKITers/qml-essentials)
+on the [jaqsi](https://github.com/cirKITers/jaqsi) simulator, experiments run as
+versioned [Fluksio](https://docs.fluksio.com) runs.
 
-## Getting Started :rocket:
+## Layout
 
-This repository uses [Kedro](https://kedro.org/). To get started, follow these steps:
-1. Clone this repository
-2. Install the pinned environment (Python 3.11) with [Poetry](https://python-poetry.org/): `poetry env use python3.11 && poetry install`
-3. Run the experiment: `poetry run kedro run`
+- `fourier_fingerprints/`: the library (models and custom ansaetze, FCC and
+  expressibility, datasets, training loops) and `pipeline.py`, the Fluksio flows
+  fingerprint, surrogate, expressibility, train and encoding
+- `dev/`: one folder per study with its driver (`run.py`), export (`export.py`),
+  figures (`figures.py`), README, and reference CSVs;
+  `dev/serve.sh` starts the engine
+  - `s1-fingerprints`: FCC, expressibility and the random-coefficient surrogate
+  - `s2-fourier-series`: training on 1D and 2D Fourier series
+  - `s3-hep`: training on the $pp \to Z \to$ jets dataset, QFM and MLP
+  - `s4-encodings`: FCC and training error of the encoding strategies
+- `tests/`: unit tests, `uv run pytest`
+- `data/`: the HEP datasets (not tracked)
 
-Experiments are automatically recorded using [MlFlow](https://mlflow.org/). You can view the experiments by
-1. Running `poetry run kedro mlflow ui`
-2. Navigating to [http://127.0.0.1:5000](http://127.0.0.1:5000)
+## Getting started
 
-To visualize the nodes and pipeline
-1. Run `poetry run kedro viz`
-2. Navigating to [http://127.0.0.1:4141](http://127.0.0.1:4141)
+```sh
+uv sync                                               # Python 3.12 environment
+RUNS=4 DEVICES=4 dev/serve.sh                         # the engine, store in ./.fluksio
+uv run fluksio sync fourier_fingerprints/pipeline.py  # upload the flows
+uv run fluksio run fingerprint --no-sync --defaults --wait  # one run
+```
 
-## Tweaking :wrench:
+Each study README lists its cells and how to run, export and plot it. The drivers
+submit to the running engine and skip cells that already ran, so an interrupted
+grid resumes on the next call. Restart the engine after `uv sync`, and keep
+`RUNS` $\times$ `DEVICES` near the number of cores.
 
-- To specify a pipeline: `kedro run --pipeline NAME` (see `src/fourier_fingerprints/pipeline_registry.py`)
-- Parameters can be adjusted in `conf/base/parameters.yml` or as command line arguments `--params=<key1>=<value1>`
-- Circuit diagrams in `docs/` are generated with `kedro run --pipeline visualize --params=model.circuit_type=<circuit>,model.n_qubits=4,model.draw=True`
-- `slurm_job.sh` and the `sweep_*.sh` scripts are the SLURM job scripts used for the parameter sweeps. `slurm_job.sh` expects the repo at `~/fourier_fingerprints` and the environment in `.venv` (run `poetry config virtualenvs.in-project true` before `poetry install`)
+## Architecture
+
+The library defines the QFMs, ansaetze, FCC and expressibility measurements, and
+training flows. The s1 fingerprints and expressibility runs characterize
+untrained models; s2 and s3 test their relation to fitting Fourier series and
+HEP data. s4 varies the encoding strategy and tests how its spectrum affects
+the FCC and training error. Each `dev/` driver supplies a study's cells to the
+shared flows.
