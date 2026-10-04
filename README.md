@@ -7,6 +7,12 @@ Models are built with [qml-essentials](https://github.com/cirKITers/qml-essentia
 on the [jaqsi](https://github.com/cirKITers/jaqsi) simulator, experiments run as
 versioned [Fluksio](https://docs.fluksio.com) runs.
 
+Tech stack:
+- [qml-essentials](https://github.com/cirKITers/qml-essentials): quantum Fourier models
+- [jaqsi](https://github.com/cirKITers/jaqsi): simulator in JAX
+- JAX: array computation and automatic differentiation
+- Fluksio: data pipeline and experiment tracking
+
 ## Layout
 
 - `fourier_fingerprints/`: the library (models and custom ansaetze, FCC and
