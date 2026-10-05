@@ -10,9 +10,9 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "qml-essentials",
-    "jaqsi",
-    "fluksio",
+    "qml-essentials>=0.3.1",
+    "jaqsi>=0.1.1",
+    "fluksio>=0.1.6",
     "h5py>=3.16.0",
     "torch>=2.9.1",
     "jax>=0.9.0.1",
@@ -40,9 +40,6 @@ torch = [
 torchvision = [
     { index = "pytorch-cpu" },
 ]
-qml-essentials = { git = "https://github.com/cirKITers/qml-essentials", rev = "69f02480c7183a9d626510c5df5ead91c3591909" }
-jaqsi = { git = "https://github.com/cirKITers/jaqsi", rev = "6dff0eca76cd5e2c9d7a240dce13d2d4634ef87d" }
-fluksio = { git = "https://git.stroblme.de/Fluksio/app", rev = "dafdcb76c4b4d04bc3f217c46228a5bcb3f63c40", subdirectory = "backend" }
 
 [build-system]
 requires = ["hatchling"]
